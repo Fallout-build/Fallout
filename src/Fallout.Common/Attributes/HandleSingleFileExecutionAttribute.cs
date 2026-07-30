@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json.Nodes;
-using ICSharpCode.SharpZipLib.Zip;
 using NuGet.Packaging;
 using Fallout.Common.IO;
 using Fallout.Common.Tooling;
@@ -47,20 +45,7 @@ public class HandleSingleFileExecutionAttribute : BuildExtensionAttributeBase, I
 
             packageResourceStream.Seek(offset: 0, SeekOrigin.Begin);
             packageResourceStream.CopyToFile(packageFile);
-
-            using var fileStream = File.OpenRead(packageFile);
-            using var zipFile = new ZipFile(fileStream);
-
-            var entries = zipFile.Cast<ZipEntry>().Where(x => !x.IsDirectory);
-            foreach (var entry in entries)
-            {
-                var file = packageFile.Parent / entry.Name;
-                Directory.CreateDirectory(file.Parent);
-
-                using var entryStream = zipFile.GetInputStream(entry);
-                using var outputStream = File.Open(file, FileMode.Create);
-                entryStream.CopyTo(outputStream);
-            }
+            packageFile.UnZipTo(packageFile.Parent);
         }
     }
 

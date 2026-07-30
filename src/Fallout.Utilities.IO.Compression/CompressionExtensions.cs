@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
-using ICSharpCode.SharpZipLib.BZip2;
-using ICSharpCode.SharpZipLib.GZip;
-using ICSharpCode.SharpZipLib.Tar;
-using ICSharpCode.SharpZipLib.Zip;
+using SharpCompress.Common;
+using SharpCompress.Readers;
+using SharpCompress.Writers;
+using SharpCompress.Writers.Zip;
 using Fallout.Common.Utilities.Collections;
 
 namespace Fallout.Common.IO;
@@ -50,13 +50,15 @@ public static class CompressionExtensions
         var files = directory.GetFiles(depth: int.MaxValue).Where(filter).ToList();
 
         using var fileStream = File.Open(archiveFile, fileMode, FileAccess.ReadWrite);
-        using var zipArchive = new ZipArchive(fileStream, ZipArchiveMode.Create);
+        using var writer = WriterFactory.OpenWriter(
+            fileStream,
+            ArchiveType.Zip,
+            new ZipWriterOptions(CompressionType.Deflate, compressionLevel.ToSharpCompressCompressionLevel()));
 
         void AddFile(AbsolutePath file)
         {
-            var relativePath = directory.GetRelativePathTo(file);
-            var entryName = ZipEntry.CleanName(relativePath);
-            zipArchive.CreateEntryFromFile(file, entryName, compressionLevel);
+            var entryName = directory.GetUnixRelativePathTo(file);
+            writer.Write(entryName, file);
         }
 
         files.ForEach(AddFile);
@@ -64,22 +66,7 @@ public static class CompressionExtensions
 
     public static void UnZipTo(this AbsolutePath archiveFile, AbsolutePath directory)
     {
-        using var fileStream = File.OpenRead(archiveFile);
-        using var zipFile = new ICSharpCode.SharpZipLib.Zip.ZipFile(fileStream);
-
-        var entries = zipFile.Cast<ZipEntry>().Where(x => !x.IsDirectory);
-
-        void HandleEntry(ZipEntry entry)
-        {
-            var file = directory / entry.Name;
-            Directory.CreateDirectory(file.Parent.NotNull());
-
-            using var entryStream = zipFile.GetInputStream(entry);
-            using var outputStream = File.Open(file, FileMode.Create);
-            entryStream.CopyTo(outputStream);
-        }
-
-        entries.ForEach(HandleEntry);
+        UncompressArchive(archiveFile, directory);
     }
 
     public static void TarGZipTo(
@@ -88,7 +75,7 @@ public static class CompressionExtensions
         IEnumerable<AbsolutePath> files,
         FileMode fileMode = FileMode.CreateNew)
     {
-        CompressTar(baseDirectory, archiveFile, files.ToList(), fileMode, x => new GZipOutputStream(x));
+        CompressTar(baseDirectory, archiveFile, files.ToList(), fileMode, CompressionType.GZip);
     }
 
     public static void TarGZipTo(
@@ -108,7 +95,7 @@ public static class CompressionExtensions
         IEnumerable<AbsolutePath> files,
         FileMode fileMode = FileMode.CreateNew)
     {
-        CompressTar(directory, archiveFile, files.ToList(), fileMode, x => new BZip2OutputStream(x));
+        CompressTar(directory, archiveFile, files.ToList(), fileMode, CompressionType.BZip2);
     }
 
     public static void TarBZip2To(
@@ -124,12 +111,12 @@ public static class CompressionExtensions
 
     public static void UnTarGZipTo(this AbsolutePath archiveFile, AbsolutePath directory)
     {
-        UncompressTar(archiveFile, directory, x => new GZipInputStream(x));
+        UncompressArchive(archiveFile, directory);
     }
 
     public static void UnTarBZip2To(this AbsolutePath archiveFile, AbsolutePath directory)
     {
-        UncompressTar(archiveFile, directory, x => new BZip2InputStream(x));
+        UncompressArchive(archiveFile, directory);
     }
 
     private static void CompressTar(
@@ -137,33 +124,51 @@ public static class CompressionExtensions
         AbsolutePath archiveFile,
         IReadOnlyCollection<AbsolutePath> files,
         FileMode fileMode,
-        Func<Stream, Stream> outputStreamFactory)
+        CompressionType compressionType)
     {
         archiveFile.Parent.CreateDirectory();
-
         using var fileStream = File.Open(archiveFile, fileMode, FileAccess.ReadWrite);
-        using var outputStream = outputStreamFactory(fileStream);
-        using var tarArchive = TarArchive.CreateOutputTarArchive(outputStream);
+        using var writer = WriterFactory.OpenWriter(fileStream, ArchiveType.Tar, new WriterOptions(compressionType));
 
         void AddFile(AbsolutePath file)
         {
-            var entry = TarEntry.CreateEntryFromFile(file);
-            entry.Name = baseDirectory.GetUnixRelativePathTo(file);
-
-            tarArchive.WriteEntry(entry, recurse: false);
+            var entryName = baseDirectory.GetUnixRelativePathTo(file);
+            // ReSharper disable once AccessToDisposedClosure
+            writer.Write(entryName, file);
         }
 
         files.ForEach(AddFile);
     }
 
-    private static void UncompressTar(AbsolutePath archiveFile, AbsolutePath directory, Func<Stream, Stream> inputStreamFactory)
+    private static SharpCompress.Compressors.Deflate.CompressionLevel ToSharpCompressCompressionLevel(
+        this CompressionLevel compressionLevel)
+    {
+        return compressionLevel switch
+        {
+            CompressionLevel.NoCompression => SharpCompress.Compressors.Deflate.CompressionLevel.None,
+            CompressionLevel.Fastest => SharpCompress.Compressors.Deflate.CompressionLevel.BestSpeed,
+            CompressionLevel.Optimal => SharpCompress.Compressors.Deflate.CompressionLevel.Default,
+            _ => SharpCompress.Compressors.Deflate.CompressionLevel.BestCompression
+        };
+    }
+
+    private static void UncompressArchive(AbsolutePath archiveFile, AbsolutePath directory)
     {
         using var fileStream = File.OpenRead(archiveFile);
-        using var inputStream = inputStreamFactory(fileStream);
-        using var tarArchive = TarArchive.CreateInputTarArchive(inputStream, nameEncoding: null);
+        using var reader = ReaderFactory.OpenReader(fileStream);
 
         directory.CreateDirectory();
 
-        tarArchive.ExtractContents(directory);
+        while (reader.MoveToNextEntry())
+        {
+            if (reader.Entry.IsDirectory)
+                continue;
+
+            reader.WriteEntryToDirectory(directory, new ExtractionOptions
+            {
+                ExtractFullPath = true,
+                Overwrite = true
+            });
+        }
     }
 }
