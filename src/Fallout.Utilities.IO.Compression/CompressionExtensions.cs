@@ -75,7 +75,7 @@ public static class CompressionExtensions
         IEnumerable<AbsolutePath> files,
         FileMode fileMode = FileMode.CreateNew)
     {
-        CompressTar(baseDirectory, archiveFile, files.ToList(), fileMode, CompressionType.GZip);
+        CompressTar(baseDirectory, archiveFile, [.. files], fileMode, CompressionType.GZip);
     }
 
     public static void TarGZipTo(
@@ -95,7 +95,7 @@ public static class CompressionExtensions
         IEnumerable<AbsolutePath> files,
         FileMode fileMode = FileMode.CreateNew)
     {
-        CompressTar(directory, archiveFile, files.ToList(), fileMode, CompressionType.BZip2);
+        CompressTar(directory, archiveFile, [.. files], fileMode, CompressionType.BZip2);
     }
 
     public static void TarBZip2To(
