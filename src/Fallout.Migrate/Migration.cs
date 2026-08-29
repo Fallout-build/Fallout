@@ -27,6 +27,7 @@ internal sealed class Migration(AbsolutePath rootDirectory, bool dryRun, TextWri
         new VerifyBuildTargetFrameworkStep(),
         new ConfirmMigrationStep(),
         new RewriteCsprojsStep(),
+        new RemoveNugetFrameworkPinStep(),
         new BumpDotNetVersionStep(),
         new RewriteCsFilesStep(),
         new RewriteBootstrapScriptsStep(),
