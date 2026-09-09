@@ -1,14 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Microsoft.Extensions.DependencyModel;
 using Fallout.Common.Tooling;
 using Fallout.Common.Utilities;
 using Fallout.Common.Utilities.Collections;
+using Microsoft.Extensions.DependencyModel;
 using Serilog;
+
 #pragma warning disable CA2255
 
 namespace Fallout.Common.Execution;
@@ -87,7 +87,9 @@ internal static class BuildManager
             NpmToolPathResolver.NpmPackageJsonFile = build.NpmPackageJsonFile;
 
             if (!build.NoLogo)
+            {
                 build.WriteLogo();
+            }
 
             // TODO: move InvokedTargets to ExecutableTargetFactory
             build.ExecutionPlan = ExecutionPlanner.GetExecutionPlan(
@@ -140,7 +142,9 @@ internal static class BuildManager
             // The plan is resolved before the introspection short-circuit returns, so guarding on
             // it alone would print the outcome tables over the emitted document.
             if (build.ExecutionPlan == null || introspection is { IsRequestedForRun: true })
+            {
                 return;
+            }
 
             foreach (var target in build.ExecutionPlan)
             {

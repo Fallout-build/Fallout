@@ -52,6 +52,7 @@ internal sealed class RunCommand : IFalloutCommand
         Assert.True(File.Exists(shimPath),
             $"Could not locate 'dotnet'. Tried PATH and '{shimPath}'. " +
             $"Run './build.sh' (Unix) or './build.ps1' (Windows) once to provision .NET locally, then retry.");
+
         return shimPath;
     }
 
@@ -138,6 +139,7 @@ internal sealed class RunCommand : IFalloutCommand
             "--no-build",
             "--"
         };
+
         args.AddRange(forwardedArgs);
         return args;
     }
