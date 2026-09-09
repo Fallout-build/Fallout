@@ -40,7 +40,6 @@ updates:
       # Only used by the fallout / fallout-migrate tools, not by the libraries
       - dependency-name: "Spectre.Console"
       - dependency-name: "Spectre.Console.Cli"
-      - dependency-name: "Microsoft.Extensions.DependencyInjection"
       - dependency-name: "JetBrains.Annotations"
     ignore:
       # 3.4.0 is deprecated and pulls in Verify 33, which fails the build (SponsorCheck SC021).
