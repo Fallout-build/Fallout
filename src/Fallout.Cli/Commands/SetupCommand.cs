@@ -156,6 +156,8 @@ internal sealed class SetupCommand : IFalloutCommand
                     new
                     {
                         RootDirectory = buildDirectory.GetWinRelativePathTo(rootDirectory),
+                        BuildDirectory = buildProjectRelativeDirectory,
+                        BuildProjectName = buildProjectName,
                         ScriptDirectory = buildDirectory.GetWinRelativePathTo(WorkingDirectory),
                         TargetFramework = TARGET_FRAMEWORK,
                         FalloutVersion = falloutVersion,
