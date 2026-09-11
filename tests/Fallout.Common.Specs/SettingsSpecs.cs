@@ -11,6 +11,7 @@ using Fallout.Common.Tools.DotNet;
 using Fallout.Common.Tools.Kubernetes;
 using Fallout.Common.Tools.MSBuild;
 using Fallout.Common.Tools.OpenCover;
+using Fallout.Common.Tools.Pnpm;
 using Fallout.Common.Tools.Xunit;
 using Fallout.Common.Utilities;
 using FluentAssertions;
@@ -190,6 +191,32 @@ public class SettingsSpecs
                 .SetArguments("arg1", "arg2")
                 .SetCluster("cluster"),
             "exec --container=container --cluster=cluster -- command arg1 arg2");
+    }
+
+    [Fact]
+    public void TestPnpm()
+    {
+        // Assert
+        Assert(new PnpmInstallSettings()
+                .EnableFrozenLockfile()
+                .EnableProduction()
+                .AddFilters("frontend", "backend"),
+            "install --frozen-lockfile --prod --filter frontend --filter backend");
+
+        Assert(new PnpmRunSettings()
+                .SetCommand("build")
+                .EnableRecursive()
+                .AddArguments("--watch"),
+            "run build --recursive -- --watch");
+
+        Assert(new PnpmCiSettings()
+                .SetDir("packages/app"),
+            "ci --dir packages/app");
+
+        Assert(new PnpmExecSettings()
+                .SetCommand("rimraf")
+                .AddArguments("dist"),
+            "exec rimraf dist");
     }
 
     private static void Assert<T>(T options, string expected)
