@@ -58,6 +58,7 @@ using Fallout.Components;
     InvokedTargets = new[]
     {
         nameof(VerifyGeneratedTools),
+        nameof(VerifyLlmsTxt),
         nameof(ITest.Test),
         nameof(IPack.Pack)
     },
