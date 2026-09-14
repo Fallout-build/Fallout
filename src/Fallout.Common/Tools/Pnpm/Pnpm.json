@@ -1,0 +1,721 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Fallout-build/Fallout/main/src/Fallout.Tooling.Generator/schema.json",
+  "references": [
+    "https://pnpm.io/cli/install",
+    "https://pnpm.io/cli/run",
+    "https://pnpm.io/cli/exec",
+    "https://pnpm.io/cli/ci",
+    "https://pnpm.io/cli/dlx",
+    "https://pnpm.io/cli/audit",
+    "https://pnpm.io/cli/pack",
+    "https://pnpm.io/cli/publish"
+  ],
+  "name": "Pnpm",
+  "officialUrl": "https://pnpm.io/",
+  "help": "pnpm is a fast, disk space efficient package manager for the Node JavaScript platform.<para/>Files inside <c>node_modules</c> are hard linked or cloned from a single content-addressable storage on disk, saving disk space and speeding up installations.",
+  "pathExecutable": "pnpm",
+  "customLogger": true,
+  "tasks": [
+    {
+      "help": "Runs <c>pnpm clean</c> followed by <c>pnpm install --frozen-lockfile</c>. Designed for CI/CD environments.",
+      "postfix": "Ci",
+      "definiteArgument": "ci",
+      "settingsClass": {
+        "properties": [
+          {
+            "name": "Dir",
+            "type": "string",
+            "format": "--dir {value}",
+            "help": "Change to directory <c>&lt;dir&gt;</c>."
+          },
+          {
+            "name": "Reporter",
+            "type": "PnpmReporter",
+            "format": "--reporter {value}",
+            "help": "Controls how output is reported."
+          },
+          {
+            "name": "LogLevel",
+            "type": "PnpmLogLevel",
+            "format": "--loglevel {value}",
+            "help": "What level of logs to report."
+          },
+          {
+            "name": "Silent",
+            "type": "bool",
+            "format": "--silent",
+            "help": "No output is logged to the console, not even fatal errors."
+          }
+        ]
+      }
+    },
+    {
+      "help": "Installs all dependencies of the project in the current working directory. When executed inside a workspace, installs all dependencies of all projects.",
+      "postfix": "Install",
+      "definiteArgument": "install",
+      "settingsClass": {
+        "properties": [
+          {
+            "name": "Packages",
+            "type": "List<string>",
+            "format": "{value}",
+            "position": 1,
+            "help": "List of packages to be installed."
+          },
+          {
+            "name": "Production",
+            "type": "bool",
+            "format": "--prod",
+            "help": "Packages in <c>devDependencies</c> will not be installed."
+          },
+          {
+            "name": "Dev",
+            "type": "bool",
+            "format": "--dev",
+            "help": "Only <c>devDependencies</c> will be installed."
+          },
+          {
+            "name": "NoOptional",
+            "type": "bool",
+            "format": "--no-optional",
+            "help": "Prevents <c>optionalDependencies</c> from being installed."
+          },
+          {
+            "name": "FrozenLockfile",
+            "type": "bool",
+            "format": "--frozen-lockfile",
+            "help": "Don't generate a lockfile and fail if an update is needed. This setting is on by default in CI environments."
+          },
+          {
+            "name": "NoFrozenLockfile",
+            "type": "bool",
+            "format": "--no-frozen-lockfile",
+            "help": "Forces generating or updating a lockfile even in CI environments."
+          },
+          {
+            "name": "PreferFrozenLockfile",
+            "type": "bool",
+            "format": "--prefer-frozen-lockfile",
+            "help": "If the available <c>pnpm-lock.yaml</c> satisfies the <c>package.json</c> then perform a headless installation."
+          },
+          {
+            "name": "LockfileOnly",
+            "type": "bool",
+            "format": "--lockfile-only",
+            "help": "Dependencies are not downloaded. Only <c>pnpm-lock.yaml</c> is updated."
+          },
+          {
+            "name": "NoLockfile",
+            "type": "bool",
+            "format": "--no-lockfile",
+            "help": "Don't read or generate a <c>pnpm-lock.yaml</c> file."
+          },
+          {
+            "name": "FixLockfile",
+            "type": "bool",
+            "format": "--fix-lockfile",
+            "help": "Fix broken lockfile entries automatically."
+          },
+          {
+            "name": "Force",
+            "type": "bool",
+            "format": "--force",
+            "help": "Forces reinstalling dependencies: refetch packages modified in store, recreate a lockfile and/or modules directory created by a non-compatible version of pnpm."
+          },
+          {
+            "name": "Global",
+            "type": "bool",
+            "format": "--global",
+            "help": "Install package globally."
+          },
+          {
+            "name": "IgnoreScripts",
+            "type": "bool",
+            "format": "--ignore-scripts",
+            "help": "Causes pnpm to not execute any scripts defined in the <c>package.json</c>."
+          },
+          {
+            "name": "Offline",
+            "type": "bool",
+            "format": "--offline",
+            "help": "Trigger an error if any required dependencies are not available in local store."
+          },
+          {
+            "name": "PreferOffline",
+            "type": "bool",
+            "format": "--prefer-offline",
+            "help": "Skip staleness checks for cached data, but request missing data from the server."
+          },
+          {
+            "name": "StoreDir",
+            "type": "string",
+            "format": "--store-dir {value}",
+            "help": "The directory in which all the packages are saved on disk."
+          },
+          {
+            "name": "VirtualStoreDir",
+            "type": "string",
+            "format": "--virtual-store-dir {value}",
+            "help": "The directory with links to the store (default is <c>node_modules/.pnpm</c>)."
+          },
+          {
+            "name": "ModulesDir",
+            "type": "string",
+            "format": "--modules-dir {value}",
+            "help": "The directory in which dependencies will be installed (instead of <c>node_modules</c>)."
+          },
+          {
+            "name": "LockfileDir",
+            "type": "string",
+            "format": "--lockfile-dir {value}",
+            "help": "The directory in which the <c>pnpm-lock.yaml</c> will be created."
+          },
+          {
+            "name": "Dir",
+            "type": "string",
+            "format": "--dir {value}",
+            "help": "Change to directory <c>&lt;dir&gt;</c>."
+          },
+          {
+            "name": "Recursive",
+            "type": "bool",
+            "format": "--recursive",
+            "help": "Run installation recursively in every package found in subdirectories."
+          },
+          {
+            "name": "Filters",
+            "type": "List<string>",
+            "format": "--filter {value}",
+            "help": "Restricts the scope to package names matching the given pattern."
+          },
+          {
+            "name": "WorkspaceRoot",
+            "type": "bool",
+            "format": "--workspace-root",
+            "help": "Run the command on the root workspace project."
+          },
+          {
+            "name": "ShamefullyHoist",
+            "type": "bool",
+            "format": "--shamefully-hoist",
+            "help": "All the subdeps will be hoisted into the root <c>node_modules</c>."
+          },
+          {
+            "name": "ChildConcurrency",
+            "type": "int",
+            "format": "--child-concurrency {value}",
+            "help": "Controls the number of child processes run parallelly to build node modules."
+          },
+          {
+            "name": "NetworkConcurrency",
+            "type": "int",
+            "format": "--network-concurrency {value}",
+            "help": "Maximum number of concurrent network requests."
+          },
+          {
+            "name": "StrictPeerDependencies",
+            "type": "bool",
+            "format": "--strict-peer-dependencies",
+            "help": "Fail on missing or invalid peer dependencies."
+          },
+          {
+            "name": "PackageImportMethod",
+            "type": "PnpmPackageImportMethod",
+            "format": "--package-import-method {value}",
+            "help": "Method used to clone, hardlink, or copy packages from the store."
+          },
+          {
+            "name": "Reporter",
+            "type": "PnpmReporter",
+            "format": "--reporter {value}",
+            "help": "Controls how output is reported."
+          },
+          {
+            "name": "LogLevel",
+            "type": "PnpmLogLevel",
+            "format": "--loglevel {value}",
+            "help": "What level of logs to report."
+          },
+          {
+            "name": "Silent",
+            "type": "bool",
+            "format": "--silent",
+            "help": "No output is logged to the console, not even fatal errors."
+          },
+          {
+            "name": "AggregateOutput",
+            "type": "bool",
+            "format": "--aggregate-output",
+            "help": "Aggregate output from child processes that are run in parallel."
+          }
+        ]
+      }
+    },
+    {
+      "help": "Runs an arbitrary command from a package's <c>\"scripts\"</c> object.",
+      "postfix": "Run",
+      "definiteArgument": "run",
+      "settingsClass": {
+        "properties": [
+          {
+            "name": "Command",
+            "type": "string",
+            "format": "{value}",
+            "position": 1,
+            "help": "The command to be executed."
+          },
+          {
+            "name": "Arguments",
+            "type": "List<string>",
+            "format": "-- {value}",
+            "separator": " ",
+            "position": -1,
+            "help": "Arguments passed to the script."
+          },
+          {
+            "name": "Recursive",
+            "type": "bool",
+            "format": "--recursive",
+            "help": "Run the defined package script in every package found in subdirectories or workspace."
+          },
+          {
+            "name": "Filters",
+            "type": "List<string>",
+            "format": "--filter {value}",
+            "help": "Restricts the scope to package names matching the given pattern."
+          },
+          {
+            "name": "Parallel",
+            "type": "bool",
+            "format": "--parallel",
+            "help": "Completely disregard concurrency and topological sorting, running a given script immediately in all matching packages."
+          },
+          {
+            "name": "Sequential",
+            "type": "bool",
+            "format": "--sequential",
+            "help": "Run the specified scripts one by one."
+          },
+          {
+            "name": "IfPresent",
+            "type": "bool",
+            "format": "--if-present",
+            "help": "Avoid exiting with a non-zero exit code when the script is undefined."
+          },
+          {
+            "name": "NoBail",
+            "type": "bool",
+            "format": "--no-bail",
+            "help": "The command will exit with a 0 exit code even if the script fails."
+          },
+          {
+            "name": "Stream",
+            "type": "bool",
+            "format": "--stream",
+            "help": "Stream output from child processes immediately, prefixed with the originating package directory."
+          },
+          {
+            "name": "Dir",
+            "type": "string",
+            "format": "--dir {value}",
+            "help": "Change to directory <c>&lt;dir&gt;</c>."
+          },
+          {
+            "name": "WorkspaceRoot",
+            "type": "bool",
+            "format": "--workspace-root",
+            "help": "Run the command on the root workspace project."
+          },
+          {
+            "name": "Reporter",
+            "type": "PnpmReporter",
+            "format": "--reporter {value}",
+            "help": "Controls how output is reported."
+          },
+          {
+            "name": "LogLevel",
+            "type": "PnpmLogLevel",
+            "format": "--loglevel {value}",
+            "help": "What level of logs to report."
+          },
+          {
+            "name": "Silent",
+            "type": "bool",
+            "format": "--silent",
+            "help": "No output is logged to the console, not even fatal errors."
+          }
+        ]
+      }
+    },
+    {
+      "help": "Executes a shell command in scope of a project.",
+      "postfix": "Exec",
+      "definiteArgument": "exec",
+      "settingsClass": {
+        "properties": [
+          {
+            "name": "Command",
+            "type": "string",
+            "format": "{value}",
+            "position": 1,
+            "help": "The command to be executed."
+          },
+          {
+            "name": "Arguments",
+            "type": "List<string>",
+            "format": "{value}",
+            "separator": " ",
+            "position": -1,
+            "help": "Arguments passed to the command."
+          },
+          {
+            "name": "Recursive",
+            "type": "bool",
+            "format": "--recursive",
+            "help": "Run the shell command in every package found in subdirectories or workspace."
+          },
+          {
+            "name": "Filters",
+            "type": "List<string>",
+            "format": "--filter {value}",
+            "help": "Restricts the scope to package names matching the given pattern."
+          },
+          {
+            "name": "Parallel",
+            "type": "bool",
+            "format": "--parallel",
+            "help": "Completely disregard concurrency and topological sorting, running a given command immediately in all matching packages."
+          },
+          {
+            "name": "ShellMode",
+            "type": "bool",
+            "format": "--shell-mode",
+            "help": "Runs command inside of a shell (/bin/sh on UNIX and cmd.exe on Windows)."
+          },
+          {
+            "name": "Stream",
+            "type": "bool",
+            "format": "--stream",
+            "help": "Stream output from child processes immediately, prefixed with the originating package directory."
+          },
+          {
+            "name": "Dir",
+            "type": "string",
+            "format": "--dir {value}",
+            "help": "Change to directory <c>&lt;dir&gt;</c>."
+          },
+          {
+            "name": "WorkspaceRoot",
+            "type": "bool",
+            "format": "--workspace-root",
+            "help": "Run the command on the root workspace project."
+          },
+          {
+            "name": "LogLevel",
+            "type": "PnpmLogLevel",
+            "format": "--loglevel {value}",
+            "help": "What level of logs to report."
+          },
+          {
+            "name": "Silent",
+            "type": "bool",
+            "format": "--silent",
+            "help": "No output is logged to the console, not even fatal errors."
+          }
+        ]
+      }
+    },
+    {
+      "help": "Fetches a package from the registry without installing it as a dependency, hot loads it, and runs whatever default command binary it exposes.",
+      "postfix": "Dlx",
+      "definiteArgument": "dlx",
+      "settingsClass": {
+        "properties": [
+          {
+            "name": "Package",
+            "type": "string",
+            "format": "{value}",
+            "position": 1,
+            "help": "The package binary to execute."
+          },
+          {
+            "name": "Arguments",
+            "type": "List<string>",
+            "format": "{value}",
+            "separator": " ",
+            "position": -1,
+            "help": "Arguments passed to the package binary."
+          },
+          {
+            "name": "Dir",
+            "type": "string",
+            "format": "--dir {value}",
+            "help": "Change to directory <c>&lt;dir&gt;</c>."
+          },
+          {
+            "name": "Silent",
+            "type": "bool",
+            "format": "--silent",
+            "help": "No output is logged to the console, not even fatal errors."
+          }
+        ]
+      }
+    },
+    {
+      "help": "Publishes a package to the npm registry.",
+      "postfix": "Publish",
+      "definiteArgument": "publish",
+      "settingsClass": {
+        "properties": [
+          {
+            "name": "Target",
+            "type": "string",
+            "format": "{value}",
+            "position": 1,
+            "help": "A tarball or directory to publish."
+          },
+          {
+            "name": "Tag",
+            "type": "string",
+            "format": "--tag {value}",
+            "help": "Registers the published package with the given tag."
+          },
+          {
+            "name": "Access",
+            "type": "PnpmPublishAccess",
+            "format": "--access {value}",
+            "help": "Tells the registry whether this package should be published as public or restricted."
+          },
+          {
+            "name": "Force",
+            "type": "bool",
+            "format": "--force",
+            "help": "Packages are proceeded to be published even if their current version is already in the registry."
+          },
+          {
+            "name": "DryRun",
+            "type": "bool",
+            "format": "--dry-run",
+            "help": "Does everything a publish would do except actually publishing to the registry."
+          },
+          {
+            "name": "Json",
+            "type": "bool",
+            "format": "--json",
+            "help": "Show information in JSON format."
+          },
+          {
+            "name": "NoGitChecks",
+            "type": "bool",
+            "format": "--no-git-checks",
+            "help": "Don't check if current branch is your publish branch, clean, and up to date."
+          },
+          {
+            "name": "Otp",
+            "type": "string",
+            "format": "--otp {value}",
+            "secret": true,
+            "help": "When publishing packages that require two-factor authentication, this option can specify a one-time password."
+          },
+          {
+            "name": "PublishBranch",
+            "type": "string",
+            "format": "--publish-branch {value}",
+            "help": "Sets branch name to publish."
+          },
+          {
+            "name": "Recursive",
+            "type": "bool",
+            "format": "--recursive",
+            "help": "Publish all packages from the workspace."
+          },
+          {
+            "name": "ReportSummary",
+            "type": "bool",
+            "format": "--report-summary",
+            "help": "Save the list of the newly published packages to <c>pnpm-publish-summary.json</c>."
+          },
+          {
+            "name": "IgnoreScripts",
+            "type": "bool",
+            "format": "--ignore-scripts",
+            "help": "Ignores any publish related lifecycle scripts."
+          },
+          {
+            "name": "Dir",
+            "type": "string",
+            "format": "--dir {value}",
+            "help": "Change to directory <c>&lt;dir&gt;</c>."
+          }
+        ]
+      }
+    },
+    {
+      "help": "Creates a tarball from a package.",
+      "postfix": "Pack",
+      "definiteArgument": "pack",
+      "settingsClass": {
+        "properties": [
+          {
+            "name": "Out",
+            "type": "string",
+            "format": "--out {value}",
+            "help": "Customizes the output path for the tarball."
+          },
+          {
+            "name": "PackDestination",
+            "type": "string",
+            "format": "--pack-destination {value}",
+            "help": "Directory in which <c>pnpm pack</c> will save tarballs."
+          },
+          {
+            "name": "DryRun",
+            "type": "bool",
+            "format": "--dry-run",
+            "help": "Does everything <c>pnpm pack</c> would do except actually writing the tarball to disk."
+          },
+          {
+            "name": "Json",
+            "type": "bool",
+            "format": "--json",
+            "help": "Prints the packed tarball and contents in JSON format."
+          },
+          {
+            "name": "Recursive",
+            "type": "bool",
+            "format": "--recursive",
+            "help": "Pack all packages from the workspace."
+          },
+          {
+            "name": "Filters",
+            "type": "List<string>",
+            "format": "--filter {value}",
+            "help": "Restricts the scope to package names matching the given pattern."
+          },
+          {
+            "name": "Dir",
+            "type": "string",
+            "format": "--dir {value}",
+            "help": "Change to directory <c>&lt;dir&gt;</c>."
+          }
+        ]
+      }
+    },
+    {
+      "help": "Checks for known security issues with the installed packages.",
+      "postfix": "Audit",
+      "definiteArgument": "audit",
+      "settingsClass": {
+        "properties": [
+          {
+            "name": "AuditLevel",
+            "type": "PnpmAuditLevel",
+            "format": "--audit-level {value}",
+            "help": "Only print advisories with severity greater than or equal to the given level."
+          },
+          {
+            "name": "Dev",
+            "type": "bool",
+            "format": "--dev",
+            "help": "Only audit <c>devDependencies</c>."
+          },
+          {
+            "name": "Prod",
+            "type": "bool",
+            "format": "--prod",
+            "help": "Only audit <c>dependencies</c> and <c>optionalDependencies</c>."
+          },
+          {
+            "name": "NoOptional",
+            "type": "bool",
+            "format": "--no-optional",
+            "help": "Don't audit <c>optionalDependencies</c>."
+          },
+          {
+            "name": "Fix",
+            "type": "PnpmAuditFix",
+            "format": "--fix {value}",
+            "help": "Fix the audited vulnerabilities using the specified method: <c>override</c> or <c>update</c>."
+          },
+          {
+            "name": "IgnoreRegistryErrors",
+            "type": "bool",
+            "format": "--ignore-registry-errors",
+            "help": "Use exit code 0 if the registry responds with an error. Useful in CI."
+          },
+          {
+            "name": "IgnoreUnfixable",
+            "type": "bool",
+            "format": "--ignore-unfixable",
+            "help": "Ignore all vulnerabilities for which no fix exists."
+          },
+          {
+            "name": "Json",
+            "type": "bool",
+            "format": "--json",
+            "help": "Output audit report in JSON format."
+          },
+          {
+            "name": "Dir",
+            "type": "string",
+            "format": "--dir {value}",
+            "help": "Change to directory <c>&lt;dir&gt;</c>."
+          }
+        ]
+      }
+    }
+  ],
+  "enumerations": [
+    {
+      "name": "PnpmLogLevel",
+      "values": [
+        "debug",
+        "info",
+        "warn",
+        "error"
+      ]
+    },
+    {
+      "name": "PnpmReporter",
+      "values": [
+        "append-only",
+        "default",
+        "ndjson",
+        "silent"
+      ]
+    },
+    {
+      "name": "PnpmPackageImportMethod",
+      "values": [
+        "auto",
+        "clone",
+        "copy",
+        "hardlink"
+      ]
+    },
+    {
+      "name": "PnpmPublishAccess",
+      "values": [
+        "public",
+        "restricted"
+      ]
+    },
+    {
+      "name": "PnpmAuditLevel",
+      "values": [
+        "info",
+        "low",
+        "moderate",
+        "high",
+        "critical"
+      ]
+    },
+    {
+      "name": "PnpmAuditFix",
+      "values": [
+        "override",
+        "update"
+      ]
+    }
+  ]
+}
