@@ -13,9 +13,9 @@ $PSScriptRoot = Split-Path $MyInvocation.MyCommand.Path -Parent
 # CONFIGURATION
 ###########################################################################
 
-$TempDirectory = "$PSScriptRoot\\.fallout\temp"
+$TempDirectory = "$PSScriptRoot/.fallout/temp"
 
-$DotNetGlobalFile = "$PSScriptRoot\global.json"
+$DotNetGlobalFile = "$PSScriptRoot/global.json"
 $DotNetInstallUrl = "https://dot.net/v1/dotnet-install.ps1"
 $DotNetChannel = "STS"
 
