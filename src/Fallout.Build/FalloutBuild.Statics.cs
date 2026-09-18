@@ -15,14 +15,14 @@ public abstract partial class FalloutBuild
 {
     static FalloutBuild()
     {
-        RootDirectory = GetRootDirectory();
-        TemporaryDirectory = GetTemporaryDirectory(RootDirectory).CreateDirectory();
-
         BuildAssemblyFile = GetBuildAssemblyFile();
         BuildAssemblyDirectory = BuildAssemblyFile?.Parent;
 
         BuildProjectFile = GetBuildProjectFile(BuildAssemblyDirectory);
         BuildProjectDirectory = BuildProjectFile?.Parent;
+
+        RootDirectory = GetRootDirectory();
+        TemporaryDirectory = GetTemporaryDirectory(RootDirectory).CreateDirectory();
 
         Verbosity = ParameterService.GetParameter<Verbosity?>(() => Verbosity) ?? Verbosity.Normal;
         Host = ParameterService.GetParameter(() => Host) ?? Host.Default;
@@ -91,10 +91,17 @@ public abstract partial class FalloutBuild
         if (ParameterService.GetParameter<bool>(() => RootDirectory))
             return EnvironmentInfo.WorkingDirectory;
 
-        return TryGetRootDirectoryFrom(EnvironmentInfo.WorkingDirectory)
+        // Prefer the location of the executing build project over the process's current working
+        // directory. This matters when the current directory happens to sit inside a different,
+        // but also valid, Fallout root (e.g. a repo root that contains a nested sub-project with its
+        // own '.fallout' marker) — walking up from the working directory would then silently resolve
+        // to the wrong root instead of the one that actually owns this build project.
+        var searchStartDirectory = BuildProjectDirectory ?? EnvironmentInfo.WorkingDirectory;
+
+        return TryGetRootDirectoryFrom(searchStartDirectory)
             .NotNull(new[]
                      {
-                         $"Could not locate '{FalloutDirectoryName}' directory/file while walking up from '{EnvironmentInfo.WorkingDirectory}'.",
+                         $"Could not locate '{FalloutDirectoryName}' directory/file while walking up from '{searchStartDirectory}'.",
                          "Either create a directory/file to mark the root directory, or add '--root [path]' to the invocation."
                      }.JoinNewLine());
     }
