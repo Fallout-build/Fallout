@@ -29,9 +29,22 @@ public static class ProjectContainerExtensions
     /// <summary>
     /// Gets a project by its name.
     /// </summary>
+    /// <exception cref="ArgumentException">
+    /// Thrown when no project with the given <paramref name="name"/> exists in <paramref name="container"/>.
+    /// </exception>
     public static Project GetProject(this IProjectContainer container, string name)
     {
-        return container.Projects.SingleOrDefault(x => name.Equals(x.Name, StringComparison.Ordinal));
+        var project = container.Projects.SingleOrDefault(x => name.Equals(x.Name, StringComparison.Ordinal));
+        if (project == null)
+        {
+            var containerName = (container as Solution)?.Name ?? (container as SolutionItem)?.Name ?? container.ToString();
+            var availableNames = container.Projects.Select(x => x.Name).OrderBy(x => x, StringComparer.Ordinal).JoinComma();
+            throw new ArgumentException(
+                $"Project '{name}' was not found in '{containerName}'. Available projects: {availableNames}.",
+                nameof(name));
+        }
+
+        return project;
     }
 }
 
