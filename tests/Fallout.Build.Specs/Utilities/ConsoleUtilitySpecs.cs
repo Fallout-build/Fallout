@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using Fallout.Build.Utilities;
+using Fallout.Common.Specs;
 using Fallout.Common.Utilities;
 using FluentAssertions;
 using Xunit;
 
 namespace Fallout.Build.Tests.Utilities;
 
+[Collection(ProcessGlobalStateCollection.Name)]
 public class ConsoleUtilitySpecs
 {
     private class MockConsole : IConsole
