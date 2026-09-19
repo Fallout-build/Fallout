@@ -98,6 +98,7 @@ Production code lives under `src/`, tests under `tests/` — don't reintroduce a
 | Writing any PR, commit, issue, or doc text | `plain-english` skill |
 | Adding/extending a `Tools/<Tool>/<Tool>.json` wrapper | `adding-a-tool-wrapper` skill |
 | Adding public API that isn't stable yet, or deprecating one | `marking-experimental-apis` skill |
+| Proposing a new public API before writing code | [CONTRIBUTING.md § Proposing new public API](CONTRIBUTING.md#proposing-new-public-api) |
 | Touching `.github/workflows/**` or `build/Build.CI.GitHubActions.cs` | `editing-ci-workflows` skill |
 | Tagging, publishing, hotfixing, or cutting a release branch | `cutting-a-release` skill |
 | Adding a rename/rewrite rule to `fallout-migrate` | `adding-a-migration-step` skill |
