@@ -6,7 +6,8 @@ public static class AssemblyExtensions
 {
     public static string GetInformationalText(this Assembly assembly)
     {
-        return $"version {assembly.GetVersionText()} ({EnvironmentInfo.Platform},{EnvironmentInfo.Framework})";
+        string sdkVersion = EnvironmentInfo.GetDotNetSdkVersion() is { } version ? $",SDK {version}" : string.Empty;
+        return $"version {assembly.GetVersionText()} ({EnvironmentInfo.Platform},{EnvironmentInfo.Framework}{sdkVersion})";
     }
 
     public static string GetVersionText(this Assembly assembly)

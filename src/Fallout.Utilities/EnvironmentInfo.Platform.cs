@@ -1,7 +1,11 @@
-﻿using System.IO;
+﻿using System;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using System.Threading.Tasks;
 using Fallout.Common.Utilities;
 
 namespace Fallout.Common;
@@ -82,6 +86,50 @@ partial class EnvironmentInfo
     /// </summary>
     public static FrameworkName Framework
         => new(Assembly.GetEntryAssembly().NotNull().GetCustomAttribute<TargetFrameworkAttribute>().NotNull().FrameworkName);
+
+    private static readonly TimeSpan dotNetSdkVersionTimeout = TimeSpan.FromSeconds(5);
+
+    /// <summary>
+    /// Asks the <c>dotnet</c> host that launched the current process which .NET SDK it resolved
+    /// (e.g. <c>10.0.401</c>), or returns <c>null</c> when that can't be determined within
+    /// <see cref="dotNetSdkVersionTimeout"/>.
+    /// </summary>
+    public static string GetDotNetSdkVersion()
+    {
+        string dotnetPath = Environment.GetEnvironmentVariable("DOTNET_HOST_PATH")
+            ?? Environment.GetEnvironmentVariable("DOTNET_EXE")
+            ?? "dotnet";
+
+        var startInfo = new ProcessStartInfo(dotnetPath, "--version")
+        {
+            RedirectStandardOutput = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        // Suppress the SDK's first-run welcome message and telemetry prompt so neither ends up in stdout.
+        startInfo.EnvironmentVariables["DOTNET_NOLOGO"] = "1";
+        startInfo.EnvironmentVariables["DOTNET_CLI_TELEMETRY_OPTOUT"] = "1";
+
+        try
+        {
+            using Process process = Process.Start(startInfo).NotNull();
+            Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+
+            if (!process.WaitForExit((int)dotNetSdkVersionTimeout.TotalMilliseconds))
+            {
+                process.Kill();
+                return null;
+            }
+
+            string output = outputTask.GetAwaiter().GetResult().Trim();
+            return process.ExitCode == 0 && output.Length > 0 ? output : null;
+        }
+        catch (Exception ex) when (ex is Win32Exception or InvalidOperationException)
+        {
+            return null;
+        }
+    }
 
     /// <summary>
     /// Indicates the operating-system platform.
