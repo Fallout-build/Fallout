@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using Fallout.Common;
 using Fallout.Common.IO;
@@ -35,8 +36,10 @@ internal sealed class MigrateCommand : AsyncCommand<MigrateSettings>
     /// </summary>
     /// <param name="context">The Spectre.Console.Cli command context (unused).</param>
     /// <param name="settings">The parsed <see cref="MigrateSettings"/> for this invocation.</param>
+    /// <param name="cancellationToken">The command cancellation token (unused).</param>
     /// <returns>0 on success, 1 if the repository root could not be resolved.</returns>
-    public override async Task<int> ExecuteAsync(CommandContext context, MigrateSettings settings)
+    protected override async Task<int> ExecuteAsync(CommandContext context, MigrateSettings settings,
+        CancellationToken cancellationToken)
     {
         var rootDirectory = ResolveRootDirectory(settings.Path);
         if (rootDirectory is null)
