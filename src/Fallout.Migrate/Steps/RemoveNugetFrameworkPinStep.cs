@@ -11,7 +11,7 @@ namespace Fallout.Migrate.Steps;
 internal sealed class RemoveNugetFrameworkPinStep : IMigrationStep
 {
     private static readonly Regex explicitPinPattern = new(
-        @"^[ \t]*<PackageReference\s+(?=[^>\r\n]*\bInclude=""NuGet\.(?:Framework|Protocol|Packaging|Resolver)"")(?=[^>\r\n]*\bVersion=""[^""]+"")[^>\r\n]*/>[ \t]*\r?\n?",
+        @"^[ \t]*<PackageReference\s+(?=[^>\r\n]*\bInclude=""NuGet\.Frameworks"")(?=[^>\r\n]*\bVersion=""[^""]+"")[^>\r\n]*/>[ \t]*\r?\n?",
         RegexOptions.Compiled | RegexOptions.Multiline);
 
     /// <inheritdoc />
