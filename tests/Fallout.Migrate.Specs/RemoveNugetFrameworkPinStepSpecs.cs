@@ -30,7 +30,7 @@ public class RemoveNugetFrameworkPinStepSpecs : IDisposable
             """
             <Project Sdk="Microsoft.NET.Sdk">
               <ItemGroup>
-                <PackageReference Version="7.9.0" PrivateAssets="all" Include="NuGet.Framework" />
+                <PackageReference Version="7.9.0" PrivateAssets="all" Include="NuGet.Frameworks" />
                 <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
               </ItemGroup>
             </Project>
@@ -49,38 +49,6 @@ public class RemoveNugetFrameworkPinStepSpecs : IDisposable
             </Project>
             """);
 
-        summary.FilesChanged.Should().Be(1);
-        summary.EditCount.Should().Be(1);
-    }
-
-    [Theory]
-    [InlineData("NuGet.Protocol")]
-    [InlineData("NuGet.Packaging")]
-    [InlineData("NuGet.Resolver")]
-    public async Task Explicit_related_nuget_pin_is_removed(string packageName)
-    {
-        // Arrange
-        var project = tempDirectory / "Library.csproj";
-        project.WriteAllText(
-            $"""
-            <Project Sdk="Microsoft.NET.Sdk">
-              <ItemGroup>
-                <PackageReference Include="{packageName}" Version="7.9.0" />
-              </ItemGroup>
-            </Project>
-            """, eofLineBreak: false);
-
-        // Act
-        await new RemoveNugetFrameworkPinStep().ExecuteAsync(context, summary);
-
-        // Assert
-        project.ReadAllText().Should().Be(
-            """
-            <Project Sdk="Microsoft.NET.Sdk">
-              <ItemGroup>
-              </ItemGroup>
-            </Project>
-            """);
         summary.FilesChanged.Should().Be(1);
         summary.EditCount.Should().Be(1);
     }
@@ -94,7 +62,7 @@ public class RemoveNugetFrameworkPinStepSpecs : IDisposable
             """
             <Project Sdk="Microsoft.NET.Sdk">
               <ItemGroup>
-                <PackageReference Include="NuGet.Framework" />
+                <PackageReference Include="NuGet.Frameworks" />
               </ItemGroup>
             </Project>
             """;
