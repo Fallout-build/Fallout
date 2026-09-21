@@ -5,13 +5,13 @@ using Fallout.Migrate.Common;
 namespace Fallout.Migrate.Steps;
 
 /// <summary>
-/// Removes explicit <c>NuGet.Framework</c> package pins from project files. The pin was a temporary
-/// workaround for .NET SDK 10.0.400 and is no longer needed.
+/// Removes explicit <c>NuGet.Framework</c>, <c>NuGet.Protocol</c>, <c>NuGet.Packaging</c>, and
+/// <c>NuGet.Resolver</c> package pins from project files. The pins are no longer needed.
 /// </summary>
 internal sealed class RemoveNugetFrameworkPinStep : IMigrationStep
 {
     private static readonly Regex explicitPinPattern = new(
-        @"^[ \t]*<PackageReference\s+(?=[^>\r\n]*\bInclude=""NuGet\.Framework"")(?=[^>\r\n]*\bVersion=""[^""]+"")[^>\r\n]*/>[ \t]*\r?\n?",
+        @"^[ \t]*<PackageReference\s+(?=[^>\r\n]*\bInclude=""NuGet\.(?:Framework|Protocol|Packaging|Resolver)"")(?=[^>\r\n]*\bVersion=""[^""]+"")[^>\r\n]*/>[ \t]*\r?\n?",
         RegexOptions.Compiled | RegexOptions.Multiline);
 
     /// <inheritdoc />
