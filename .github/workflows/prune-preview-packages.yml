@@ -39,7 +39,7 @@ name: prune-preview-packages
 
 on:
   schedule:
-    # Mondays 03:00 UTC — same weekly cadence as Dependabot.
+    # Mondays 03:00 UTC.
     - cron: '0 3 * * 1'
   workflow_dispatch:
     inputs:

@@ -1,26 +1,73 @@
 version: 2
 updates:
-  # Monitor NuGet packages (Directory.Packages.props)
+  # NuGet packages. Only the "NOT SHIPPED" group of Directory.Packages.props is updated: test,
+  # build-time and tool-only packages. Keep this allow list in sync with that group.
+  # Every other package ships to consumers of Fallout.Common / Fallout.Components, so updating
+  # it raises their minimum version, and several are part of our public API. Those are raised
+  # deliberately, never on a schedule. See "Updating dependencies" in docs/dependencies.md.
+  #
+  # `allow` also stops security PRs for the packages that are not listed. That is on purpose:
+  # vulnerabilities in shipped packages still show up as Dependabot alerts.
+  #
+  # Not listed on purpose, although tests use them:
+  # - Microsoft.CodeAnalysis.CSharp(.Workspaces): shared with the shipped Fallout.Migrate.Analyzers.
+  # - NuGet.Protocol / NuGet.Resolver: must stay on the same version as NuGet.Packaging (#677).
   - package-ecosystem: "nuget"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
+    allow:
+      # Test-only
+      - dependency-name: "coverlet.msbuild"
+      - dependency-name: "FluentAssertions"
+      - dependency-name: "GitHubActionsTestLogger"
+      - dependency-name: "Microsoft.NET.Test.Sdk"
+      - dependency-name: "NetArchTest.Rules"
+      - dependency-name: "Verify.*"
+      - dependency-name: "xunit"
+      - dependency-name: "xunit.runner.visualstudio"
+      - dependency-name: "Basic.Reference.Assemblies.*"
+      - dependency-name: "BenchmarkDotNet"
+      - dependency-name: "Microsoft.CodeAnalysis.CSharp.Analyzer.Testing.XUnit"
+      - dependency-name: "Microsoft.CodeAnalysis.CSharp.CodeFix.Testing.XUnit"
+      # Build-time only (PrivateAssets="all", never in a package's dependencies)
+      - dependency-name: "Microsoft.SourceLink.GitHub"
+      - dependency-name: "Nerdbank.GitVersioning"
+      - dependency-name: "PolySharp"
+      - dependency-name: "IsExternalInit"
+      # Only used by the fallout / fallout-migrate tools, not by the libraries
+      - dependency-name: "Spectre.Console"
+      - dependency-name: "Spectre.Console.Cli"
+      - dependency-name: "Microsoft.Extensions.DependencyInjection"
+      - dependency-name: "JetBrains.Annotations"
     groups:
-      nuget-dependencies:
+      test-dependencies:
+        patterns:
+          - "coverlet.*"
+          - "FluentAssertions"
+          - "GitHubActionsTestLogger"
+          - "Microsoft.NET.Test.Sdk"
+          - "NetArchTest.Rules"
+          - "Verify.*"
+          - "xunit*"
+          - "Basic.Reference.Assemblies.*"
+          - "BenchmarkDotNet"
+          - "Microsoft.CodeAnalysis.CSharp.*.Testing.XUnit"
+      build-and-tool-dependencies:
         patterns:
           - "*"
 
-  # Monitor .NET SDK version (global.json)
+  # .NET SDK version (global.json)
   - package-ecosystem: "dotnet-sdk"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
 
-  # Monitor GitHub Actions (.github/workflows/*.yml)
+  # GitHub Actions (.github/workflows/*.yml)
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     groups:
       github-actions-dependencies:
         patterns:

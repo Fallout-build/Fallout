@@ -1,43 +1,85 @@
 <Project>
+  <!--
+    Packages are grouped by what an update means for consumers of Fallout.Common and
+    Fallout.Components. Every 10.x release must be non-breaking (ADR-0009), and every version
+    in a shipped group is a minimum version that consumers receive. Put a new package in the
+    right group, and see "Updating dependencies" in docs/dependencies.md for the rules.
+  -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
+
+  <!-- PUBLIC API: types from these packages appear in Fallout's public API.
+       Never raise the major version in 10.x. Raise minor/patch only for a security fix or a fix we need. -->
   <ItemGroup>
+    <!-- Fallout.Common: AzureKeyVault.CertificateClient / KeyClient -->
     <PackageVersion Include="Azure.Identity" Version="1.17.1" />
     <PackageVersion Include="Azure.Security.KeyVault.Certificates" Version="4.8.0" />
     <PackageVersion Include="Azure.Security.KeyVault.Keys" Version="4.8.0" />
     <PackageVersion Include="Azure.Security.KeyVault.Secrets" Version="4.8.0" />
-    <PackageVersion Include="Basic.Reference.Assemblies.NetStandard20" Version="1.7.9" />
-    <PackageVersion Include="BenchmarkDotNet" Version="0.14.0" />
-    <PackageVersion Include="Glob" Version="1.1.9" />
+    <!-- Fallout.Common GitHubTasks + Fallout.Components ICreateGitHubRelease -->
+    <PackageVersion Include="Octokit" Version="14.0.0" />
+    <!-- Fallout.Utilities.Text.Yaml: SerializerBuilder / DeserializerBuilder -->
+    <PackageVersion Include="YamlDotNet" Version="16.3.0" />
+    <!-- Build code calls Serilog.Log directly -->
+    <PackageVersion Include="Serilog" Version="4.3.0" />
+    <!-- NuGetVersion in Fallout.Tooling / Fallout.Common. Also bundled with the MSBuild tasks:
+         must match the NuGet version the .NET SDK loads into MSBuild (#677). -->
+    <PackageVersion Include="NuGet.Packaging" Version="7.9.0" />
+    <!-- Fallout.ProjectModel: ParseProject returns Microsoft.Build.Evaluation.Project.
+         Compile-time only; per-framework versions below. A new major also needs a newer SDK. -->
+    <PackageVersion Include="Microsoft.Build" Version="18.0.2" />
+    <PackageVersion Include="Microsoft.Build.Framework" Version="18.0.2" />
+    <PackageVersion Include="Microsoft.Build.Tasks.Core" Version="18.0.2" />
+    <PackageVersion Include="Microsoft.Build.Utilities.Core" Version="18.0.2" />
+  </ItemGroup>
+
+  <!-- RUNS IN HOST: bundled inside the Fallout.Common package and loaded into the consumer's
+       MSBuild, Visual Studio or C# compiler, next to the versions those hosts already loaded. -->
+  <ItemGroup>
+    <!-- Roslyn. The version sets the oldest compiler that can load Fallout.Migrate.Analyzers
+         (Fallout.SourceGenerators pins 4.7.0 with VersionOverride). Keep all Roslyn packages,
+         including the ones only Fallout.Cli and the tests use, on the same version. -->
+    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.12.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="4.12.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.12.0" />
+    <!-- Fallout.SourceGenerators (analyzers/ folder) -->
+    <PackageVersion Include="Scriban" Version="7.4.0" />
+    <!-- Fallout.Tooling.Generator, bundled with Fallout.MSBuildTasks (build/ folder) -->
     <PackageVersion Include="HtmlAgilityPack" Version="1.11.71" />
     <PackageVersion Include="Humanizer" Version="3.0.1" />
-    <PackageVersion Include="JetBrains.Annotations" Version="2026.2.0" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="10.0.0" />
-    <PackageVersion Include="Nerdbank.GitVersioning" Version="3.10.94" />
-    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.401" />
-    <PackageVersion Include="NuGet.Packaging" Version="7.9.0" />
-    <PackageVersion Include="NuGet.Protocol" Version="7.9.0" />
-    <PackageVersion Include="NuGet.Resolver" Version="7.9.0" />
-    <PackageVersion Include="Octokit" Version="14.0.0" />
-    <PackageVersion Include="Serilog" Version="4.3.0" />
+    <PackageVersion Include="System.ComponentModel.Annotations" Version="5.0.0" />
+  </ItemGroup>
+
+  <!-- SHIPPED, INTERNAL ONLY: not in our public API, but consumers still receive them as
+       dependencies. Patch/minor updates are fine when there is a reason; not on a schedule. -->
+  <ItemGroup>
+    <PackageVersion Include="Glob" Version="1.1.9" />
+    <!-- Still 0.x: its minor versions can break our code -->
+    <PackageVersion Include="SharpCompress" Version="0.50.1" />
     <PackageVersion Include="Serilog.Formatting.Compact" Version="3.0.0" />
     <PackageVersion Include="Serilog.Formatting.Compact.Reader" Version="4.0.0" />
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
-    <PackageVersion Include="SharpCompress" Version="0.50.1" />
-    <PackageVersion Include="System.ComponentModel.Annotations" Version="5.0.0" />
-    <PackageVersion Include="System.Net.Http" Version="4.3.4" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Build.Locator" Version="1.7.8" />
+    <!-- Security-advisory pin; reaches us through Microsoft.Build. Per-framework versions below. -->
     <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.10" />
+    <!-- Only reach netstandard2.0 consumers; part of the net10.0 framework -->
     <PackageVersion Include="System.Text.Json" Version="10.0.8" />
-    <PackageVersion Include="YamlDotNet" Version="16.3.0" />
-    <PackageVersion Include="Spectre.Console" Version="0.57.2" />
-    <PackageVersion Include="Spectre.Console.Cli" Version="0.55.0" />
+    <PackageVersion Include="System.Net.Http" Version="4.3.4" />
+    <PackageVersion Include="System.Memory" Version="4.6.3" />
+    <PackageVersion Include="System.Threading.Tasks.Extensions" Version="4.6.3" />
   </ItemGroup>
-  <!-- Testing -->
+
+  <!-- NOT SHIPPED: tests, this repo's build, and the fallout / fallout-migrate tools.
+       Safe to update at any time. Keep this list in sync with the `allow` list in
+       .github/dependabot.yml, which updates these packages monthly. -->
   <ItemGroup>
+    <!-- Tests -->
     <PackageVersion Include="coverlet.msbuild" Version="10.0.1" />
     <PackageVersion Include="FluentAssertions" Version="8.11.0" />
     <PackageVersion Include="GitHubActionsTestLogger" Version="3.0.5" />
@@ -49,35 +91,30 @@
     <PackageVersion Include="Verify.SourceGenerators" Version="2.5.0" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
-  </ItemGroup>
-  <!-- Roslyn (Fallout.SourceGenerator + Fallout.Cli + Fallout.Migrate.Analyzers) -->
-  <ItemGroup>
-    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.12.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="4.12.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.12.0" />
+    <PackageVersion Include="Basic.Reference.Assemblies.NetStandard20" Version="1.7.9" />
+    <PackageVersion Include="BenchmarkDotNet" Version="0.14.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing.XUnit" Version="1.1.2" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing.XUnit" Version="1.1.2" />
-  </ItemGroup>
-  <!-- Solution Model — netstandard2.0 polyfills for the vendored SolutionPersistence
-       source. The library itself isn't a NuGet dep; it's compiled from
-       vendor/vs-solutionpersistence/ into Fallout.VisualStudio.SolutionPersistence. -->
-  <ItemGroup>
+    <!-- Build-time only (PrivateAssets="all") -->
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.401" />
+    <PackageVersion Include="Nerdbank.GitVersioning" Version="3.10.94" />
     <PackageVersion Include="IsExternalInit" Version="1.0.3" />
     <PackageVersion Include="PolySharp" Version="1.15.0" />
-    <PackageVersion Include="System.Memory" Version="4.6.3" />
-    <PackageVersion Include="System.Threading.Tasks.Extensions" Version="4.6.3" />
-    <PackageVersion Include="Scriban" Version="7.4.0" />
+    <!-- Fallout.Cli / Fallout.Migrate only -->
+    <PackageVersion Include="Spectre.Console" Version="0.57.2" />
+    <PackageVersion Include="Spectre.Console.Cli" Version="0.55.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+    <PackageVersion Include="JetBrains.Annotations" Version="2026.2.0" />
   </ItemGroup>
-  <!-- MSBuild (Fallout.ProjectModel + Fallout.MSBuildTasks) -->
+
+  <!-- NOT SHIPPED, BUT LOCKED: test-only pins that must stay on the NuGet.Packaging version,
+       because the Roslyn analyzer test harness pulls in older copies (#677). Not on the Dependabot allow list. -->
   <ItemGroup>
-    <PackageVersion Include="Microsoft.Build.Locator" Version="1.7.8" />
-    <PackageVersion Include="Microsoft.Build" Version="18.0.2" />
-    <PackageVersion Include="Microsoft.Build.Framework" Version="18.0.2" />
-    <PackageVersion Include="Microsoft.Build.Tasks.Core" Version="18.0.2" />
-    <PackageVersion Include="Microsoft.Build.Utilities.Core" Version="18.0.2" />
+    <PackageVersion Include="NuGet.Protocol" Version="7.9.0" />
+    <PackageVersion Include="NuGet.Resolver" Version="7.9.0" />
   </ItemGroup>
+
+  <!-- Per-framework versions for Fallout.ProjectModel (net8.0 / net9.0) -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
     <PackageVersion Update="Microsoft.Build" Version="17.14.28" />
     <PackageVersion Update="Microsoft.Build.Framework" Version="17.14.28" />

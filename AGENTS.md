@@ -38,7 +38,7 @@ Classic GitFlow, staying on semver `10.x` — see [ADR-0009](docs/adr/0009-gitfl
 - Central package versions in `Directory.Packages.props` — never add a `Version=` to an individual `PackageReference`.
 - xUnit + FluentAssertions + Verify.Xunit for tests.
 - Solution file is `fallout.slnx` (new XML solution format, not `.sln`).
-- Dependency updates: handled by Dependabot (weekly grouped PRs). Adding a meaningful library? Add a row to [docs/dependencies.md](docs/dependencies.md) in the same PR.
+- Dependency updates: Dependabot opens monthly grouped PRs, but only for the test, build-time and tool-only packages in the `allow` list of `.github/dependabot.yml`. Packages that ship to consumers are updated deliberately — see "Updating dependencies" in [docs/dependencies.md](docs/dependencies.md). Adding a library? Put it in the right group of `Directory.Packages.props`.
 
 ## Common commands
 
