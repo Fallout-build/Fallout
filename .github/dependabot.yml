@@ -1,8 +1,10 @@
 version: 2
 updates:
-  # Monitor NuGet packages (Directory.Packages.props)
+  # Monitor NuGet packages of the test projects only (versions are central in Directory.Packages.props)
   - package-ecosystem: "nuget"
-    directory: "/"
+    directories:
+      - "/tests/*"
+      - "/tests/*/*"
     schedule:
       interval: "weekly"
     groups:
