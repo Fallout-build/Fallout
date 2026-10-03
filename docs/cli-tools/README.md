@@ -1,23 +1,27 @@
 # CLI tool references
 
-Plain-text snapshots of the upstream documentation for each CLI tool that Fallout wraps. One file per `<Tool>.ref.<NNN>.txt`, indexed against the `references` array in the matching `src/Fallout.Common/Tools/<Tool>/<Tool>.json` spec.
+This folder holds copies of the official documentation pages for each command-line tool that Fallout wraps (for example `dotnet`, `npm` and `git`). Each copy is a plain-text file named `<Tool>.ref.<NNN>.txt`.
 
-## Why they're here
+Each file matches a URL in the `references` array of the tool's JSON spec, at `src/Fallout.Common/Tools/<Tool>/<Tool>.json`. The JSON spec is the source we generate the tool wrapper from.
 
-Originally checked into `build/references/` and used by the `References` build target as a validation aid — the target downloads the upstream pages, normalises them, and writes them here, so reviewers can spot when a tool's CLI has drifted from what the JSON spec expects.
+## Why they are here
 
-Moved to `docs/cli-tools/` because (a) they're documentation, not part of the build's working state, and (b) Markdown'd guides for commonly-used tools can grow next to them if we ever want pretty docs.
+We keep the copies so we can see when a tool's command line changes. If a tool adds, renames or removes a flag, the copy changes, and the Git diff shows it. You can then check whether the JSON spec needs the same change.
 
-## Regenerating
+The files used to live in `build/references/`. We moved them here because they are documentation, not part of the build.
+
+## Update the files
 
 ```pwsh
 ./build.ps1 References
 ```
 
-Pulls the latest content from each tool's reference URL and overwrites the matching `.ref.NNN.txt` here. Run on demand — not part of the regular build flow.
+This downloads each page again, converts it to plain text, and overwrites the matching `.ref.NNN.txt` file. Run it when you want to check for changes. It is not part of the normal build.
 
-## What's in each file
+## What is in each file
 
-Plain text scraped from the upstream HTML. Mostly raw `dotnet`, `git`, `paket`, etc. command help output. Useful as a quick diff signal when a tool gets a new flag; **not** intended as user-facing tutorial content.
+Each file is the text of a web page with the HTML tags removed. Some HTML codes are still in the text, such as `&lt;` for `<`. Most pages show the help output of a command, such as `dotnet`, `git` or `paket`.
 
-If you're looking for tutorial-style usage docs for a Fallout-wrapped tool, those will land here too — separately authored under each tool's name (e.g. `dotnet.md`) once we get around to writing them. See [#41](https://github.com/Fallout-build/Fallout/issues/41) for the broader docs effort.
+Use the files to spot changes. They are not tutorials.
+
+We may add tutorials for wrapped tools in this folder later, one file per tool, such as `dotnet.md`. See [#41](https://github.com/Fallout-build/Fallout/issues/41) (the documentation effort) for details.
