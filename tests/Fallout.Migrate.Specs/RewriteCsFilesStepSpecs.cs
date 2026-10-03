@@ -157,4 +157,39 @@ public class RewriteCsFilesStepSpecs : IDisposable
         var buildCs = (tempDirectory / "Build.cs").ReadAllText().Trim();
         buildCs.Should().Be("using Fallout.Common.ProjectModelFoo;");
     }
+
+    [Fact]
+    public async Task IHaz_component_interfaces_are_renamed_to_IHas()
+    {
+        // Arrange
+        (tempDirectory / "Build.cs").WriteAllText("""
+                                                  interface IBuildPaths : IHazSolution, IHazArtifacts;
+                                                  var solution = From<IHazSolution>().Solution;
+                                                  """);
+
+        // Act
+        await new RewriteCsFilesStep().ExecuteAsync(context, summary);
+
+        // Assert
+        summary.EditCount.Should().Be(3);
+        var buildCs = (tempDirectory / "Build.cs").ReadAllText();
+        buildCs.Should().Contain("IBuildPaths : IHasSolution, IHasArtifacts;");
+        buildCs.Should().Contain("From<IHasSolution>()");
+        buildCs.Should().NotContain("IHaz");
+    }
+
+    [Fact]
+    public async Task User_defined_IHaz_interfaces_keep_their_name()
+    {
+        // Arrange
+        (tempDirectory / "Build.cs").WriteAllText("interface IHazSourcePaths : IHazSolution;");
+
+        // Act
+        await new RewriteCsFilesStep().ExecuteAsync(context, summary);
+
+        // Assert
+        summary.EditCount.Should().Be(1);
+        var buildCs = (tempDirectory / "Build.cs").ReadAllText().Trim();
+        buildCs.Should().Be("interface IHazSourcePaths : IHasSolution;");
+    }
 }
