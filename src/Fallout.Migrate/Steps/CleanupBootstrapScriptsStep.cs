@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Fallout.Common.IO;
 using Fallout.Migrate.Common;
 
 namespace Fallout.Migrate.Steps;
@@ -15,14 +14,14 @@ internal partial class CleanupBootstrapScriptsStep : IMigrationStep
 {
     public Task ExecuteAsync(MigrationContext context, Summary summary)
     {
-        foreach (var file in new[]
+        // The scripts can sit in a subdirectory (NukeScriptDirectory), so search the whole tree.
+        foreach (var name in new[]
                  {
                      "build.sh",
                      "build.ps1"
                  })
         {
-            var path = context.RootDirectory / file;
-            if (path.FileExists())
+            foreach (var path in MigrationFileOperations.EnumerateFiles(context.RootDirectory, name))
             {
                 MigrationFileOperations.ApplyRewrite(context, path, Cleanup, summary);
             }
@@ -54,6 +53,12 @@ internal partial class CleanupBootstrapScriptsStep : IMigrationStep
         // which is fi on bash and a simple "}" in powershell
         var endOfIfBlock = lines.FindIndex(indexOfEnterpriseEnvVarCheck,
             line => line.Trim() == "}" || line.Trim() == "fi");
+
+        // No closing `fi`/`}` after the token: not the generated block, so leave the file alone.
+        if (endOfIfBlock < 0)
+        {
+            return new RewriteResult(content, 0);
+        }
 
         // this is "just" to remove the empty line after the if block
         if (lines.Count > endOfIfBlock + 1 && lines[endOfIfBlock + 1].Trim() == "")

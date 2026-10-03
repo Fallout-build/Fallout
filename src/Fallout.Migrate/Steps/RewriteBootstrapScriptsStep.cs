@@ -1,6 +1,5 @@
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Fallout.Common.IO;
 using Fallout.Migrate.Common;
 
 namespace Fallout.Migrate.Steps;
@@ -33,6 +32,8 @@ internal sealed class RewriteBootstrapScriptsStep : IMigrationStep
     /// <inheritdoc />
     public Task ExecuteAsync(MigrationContext context, Summary summary)
     {
+        // The scripts can sit in a subdirectory (NukeScriptDirectory), so search the whole tree.
+        // The patterns only match NUKE-specific text, and a script without any is not written.
         foreach (var name in new[]
                  {
                      "build.cmd",
@@ -40,8 +41,7 @@ internal sealed class RewriteBootstrapScriptsStep : IMigrationStep
                      "build.sh"
                  })
         {
-            var path = context.RootDirectory / name;
-            if (path.FileExists())
+            foreach (var path in MigrationFileOperations.EnumerateFiles(context.RootDirectory, name))
             {
                 MigrationFileOperations.ApplyRewrite(context, path, Rewrite, summary);
             }

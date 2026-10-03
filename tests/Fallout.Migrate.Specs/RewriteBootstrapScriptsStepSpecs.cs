@@ -196,4 +196,75 @@ public class RewriteBootstrapScriptsStepSpecs : IDisposable
             "$DOTNET_EXE" run --project "$BUILD_PROJECT_FILE" --no-build -- "$@"
             """);
     }
+
+    [Fact]
+    public async Task Bootstrap_scripts_in_a_subdirectory_are_rewritten()
+    {
+        // Arrange
+        (tempDirectory / "eng" / "build.sh").WriteAllText("""
+                                                          TEMP_DIRECTORY="$SCRIPT_DIR/../.nuke/temp"
+                                                          dotnet nuke "$@"
+                                                          """, eofLineBreak: false);
+
+        // Act
+        await new RewriteBootstrapScriptsStep().ExecuteAsync(context, summary);
+
+        // Assert
+        summary.EditCount.Should().Be(2);
+        var buildSh = (tempDirectory / "eng" / "build.sh").ReadAllText();
+        buildSh.Should().Contain("/.fallout/temp");
+        buildSh.Should().Contain("dotnet fallout");
+    }
+
+    [Fact]
+    public async Task Unrelated_build_scripts_are_left_untouched()
+    {
+        // Arrange
+        var original = "#!/bin/sh\nmake all\n";
+        (tempDirectory / "tools" / "build.sh").WriteAllText(original, eofLineBreak: false);
+
+        // Act
+        await new RewriteBootstrapScriptsStep().ExecuteAsync(context, summary);
+        await new CleanupBootstrapScriptsStep().ExecuteAsync(context, summary);
+
+        // Assert
+        summary.EditCount.Should().Be(0);
+        (tempDirectory / "tools" / "build.sh").ReadAllText().Should().Be(original);
+    }
+
+    [Fact]
+    public async Task Enterprise_feed_block_in_a_subdirectory_script_is_removed()
+    {
+        // Arrange
+        (tempDirectory / "eng" / "build.ps1").WriteAllText("""
+                                                           if (Test-Path env:NUKE_ENTERPRISE_TOKEN) {
+                                                               & $env:DOTNET_EXE nuget add source "https://f.feedz.io/nuke/enterprise/nuget" --name "nuke-enterprise" --username "PAT" --password $env:NUKE_ENTERPRISE_TOKEN > $null
+                                                           }
+
+                                                           ExecSafe { & $env:DOTNET_EXE run --project $BuildProjectFile --no-build -- $BuildArguments }
+                                                           """, eofLineBreak: false);
+
+        // Act
+        await new CleanupBootstrapScriptsStep().ExecuteAsync(context, summary);
+
+        // Assert
+        summary.EditCount.Should().Be(1);
+        (tempDirectory / "eng" / "build.ps1").ReadAllText().Should().Be(
+            "ExecSafe { & $env:DOTNET_EXE run --project $BuildProjectFile --no-build -- $BuildArguments }");
+    }
+
+    [Fact]
+    public async Task Enterprise_token_without_a_closing_block_is_left_alone()
+    {
+        // Arrange
+        var original = "export NUKE_ENTERPRISE_TOKEN=\"$1\"\ndotnet nuke \"$@\"";
+        (tempDirectory / "build.sh").WriteAllText(original, eofLineBreak: false);
+
+        // Act
+        await new CleanupBootstrapScriptsStep().ExecuteAsync(context, summary);
+
+        // Assert
+        summary.EditCount.Should().Be(0);
+        (tempDirectory / "build.sh").ReadAllText().Should().Be(original);
+    }
 }
