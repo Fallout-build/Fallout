@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Fallout.Common.IO;
 using Fallout.Migrate.Common;
@@ -191,5 +193,28 @@ public class RewriteCsFilesStepSpecs : IDisposable
         summary.EditCount.Should().Be(1);
         var buildCs = (tempDirectory / "Build.cs").ReadAllText().Trim();
         buildCs.Should().Be("interface IHazSourcePaths : IHasSolution;");
+    }
+
+    [Fact]
+    public async Task Every_IHaz_alias_in_the_Nuke_Components_shim_is_renamed()
+    {
+        // The rename list is hard-coded. This spec fails when the shim gains an IHaz* alias
+        // that the list doesn't have.
+        // Arrange
+        var shimDirectory = AbsolutePath.Create(AppContext.BaseDirectory)
+            .FindParentOrSelf(x => (x / "fallout.slnx").FileExists()) / "src" / "Shims" / "Nuke.Components";
+        var aliases = shimDirectory.GetFiles("*.cs")
+            .SelectMany(x => Regex.Matches(x.ReadAllText(), @"\binterface\s+(?<name>IHaz\w+)"))
+            .Select(x => x.Groups["name"].Value)
+            .ToList();
+        (tempDirectory / "Build.cs").WriteAllText(string.Join("\n", aliases), eofLineBreak: false);
+
+        // Act
+        await new RewriteCsFilesStep().ExecuteAsync(context, summary);
+
+        // Assert
+        aliases.Should().NotBeEmpty();
+        (tempDirectory / "Build.cs").ReadAllText()
+            .Should().Be(string.Join("\n", aliases.Select(x => "IHas" + x["IHaz".Length..])));
     }
 }

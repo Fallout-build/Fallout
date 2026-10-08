@@ -49,6 +49,16 @@ internal partial class CleanupBootstrapScriptsStep : IMigrationStep
         // here, we get the index of the line that contains the environment variable check
         var indexOfEnterpriseEnvVarCheck = lines.FindIndex(line => line.Contains(envVarToCheck));
 
+        // The generated block starts with the `if` line that checks the token. Any other first use,
+        // for example `export NUKE_ENTERPRISE_TOKEN=...`, is not the generated block, so leave the
+        // file alone. Otherwise an unrelated `fi`/`}` later in the file would end the removal.
+        var checkLine = lines[indexOfEnterpriseEnvVarCheck].TrimStart();
+        if (!checkLine.StartsWith("if ", StringComparison.OrdinalIgnoreCase) &&
+            !checkLine.StartsWith("if(", StringComparison.OrdinalIgnoreCase))
+        {
+            return new RewriteResult(content, 0);
+        }
+
         // here, we get the index of the line that ends the if block
         // which is fi on bash and a simple "}" in powershell
         var endOfIfBlock = lines.FindIndex(indexOfEnterpriseEnvVarCheck,

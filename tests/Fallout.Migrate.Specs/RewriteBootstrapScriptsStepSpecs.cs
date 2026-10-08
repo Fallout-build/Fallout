@@ -267,4 +267,19 @@ public class RewriteBootstrapScriptsStepSpecs : IDisposable
         summary.EditCount.Should().Be(0);
         (tempDirectory / "build.sh").ReadAllText().Should().Be(original);
     }
+
+    [Fact]
+    public async Task Enterprise_token_outside_an_if_line_is_left_alone()
+    {
+        // Arrange
+        var original = "export NUKE_ENTERPRISE_TOKEN=\"$1\"\necho \"start\"\nif [ -f x ]; then echo y; fi\ndotnet nuke \"$@\"";
+        (tempDirectory / "build.sh").WriteAllText(original, eofLineBreak: false);
+
+        // Act
+        await new CleanupBootstrapScriptsStep().ExecuteAsync(context, summary);
+
+        // Assert
+        summary.EditCount.Should().Be(0);
+        (tempDirectory / "build.sh").ReadAllText().Should().Be(original);
+    }
 }

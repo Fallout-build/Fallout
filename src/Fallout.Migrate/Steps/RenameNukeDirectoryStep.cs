@@ -16,6 +16,8 @@ internal sealed class RenameNukeDirectoryStep : IMigrationStep
     // NUKE's schema has the layout Fallout reads; only the base definition is named
     // NukeBuild. CompletionUtility (fallout completion and :secrets) looks up FalloutBuild,
     // so rename the definition key and its $ref. The next build rewrites the whole file.
+    // The lookbehind matches any quoted "NukeBuild", not only these two. That is safe because
+    // the schema is machine-generated, and NukeBuild appears only as the key and in the $ref.
     private static readonly Regex nukeBuildDefinition =
         new(@"(?<=""|#/definitions/)NukeBuild(?="")", RegexOptions.Compiled);
 
@@ -25,8 +27,11 @@ internal sealed class RenameNukeDirectoryStep : IMigrationStep
         var legacy = context.RootDirectory / ".nuke";
         var canonical = context.RootDirectory / ".fallout";
 
-        // Also repairs a repository that an earlier fallout-migrate moved without rewriting.
-        var schema = (legacy.DirectoryExists() ? legacy : canonical) / "build.schema.json";
+        // Rewrite the schema in the directory that ends up as .fallout/: .nuke/ when it is moved,
+        // otherwise .fallout/. When both exist, .nuke/ is left for the manual merge. This also
+        // repairs a repository that an earlier fallout-migrate moved without rewriting.
+        var moveLegacy = legacy.DirectoryExists() && !canonical.DirectoryExists();
+        var schema = (moveLegacy ? legacy : canonical) / "build.schema.json";
         if (schema.FileExists())
         {
             MigrationFileOperations.ApplyRewrite(context, schema, RewriteSchema, summary);

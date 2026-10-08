@@ -73,6 +73,25 @@ public class RenameNukeDirectoryStepSpecs : IDisposable
     }
 
     [Fact]
+    public async Task Only_the_fallout_schema_is_rewritten_when_both_directories_exist()
+    {
+        // Arrange
+        (tempDirectory / ".nuke" / "build.schema.json").WriteAllText(NukeSchema, eofLineBreak: false);
+        (tempDirectory / ".fallout" / "build.schema.json").WriteAllText(NukeSchema, eofLineBreak: false);
+        var context = new MigrationContext(tempDirectory, dryRun: false, TextWriter.Null);
+
+        // Act
+        await new RenameNukeDirectoryStep().ExecuteAsync(context, summary);
+
+        // Assert
+        summary.DirectoriesRenamed.Should().Be(0);
+        summary.EditCount.Should().Be(2);
+        summary.Warnings.Should().ContainSingle().Which.Should().Contain("merge their contents manually");
+        (tempDirectory / ".fallout" / "build.schema.json").ReadAllText().Should().NotContain("NukeBuild");
+        (tempDirectory / ".nuke" / "build.schema.json").ReadAllText().Should().Be(NukeSchema);
+    }
+
+    [Fact]
     public async Task Dry_run_leaves_the_schema_unchanged()
     {
         // Arrange
