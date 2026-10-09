@@ -18,6 +18,7 @@ public sealed class EnvironmentExecutableSpecs : IDisposable
         var path = root / "directory with spaces" / "tool";
         path.Parent.CreateDirectory();
         path.WriteAllText(string.Empty);
+        ((AbsolutePath)(path + ".exe")).WriteAllText(string.Empty);
         Environment.SetEnvironmentVariable(variable, path);
 
         ToolPathResolver.TryGetEnvironmentExecutable(variable).Should().Be(path);
@@ -45,6 +46,7 @@ public sealed class EnvironmentExecutableSpecs : IDisposable
     [Fact]
     public void Missing_explicit_paths_still_fail()
     {
+        (root / "missing.exe.exe").WriteAllText(string.Empty);
         Environment.SetEnvironmentVariable(variable, root / "missing.exe");
 
         var resolve = () => ToolPathResolver.TryGetEnvironmentExecutable(variable);
