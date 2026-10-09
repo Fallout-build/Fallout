@@ -15,6 +15,12 @@ public static class ToolPathResolver
             return null;
         }
 
+        if (!File.Exists(environmentExecutablePath) && EnvironmentInfo.IsWin &&
+            !Path.HasExtension(environmentExecutablePath) && File.Exists(environmentExecutablePath + ".exe"))
+        {
+            environmentExecutablePath += ".exe";
+        }
+
         Assert.FileExists(environmentExecutablePath,
             $"Path '{environmentExecutablePath}' from environment variable '{environmentExecutable}' does not exist");
 
