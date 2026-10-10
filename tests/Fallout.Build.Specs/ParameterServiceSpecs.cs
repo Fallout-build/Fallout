@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Fallout.Common.IO;
 using FluentAssertions;
 using Xunit;
@@ -7,6 +8,7 @@ using static Fallout.Common.Utilities.ReflectionUtility;
 
 namespace Fallout.Common.Specs;
 
+[Collection(ProcessGlobalStateCollection.Name)]
 public class ParameterServiceSpecs
 {
     private ParameterService GetService(string[] commandLineArguments = null,
@@ -168,6 +170,79 @@ public class ParameterServiceSpecs
         };
 
         service.GetParameter("string", typeof(string), separator: null).Should().Be("commitMessage");
+    }
+
+    [Fact]
+    public void UnusableHostEnvironmentValue_UsesDefaultAndWarns()
+    {
+        // Arrange. The standard Unix HOST variable. FalloutBuild resolves the Host parameter
+        // from the environment before any target runs.
+        var environmentVariables = new Dictionary<string, string> { ["HOST"] = "M2" };
+
+        // Act
+        var (value, error) = ResolveWithEnvironment("Host", typeof(Host), environmentVariables);
+
+        // Assert
+        value.Should().BeNull();
+        error.Should().Contain("could not resolve 'Host'");
+        error.Should().Contain("M2");
+    }
+
+    [Fact]
+    public void UnusableEnvironmentValue_UsesDefaultAndWarns()
+    {
+        // Arrange
+        var environmentVariables = new Dictionary<string, string> { ["VERBOSITY"] = "bogus" };
+
+        // Act
+        var (value, error) = ResolveWithEnvironment("Verbosity", typeof(Verbosity?), environmentVariables);
+
+        // Assert
+        value.Should().BeNull();
+        error.Should().Contain("could not resolve 'Verbosity'");
+        error.Should().Contain("bogus");
+    }
+
+    [Fact]
+    public void SeveralMatchingEnvironmentValues_UseDefaultAndWarn()
+    {
+        // Arrange. Two spellings of the same parameter name, neither an exact match.
+        var environmentVariables = new Dictionary<string, string>
+        {
+            ["verbosity"] = "Normal",
+            ["VERBOSITY"] = "Verbose"
+        };
+
+        // Act
+        var (value, error) = ResolveWithEnvironment("Verbosity", typeof(Verbosity?), environmentVariables);
+
+        // Assert
+        value.Should().BeNull();
+        error.Should().Contain("multiple values are provided");
+    }
+
+    private (object Value, string Error) ResolveWithEnvironment(
+        string parameterName,
+        Type destinationType,
+        IDictionary<string, string> environmentVariables)
+    {
+        var service = GetService(environmentVariables: environmentVariables);
+        var original = Console.Error;
+        using var writer = new StringWriter();
+
+        object value;
+        try
+        {
+            // Parameters resolve before Serilog is configured, so warnings go to standard error.
+            Console.SetError(writer);
+            value = service.GetParameter(parameterName, destinationType, separator: null);
+        }
+        finally
+        {
+            Console.SetError(original);
+        }
+
+        return (value, writer.ToString());
     }
 
 #pragma warning disable CS0649

@@ -198,7 +198,7 @@ internal partial class ParameterService
 
             if (alternativeValues.Count > 1)
             {
-                Log.Warning("Could not resolve {VariableName} since multiple values are provided", variableName);
+                ReportWarning($"could not resolve '{variableName}' since multiple values are provided");
             }
 
             if (alternativeValues.Count == 1)
@@ -215,17 +215,25 @@ internal partial class ParameterService
         {
             return Convert(value, destinationType, separator, booleanDefault: false);
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            Assert.Fail(new[]
-            {
-                ex.Message,
-                $"Resolving parameter '{variableName}' failed. Environment variable was:",
-                value
-            }.JoinNewLine());
+            // A value the build cannot read must not abort the process. Built-in parameters are
+            // resolved inside FalloutBuild's static constructor, so throwing here kills the build
+            // before the consumer can act on it and before any target runs.
+            ReportWarning(
+                $"could not resolve '{variableName}' from environment variable value '{value}'. " +
+                $"Ignoring it and using the default. {exception.Message}");
 
-            // ReSharper disable once HeuristicUnreachableCode
-            return null;
+            return destinationType.GetDefaultValue();
         }
+    }
+
+    /// <summary>
+    /// Writes a warning to standard error. Parameters are resolved before Serilog is configured,
+    /// so anything sent to the log is never shown.
+    /// </summary>
+    private static void ReportWarning(string message)
+    {
+        Console.Error.WriteLine($"warning: {message}");
     }
 }
