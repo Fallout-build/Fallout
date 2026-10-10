@@ -1,3 +1,5 @@
+using Fallout.Build.Execution;
+
 namespace Fallout.Common.CI;
 
 public static class BuildServerConfigurationGeneration

@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Fallout.Build.Execution;
 using Fallout.Common.Tooling;
 using Fallout.Common.Utilities;
 using Fallout.Common.ValueInjection;
