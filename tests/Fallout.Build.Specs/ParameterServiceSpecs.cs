@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Fallout.Common.Execution;
 using Fallout.Common.IO;
 using FluentAssertions;
 using Xunit;
@@ -219,6 +220,58 @@ public class ParameterServiceSpecs
         // Assert
         value.Should().BeNull();
         error.Should().Contain("multiple values are provided");
+    }
+
+    [Theory]
+    [InlineData("FALLOUT_VERBOSITY")]
+    [InlineData("fallout_verbosity")]
+    [InlineData("Fallout_Verbosity")]
+    public void PrefixedEnvironmentValue_IsResolved(string name)
+    {
+        // Arrange
+        var environmentVariables = new Dictionary<string, string> { [name] = "Verbose" };
+
+        // Act
+        var (value, _) = ResolveWithEnvironment("Verbosity", typeof(Verbosity?), environmentVariables);
+
+        // Assert
+        value.Should().Be(Verbosity.Verbose);
+    }
+
+    [Fact]
+    public void PrefixedHostValue_TakesPrecedenceOverBareHost()
+    {
+        // Arrange. The Unix hostname variable is present and cannot be converted.
+        var environmentVariables = new Dictionary<string, string>
+        {
+            ["HOST"] = "M2",
+            ["FALLOUT_HOST"] = "Terminal"
+        };
+
+        // Act
+        var (value, error) = ResolveWithEnvironment("Host", typeof(Host), environmentVariables);
+
+        // Assert
+        value.Should().BeOfType<Terminal>();
+        error.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void LegacyPrefixedHostValue_TakesPrecedenceOverBareHost()
+    {
+        // Arrange
+        var environmentVariables = new Dictionary<string, string>
+        {
+            ["HOST"] = "M2",
+            ["NUKE_HOST"] = "Terminal"
+        };
+
+        // Act
+        var (value, error) = ResolveWithEnvironment("Host", typeof(Host), environmentVariables);
+
+        // Assert
+        value.Should().BeOfType<Terminal>();
+        error.Should().BeEmpty();
     }
 
     private (object Value, string Error) ResolveWithEnvironment(

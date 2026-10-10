@@ -192,9 +192,17 @@ internal partial class ParameterService
         if (!Variables.TryGetValue(variableName, out var value))
         {
             var trimmedVariableName = GetTrimmedName(variableName);
-            var alternativeValues = Variables
-                .Where(x => GetTrimmedName(x.Key).EqualsOrdinalIgnoreCase(trimmedVariableName) ||
+
+            // Prefixed names are matched before the bare parameter name. FALLOUT_HOST would
+            // otherwise be shadowed by an unrelated bare HOST, which is the hostname variable
+            // every Unix shell exports.
+            var prefixedValues = Variables
+                .Where(x => GetTrimmedName(x.Key).EqualsOrdinalIgnoreCase($"FALLOUT{trimmedVariableName}") ||
                             GetTrimmedName(x.Key).EqualsOrdinalIgnoreCase($"NUKE{trimmedVariableName}")).ToList();
+
+            var alternativeValues = prefixedValues.Count > 0
+                ? prefixedValues
+                : Variables.Where(x => GetTrimmedName(x.Key).EqualsOrdinalIgnoreCase(trimmedVariableName)).ToList();
 
             if (alternativeValues.Count > 1)
             {
