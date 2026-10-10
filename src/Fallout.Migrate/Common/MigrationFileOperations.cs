@@ -50,7 +50,7 @@ internal static class MigrationFileOperations
         {
             original = path.ReadAllText();
         }
-        catch (IOException ex)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             summary.Warnings.Add($"could not read {RelativePath(context.RootDirectory, path)}: {ex.Message}");
             return;

@@ -15,7 +15,7 @@ Done. Read on if anything looks unusual, or you want to know what the tool did.
 
 ## The recommended path: `fallout-migrate`
 
-`fallout-migrate` is a global `dotnet` tool that performs the entire migration in one command. It rewrites `PackageReference`s, `using` directives, MSBuild properties, bootstrap scripts, env vars, and renames `.nuke/` → `.fallout/`. It's idempotent and has a `--dry-run` mode.
+`fallout-migrate` is a global `dotnet` tool that performs the entire migration in one command. It rewrites `PackageReference`s and central package versions (`Directory.Packages.props`), `using` directives, MSBuild properties, bootstrap scripts, env vars, and renames `.nuke/` → `.fallout/`. It's idempotent and has a `--dry-run` mode.
 
 ### Step 1 — install the tool
 
