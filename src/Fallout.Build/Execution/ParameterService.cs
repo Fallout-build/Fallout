@@ -192,13 +192,21 @@ internal partial class ParameterService
         if (!Variables.TryGetValue(variableName, out var value))
         {
             var trimmedVariableName = GetTrimmedName(variableName);
-            var alternativeValues = Variables
-                .Where(x => GetTrimmedName(x.Key).EqualsOrdinalIgnoreCase(trimmedVariableName) ||
+
+            // Prefixed names are matched before the bare parameter name. FALLOUT_HOST would
+            // otherwise be shadowed by an unrelated bare HOST, which is the hostname variable
+            // every Unix shell exports.
+            var prefixedValues = Variables
+                .Where(x => GetTrimmedName(x.Key).EqualsOrdinalIgnoreCase($"FALLOUT{trimmedVariableName}") ||
                             GetTrimmedName(x.Key).EqualsOrdinalIgnoreCase($"NUKE{trimmedVariableName}")).ToList();
+
+            var alternativeValues = prefixedValues.Count > 0
+                ? prefixedValues
+                : Variables.Where(x => GetTrimmedName(x.Key).EqualsOrdinalIgnoreCase(trimmedVariableName)).ToList();
 
             if (alternativeValues.Count > 1)
             {
-                Log.Warning("Could not resolve {VariableName} since multiple values are provided", variableName);
+                ReportWarning($"could not resolve '{variableName}' since multiple values are provided");
             }
 
             if (alternativeValues.Count == 1)
@@ -215,17 +223,25 @@ internal partial class ParameterService
         {
             return Convert(value, destinationType, separator, booleanDefault: false);
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            Assert.Fail(new[]
-            {
-                ex.Message,
-                $"Resolving parameter '{variableName}' failed. Environment variable was:",
-                value
-            }.JoinNewLine());
+            // A value the build cannot read must not abort the process. Built-in parameters are
+            // resolved inside FalloutBuild's static constructor, so throwing here kills the build
+            // before the consumer can act on it and before any target runs.
+            ReportWarning(
+                $"could not resolve '{variableName}' from environment variable value '{value}'. " +
+                $"Ignoring it and using the default. {exception.Message}");
 
-            // ReSharper disable once HeuristicUnreachableCode
-            return null;
+            return destinationType.GetDefaultValue();
         }
+    }
+
+    /// <summary>
+    /// Writes a warning to standard error. Parameters are resolved before Serilog is configured,
+    /// so anything sent to the log is never shown.
+    /// </summary>
+    private static void ReportWarning(string message)
+    {
+        Console.Error.WriteLine($"warning: {message}");
     }
 }
