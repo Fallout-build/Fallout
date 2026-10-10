@@ -85,6 +85,10 @@ SET MY_PARAMETER = <value>
 SET FALLOUT_MY_PARAMETER = <value>
 ```
 
+A prefixed name takes precedence over the bare parameter name. Use the prefix when the two would otherwise collide, for example with the `Host` parameter and the `HOST` variable that every Unix shell sets to the machine's hostname.
+
+If a value cannot be read, Fallout reports a warning on standard error and uses the default for that parameter. It does not stop the build.
+
 ## Required Parameters
 
 You can specify a parameter as a [target requirement](../02-fundamentals/05-targets.md#requirements) using the following shorthand syntax:
