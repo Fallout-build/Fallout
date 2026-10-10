@@ -22,7 +22,7 @@ internal static class MigrationFileOperations
     {
         foreach (var file in rootDirectory.GetFiles(pattern, depth: int.MaxValue))
         {
-            if (IsIgnored(file))
+            if (IsIgnored(rootDirectory, file))
             {
                 continue;
             }
@@ -88,13 +88,21 @@ internal static class MigrationFileOperations
 
     /// <summary>
     /// Returns <c>true</c> if <paramref name="path"/> sits under a <c>bin/</c>, <c>obj/</c>, or
-    /// <c>.git/</c> directory and should be skipped by <see cref="EnumerateFiles"/>.
+    /// <c>.git/</c> directory below <paramref name="rootDirectory"/> and should be skipped by
+    /// <see cref="EnumerateFiles"/>. Only the path below the root counts, so a repository cloned
+    /// under a folder named <c>bin</c> or <c>obj</c> is still migrated.
     /// </summary>
-    private static bool IsIgnored(AbsolutePath path)
+    private static bool IsIgnored(AbsolutePath rootDirectory, AbsolutePath path)
     {
-        string text = path;
-        return text.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
-               || text.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
-               || text.Contains($"{Path.DirectorySeparatorChar}.git{Path.DirectorySeparatorChar}", StringComparison.Ordinal);
+        var segments = RelativePath(rootDirectory, path).Split('/');
+        for (var i = 0; i < segments.Length - 1; i++)
+        {
+            if (segments[i] is "bin" or "obj" or ".git")
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

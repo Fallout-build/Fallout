@@ -130,6 +130,89 @@ public class BumpDotNetVersionStepSpecs : IDisposable
     }
 
     [Fact]
+    public async Task Bumped_sdk_version_gets_a_roll_forward_policy_when_none_is_set()
+    {
+        // Arrange
+        var globalJson = tempDirectory / "global.json";
+        globalJson.WriteAllText(
+            """
+            {
+              "sdk": {
+                "version": "8.0.100"
+              }
+            }
+            """);
+
+        // Act
+        await new BumpDotNetVersionStep().ExecuteAsync(context, summary);
+
+        // Assert
+        globalJson.ReadAllText().Should().Contain(
+            """
+                "version": "10.0.100",
+                "rollForward": "latestFeature"
+              }
+            """);
+        summary.FilesChanged.Should().Be(1);
+        summary.EditCount.Should().Be(2);
+    }
+
+    [Theory]
+    [InlineData("patch")]
+    [InlineData("latestPatch")]
+    [InlineData("disable")]
+    public async Task Kept_roll_forward_policy_that_needs_the_pinned_feature_band_gives_a_warning(string policy)
+    {
+        // Arrange
+        var globalJson = tempDirectory / "global.json";
+        globalJson.WriteAllText(
+            $$"""
+            {
+              "sdk": {
+                "version": "8.0.100",
+                "rollForward": "{{policy}}"
+              }
+            }
+            """);
+
+        // Act
+        await new BumpDotNetVersionStep().ExecuteAsync(context, summary);
+
+        // Assert
+        var content = globalJson.ReadAllText();
+        content.Should().Contain(@"""version"": ""10.0.100""");
+        content.Should().Contain($@"""rollForward"": ""{policy}""");
+        content.Should().NotContain("latestFeature");
+        summary.EditCount.Should().Be(1);
+        summary.Warnings.Should().ContainSingle()
+            .Which.Should().Contain($@"""rollForward"": ""{policy}""").And.Contain("latestFeature");
+    }
+
+    [Fact]
+    public async Task Kept_roll_forward_policy_that_allows_a_later_feature_band_gives_no_warning()
+    {
+        // Arrange
+        var globalJson = tempDirectory / "global.json";
+        globalJson.WriteAllText(
+            """
+            {
+              "sdk": {
+                "version": "8.0.100",
+                "rollForward": "latestMajor"
+              }
+            }
+            """);
+
+        // Act
+        await new BumpDotNetVersionStep().ExecuteAsync(context, summary);
+
+        // Assert
+        globalJson.ReadAllText().Should().Contain(@"""rollForward"": ""latestMajor""");
+        summary.EditCount.Should().Be(1);
+        summary.Warnings.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task Already_pinned_sdk_version_is_left_unchanged()
     {
         // Arrange
