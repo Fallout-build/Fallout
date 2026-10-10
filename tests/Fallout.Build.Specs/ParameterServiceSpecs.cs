@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Fallout.Build.Execution;
 using Fallout.Common.IO;
 using FluentAssertions;
 using Xunit;

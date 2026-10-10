@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using Fallout.Build.Execution;
 using Fallout.Common.CI.TeamCity.Configuration;
 using Fallout.Common.Execution;
 using Fallout.Common.IO;

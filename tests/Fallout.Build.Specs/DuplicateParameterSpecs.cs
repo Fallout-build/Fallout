@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Reflection;
+using Fallout.Build.Execution;
 using Fallout.Common.ValueInjection;
 using FluentAssertions;
 using Xunit;
