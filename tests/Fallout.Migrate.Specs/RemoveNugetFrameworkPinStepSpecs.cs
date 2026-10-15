@@ -11,6 +11,8 @@ namespace Fallout.Migrate.Specs;
 
 public class RemoveNugetFrameworkPinStepSpecs : IDisposable
 {
+    private const string TestFalloutVersion = "10.5.0";
+
     private readonly AbsolutePath tempDirectory;
     private readonly MigrationContext context;
     private readonly Summary summary = new();
@@ -18,7 +20,10 @@ public class RemoveNugetFrameworkPinStepSpecs : IDisposable
     public RemoveNugetFrameworkPinStepSpecs()
     {
         tempDirectory = AbsolutePath.Temp("fallout-remove-nuget-framework-pin");
-        context = new MigrationContext(tempDirectory, dryRun: false, TextWriter.Null);
+        context = new MigrationContext(tempDirectory, dryRun: false, TextWriter.Null)
+        {
+            FalloutVersion = TestFalloutVersion
+        };
     }
 
     [Fact]
@@ -63,6 +68,30 @@ public class RemoveNugetFrameworkPinStepSpecs : IDisposable
             <Project Sdk="Microsoft.NET.Sdk">
               <ItemGroup>
                 <PackageReference Include="NuGet.Frameworks" />
+              </ItemGroup>
+            </Project>
+            """;
+
+        project.WriteAllText(input, eofLineBreak: false);
+
+        // Act
+        await new RemoveNugetFrameworkPinStep().ExecuteAsync(context, summary);
+
+        // Assert
+        project.ReadAllText().Should().Be(input);
+        summary.EditCount.Should().Be(0);
+    }
+    
+    [Fact]
+    public async Task Nuget_framework_reference_is_left_unchanged_in_non_build_projects()
+    {
+        // Arrange
+        var project = tempDirectory / "Library.csproj";
+        const string input =
+            """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <ItemGroup>
+                <PackageReference Include="NuGet.Frameworks" Version="7.9.0"/>
               </ItemGroup>
             </Project>
             """;

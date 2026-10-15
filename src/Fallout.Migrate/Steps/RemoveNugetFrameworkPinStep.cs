@@ -1,3 +1,4 @@
+using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Fallout.Migrate.Common;
@@ -10,143 +11,87 @@ namespace Fallout.Migrate.Steps;
 internal sealed class RemoveNugetFrameworkPinStep : IMigrationStep
 {
     /// <summary>
-    /// Matches a single-line, self-closing NuGet package reference for
-    /// <c>NuGet.Frameworks</c> that explicitly specifies a version.
+    /// Matches an entire single-line, self-closing
+    /// <c>PackageReference</c> element for <c>NuGet.Frameworks</c>
+    /// that explicitly declares a non-empty <c>Version</c> attribute,
+    /// including its indentation and trailing line ending.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// This regular expression is intended to identify explicitly version-pinned
-    /// <c>NuGet.Frameworks</c> package references in XML-based MSBuild project
-    /// files, such as <c>.csproj</c>, <c>.props</c>, or <c>.targets</c>.
+    /// Intended for removing explicitly versioned
+    /// <c>NuGet.Frameworks</c> package references from MSBuild XML
+    /// files such as <c>.csproj</c>, <c>.props</c>, and <c>.targets</c>.
     /// </para>
-    ///
     /// <para>
-    /// A match must satisfy all of the following conditions:
+    /// The <c>Include</c> and <c>Version</c> attributes may appear
+    /// in any order. Additional attributes, such as
+    /// <c>PrivateAssets</c>, are allowed before, between, or after
+    /// the required attributes.
     /// </para>
-    /// <list type="number">
+    /// <para>
+    /// Matching requirements:
+    /// </para>
+    /// <list type="bullet">
     ///   <item>
     ///     <description>
-    ///       The element begins at the start of a line, optionally preceded
-    ///       by spaces or tab characters.
+    ///       The element must begin on a line containing only optional
+    ///       leading spaces or tabs.
     ///     </description>
     ///   </item>
     ///   <item>
     ///     <description>
-    ///       The element starts with the exact, case-sensitive text
-    ///       <c>&lt;PackageReference</c>, followed by at least one
-    ///       whitespace character.
-    ///     </description>
-    ///   </item>
-    ///   <item>
-    ///     <description>
-    ///       The element contains the exact attribute
+    ///       The element must contain
     ///       <c>Include="NuGet.Frameworks"</c>.
     ///     </description>
     ///   </item>
     ///   <item>
     ///     <description>
-    ///       The element contains a <c>Version</c> attribute whose value
-    ///       consists of one or more characters other than a double quote.
+    ///       The element must contain a non-empty
+    ///       <c>Version="..."</c> attribute.
     ///     </description>
     ///   </item>
     ///   <item>
     ///     <description>
-    ///       Both required attributes occur on the same line, before
-    ///       the first greater-than character.
-    ///       Their order does not matter.
-    ///     </description>
-    ///   </item>
-    ///   <item>
-    ///     <description>
-    ///       The element ends with the exact sequence <c>/&gt;</c>,
-    ///       optionally followed by spaces or tabs.
+    ///       The element must be self-closing and contained on one line.
     ///     </description>
     ///   </item>
     /// </list>
-    ///
     /// <para>
-    /// The match also consumes an optional line ending (<c>\n</c> or
-    /// <c>\r\n</c>) immediately following the element.
+    /// The expression consumes the entire matching line, including
+    /// its indentation, optional trailing whitespace, and line
+    /// ending (if present). Replacing matches with an empty string
+    /// therefore removes the package reference without leaving
+    /// an empty line.
     /// </para>
-    ///
     /// <para>
-    /// The pattern uses two positive lookaheads to verify the presence
-    /// of the required attributes without enforcing their order.
-    /// </para>
-    ///
-    /// <para>
-    /// Matching is case-sensitive. Only self-closing, single-line elements
-    /// are supported. This is a textual pattern, not a full XML parser.
-    /// </para>
-    ///
-    /// <para>
-    /// <b>Examples that match:</b>
+    /// <b>Example:</b>
     /// </para>
     /// <code>
-    /// &lt;PackageReference Include="NuGet.Frameworks" Version="6.0.0" /&gt;
-    /// &lt;PackageReference Version="6.0.0" Include="NuGet.Frameworks"/&gt;
-    ///     &lt;PackageReference Include="NuGet.Frameworks" Version="7.0.0" /&gt;
-    /// &lt;PackageReference Include="NuGet.Frameworks" Version="[6.0.0]" /&gt;
+    /// &lt;PackageReference Version="7.9.0" PrivateAssets="all" Include="NuGet.Frameworks" /&gt;
     /// </code>
-    ///
     /// <para>
-    /// <b>Examples that do not match:</b>
+    /// <b>Limitations:</b>
+    /// The expression is case-sensitive, supports double-quoted
+    /// attributes only, and does not match multiline elements.
+    /// It does not validate XML structure or NuGet version syntax
+    /// and may match package references inside XML comments.
     /// </para>
-    /// <code>
-    /// &lt;PackageReference Include="Other.Package" Version="6.0.0" /&gt;
-    /// &lt;PackageReference Include="NuGet.Frameworks" /&gt;
-    /// &lt;PackageReference Include="NuGet.Frameworks" Version="6.0.0"&gt;
-    /// &lt;PackageReference Include="NuGet.Frameworks"
-    ///                   Version="6.0.0" /&gt;
-    /// </code>
-    ///
-    /// <para>
-    /// <b>Important limitations:</b>
-    /// </para>
-    /// <list type="bullet">
-    ///   <item>
-    ///     <description>
-    ///       Does not support multiline package reference elements.
-    ///     </description>
-    ///   </item>
-    ///   <item>
-    ///     <description>
-    ///       Does not match references using single-quoted attributes.
-    ///     </description>
-    ///   </item>
-    ///   <item>
-    ///     <description>
-    ///       Does not match versions specified using child
-    ///       <c>&lt;Version&gt;</c> elements.
-    ///     </description>
-    ///   </item>
-    ///   <item>
-    ///     <description>
-    ///       Does not validate that a version is a valid NuGet version.
-    ///     </description>
-    ///   </item>
-    ///   <item>
-    ///     <description>
-    ///       Does not require the matched element to be the only
-    ///       content on the line after the optional trailing whitespace.
-    ///     </description>
-    ///   </item>
-    ///   <item>
-    ///     <description>
-    ///       Does not validate XML syntax or distinguish XML markup
-    ///       from text inside comments.
-    ///     </description>
-    ///   </item>
-    /// </list>
     /// </remarks>
     private static readonly Regex explicitPinPattern = new(
-        @"^[ \t]*<PackageReference\s+(?=[^>\r\n]*\bInclude=""NuGet\.Frameworks"")(?=[^>\r\n]*\bVersion=""[^""]+"")[^>\r\n]*/>[ \t]*\r?\n?",
+        @"^[ \t]*<PackageReference\b(?=[^\r\n>]*[ \t]Include=""NuGet\.Frameworks"")(?=[^\r\n>]*[ \t]Version=""[^""]+"")[^\r\n>]*?/>[ \t]*(?:\r?\n|$)",
         RegexOptions.Compiled | RegexOptions.Multiline);
 
     /// <inheritdoc />
     public Task ExecuteAsync(MigrationContext context, Summary summary)
     {
-        foreach (var path in MigrationFileOperations.EnumerateFiles(context.RootDirectory, "*.csproj"))
+        Version.TryParse(context.FalloutVersion, out var versionGate);
+
+        if (versionGate < Version.Parse("10.5.0"))
+        {
+            return Task.CompletedTask;
+        }
+
+        foreach (var path in MigrationFileOperations.EnumerateFiles(context.RootDirectory, "_build.csproj"))
         {
             MigrationFileOperations.ApplyRewrite(context, path, Rewrite, summary);
         }
