@@ -30,7 +30,7 @@ public class RemoveNugetFrameworkPinStepSpecs : IDisposable
     public async Task Explicit_nuget_framework_pin_is_removed()
     {
         // Arrange
-        var project = tempDirectory / "Library.csproj";
+        var project = tempDirectory / "_build.csproj";
         project.WriteAllText(
             """
             <Project Sdk="Microsoft.NET.Sdk">
@@ -90,7 +90,7 @@ public class RemoveNugetFrameworkPinStepSpecs : IDisposable
     public async Task Nuget_framework_reference_without_version_is_left_unchanged()
     {
         // Arrange
-        var project = tempDirectory / "Library.csproj";
+        var project = tempDirectory / "_build.csproj";
         const string input =
             """
             <Project Sdk="Microsoft.NET.Sdk">

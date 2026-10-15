@@ -28,7 +28,7 @@ public class RemoveRelatedNugetPinsStepSpecs : IDisposable
         string falloutVersion)
     {
         // Arrange
-        var project = tempDirectory / "Library.csproj";
+        var project = tempDirectory / "_build.csproj";
         project.WriteAllText(
             $"""
             <Project Sdk="Microsoft.NET.Sdk">
@@ -60,7 +60,7 @@ public class RemoveRelatedNugetPinsStepSpecs : IDisposable
     public async Task Explicit_related_nuget_pin_is_left_unchanged_before_v11(string falloutVersion)
     {
         // Arrange
-        var project = tempDirectory / "Library.csproj";
+        var project = tempDirectory / "_build.csproj";
         const string input =
             """
             <Project Sdk="Microsoft.NET.Sdk">
