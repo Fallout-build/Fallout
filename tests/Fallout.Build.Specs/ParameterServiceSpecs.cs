@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Fallout.Build.Execution;
 using Fallout.Common.Execution;
 using Fallout.Common.IO;
 using FluentAssertions;
+using Serilog;
+using Serilog.Core;
+using Serilog.Events;
 using Xunit;
 using static Fallout.Common.Utilities.ReflectionUtility;
 
@@ -182,12 +184,11 @@ public class ParameterServiceSpecs
         var environmentVariables = new Dictionary<string, string> { ["HOST"] = "M2" };
 
         // Act
-        var (value, error) = ResolveWithEnvironment("Host", typeof(Host), environmentVariables);
+        var (value, warnings) = ResolveWithEnvironment("Host", typeof(Host), environmentVariables);
 
         // Assert
         value.Should().BeNull();
-        error.Should().Contain("could not resolve 'Host'");
-        error.Should().Contain("M2");
+        warnings.Should().ContainSingle().Which.Should().Contain("Host").And.Contain("M2");
     }
 
     [Fact]
@@ -197,12 +198,11 @@ public class ParameterServiceSpecs
         var environmentVariables = new Dictionary<string, string> { ["VERBOSITY"] = "bogus" };
 
         // Act
-        var (value, error) = ResolveWithEnvironment("Verbosity", typeof(Verbosity?), environmentVariables);
+        var (value, warnings) = ResolveWithEnvironment("Verbosity", typeof(Verbosity?), environmentVariables);
 
         // Assert
         value.Should().BeNull();
-        error.Should().Contain("could not resolve 'Verbosity'");
-        error.Should().Contain("bogus");
+        warnings.Should().ContainSingle().Which.Should().Contain("Verbosity").And.Contain("bogus");
     }
 
     [Fact]
@@ -216,11 +216,11 @@ public class ParameterServiceSpecs
         };
 
         // Act
-        var (value, error) = ResolveWithEnvironment("Verbosity", typeof(Verbosity?), environmentVariables);
+        var (value, warnings) = ResolveWithEnvironment("Verbosity", typeof(Verbosity?), environmentVariables);
 
         // Assert
         value.Should().BeNull();
-        error.Should().Contain("multiple values are provided");
+        warnings.Should().ContainSingle().Which.Should().Contain("multiple values are provided");
     }
 
     [Theory]
@@ -250,11 +250,11 @@ public class ParameterServiceSpecs
         };
 
         // Act
-        var (value, error) = ResolveWithEnvironment("Host", typeof(Host), environmentVariables);
+        var (value, warnings) = ResolveWithEnvironment("Host", typeof(Host), environmentVariables);
 
         // Assert
         value.Should().BeOfType<Terminal>();
-        error.Should().BeEmpty();
+        warnings.Should().BeEmpty();
     }
 
     [Fact]
@@ -268,35 +268,53 @@ public class ParameterServiceSpecs
         };
 
         // Act
-        var (value, error) = ResolveWithEnvironment("Host", typeof(Host), environmentVariables);
+        var (value, warnings) = ResolveWithEnvironment("Host", typeof(Host), environmentVariables);
 
         // Assert
         value.Should().BeOfType<Terminal>();
-        error.Should().BeEmpty();
+        warnings.Should().BeEmpty();
     }
 
-    private (object Value, string Error) ResolveWithEnvironment(
+    /// <summary>
+    /// Resolves one parameter from the given environment and returns it together with the warnings
+    /// logged for that parameter. Swaps the process-wide logger for the duration of the call, so
+    /// the sink keeps only events tagged with the parameter name. Test classes outside the shared
+    /// collection run in parallel and would otherwise leak their log output into the result.
+    /// </summary>
+    private (object Value, IReadOnlyList<string> Warnings) ResolveWithEnvironment(
         string parameterName,
         Type destinationType,
         IDictionary<string, string> environmentVariables)
     {
         var service = GetService(environmentVariables: environmentVariables);
-        var original = Console.Error;
-        using var writer = new StringWriter();
+        var sink = new ParameterWarningSink(parameterName);
+        var original = Log.Logger;
 
-        object value;
         try
         {
-            // Parameters resolve before Serilog is configured, so warnings go to standard error.
-            Console.SetError(writer);
-            value = service.GetParameter(parameterName, destinationType, separator: null);
+            Log.Logger = new LoggerConfiguration().WriteTo.Sink(sink, LogEventLevel.Warning).CreateLogger();
+            var value = service.GetParameter(parameterName, destinationType, separator: null);
+            return (value, sink.Messages);
         }
         finally
         {
-            Console.SetError(original);
+            Log.Logger = original;
         }
+    }
 
-        return (value, writer.ToString());
+    private class ParameterWarningSink(string parameterName) : ILogEventSink
+    {
+        public List<string> Messages { get; } = new();
+
+        public void Emit(LogEvent logEvent)
+        {
+            if (logEvent.Properties.TryGetValue("VariableName", out var property) &&
+                property is ScalarValue { Value: string name } &&
+                name == parameterName)
+            {
+                Messages.Add(logEvent.RenderMessage());
+            }
+        }
     }
 
 #pragma warning disable CS0649

@@ -191,9 +191,9 @@ internal partial class ParameterService(
         {
             var trimmedVariableName = GetTrimmedName(variableName);
 
-            // Prefixed names are matched before the bare parameter name. FALLOUT_HOST would
-            // otherwise be shadowed by an unrelated bare HOST, which is the hostname variable
-            // every Unix shell exports.
+            // Prefixed names are matched before the bare parameter name. Otherwise an unrelated
+            // bare variable would shadow the prefixed one, for example the HOST variable that login
+            // shells on openSUSE export would shadow FALLOUT_HOST.
             var prefixedValues = Variables
                 .Where(x => GetTrimmedName(x.Key).EqualsOrdinalIgnoreCase($"FALLOUT{trimmedVariableName}") ||
                             GetTrimmedName(x.Key).EqualsOrdinalIgnoreCase($"NUKE{trimmedVariableName}")).ToList();
@@ -204,7 +204,7 @@ internal partial class ParameterService(
 
             if (alternativeValues.Count > 1)
             {
-                ReportWarning($"could not resolve '{variableName}' since multiple values are provided");
+                Log.Warning("Could not resolve {VariableName} since multiple values are provided", variableName);
             }
 
             if (alternativeValues.Count == 1)
@@ -221,25 +221,19 @@ internal partial class ParameterService(
         {
             return Convert(value, destinationType, separator, booleanDefault: false);
         }
-        catch (Exception exception)
+        catch (Exception ex)
         {
-            // A value the build cannot read must not abort the process. Built-in parameters are
-            // resolved inside FalloutBuild's static constructor, so throwing here kills the build
-            // before the consumer can act on it and before any target runs.
-            ReportWarning(
-                $"could not resolve '{variableName}' from environment variable value '{value}'. " +
-                $"Ignoring it and using the default. {exception.Message}");
+            // The environment is shared with the operating system, so an unrelated variable such as
+            // the Unix HOST can match a parameter by accident. Built-in parameters are also resolved
+            // in FalloutBuild's static constructor, where throwing aborts the process before any
+            // target runs. Warn and use the default instead.
+            Log.Warning(
+                "Could not resolve {VariableName} from environment variable value {Value}. Using the default value instead. {Reason}",
+                variableName,
+                value,
+                ex.Message);
 
             return destinationType.GetDefaultValue();
         }
-    }
-
-    /// <summary>
-    /// Writes a warning to standard error. Parameters are resolved before Serilog is configured,
-    /// so anything sent to the log is never shown.
-    /// </summary>
-    private static void ReportWarning(string message)
-    {
-        Console.Error.WriteLine($"warning: {message}");
     }
 }
