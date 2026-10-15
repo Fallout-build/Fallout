@@ -5,8 +5,7 @@ using Fallout.Migrate.Common;
 namespace Fallout.Migrate.Steps;
 
 /// <summary>
-/// Removes explicit <c>NuGet.Framework</c>, <c>NuGet.Protocol</c>, <c>NuGet.Packaging</c>, and
-/// <c>NuGet.Resolver</c> package pins from project files. The pins are no longer needed.
+/// Removes explicit <c>NuGet.Frameworks</c> package pins from project files. The pins are no longer needed.
 /// </summary>
 internal sealed class RemoveNugetFrameworkPinStep : IMigrationStep
 {
