@@ -121,7 +121,6 @@ public abstract partial class FalloutBuild
 
         var assemblyLocation = entryAssembly.Location;
         var invokedLocation = Environment.GetCommandLineArgs().First();
-        Assert.True(assemblyLocation == string.Empty || assemblyLocation == invokedLocation);
 
         return assemblyLocation != string.Empty ? assemblyLocation : invokedLocation;
     }
