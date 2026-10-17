@@ -1,0 +1,371 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Fallout-build/Fallout/main/src/Fallout.Tooling.Generator/schema.json",
+  "references": [
+    "https://www.jetbrains.com/help/resharper/InspectCode.html#//article[@class='article']",
+    "https://www.jetbrains.com/help/resharper/CleanupCode.html#//article[@class='article']"
+  ],
+  "name": "ReSharper",
+  "officialUrl": "https://www.jetbrains.com/help/resharper/ReSharper_Command_Line_Tools.html",
+  "help": "The ReSharper command line tools run ReSharper's code inspections and code cleanup outside the IDE. They ship as the <c>jb</c> global .NET tool (package <c>JetBrains.ReSharper.GlobalTools</c>).<para/>The tool path is resolved in this order: the <c>RESHARPER_EXE</c> environment variable, a <c>jb</c> executable on the PATH (for example, after <c>dotnet tool install --global JetBrains.ReSharper.GlobalTools</c>), and then the <c>JetBrains.ReSharper.GlobalTools</c> package in the NuGet packages folder (add it as a <c>PackageDownload</c> item to the build project).",
+  "nugetPackageId": "JetBrains.ReSharper.GlobalTools",
+  "packageExecutable": "JetBrains.CommandLine.Products.dll",
+  "tasks": [
+    {
+      "help": "InspectCode runs ReSharper's code inspections on a solution or project and writes the issues it finds to a report. The default report format is SARIF.",
+      "postfix": "InspectCode",
+      "commonPropertySets": [
+        "resharper",
+        "auxiliary",
+        "msbuild",
+        "include-exclude"
+      ],
+      "definiteArgument": "inspectcode",
+      "officialUrl": "https://www.jetbrains.com/help/resharper/InspectCode.html",
+      "settingsClass": {
+        "properties": [
+          {
+            "name": "TargetPath",
+            "type": "string",
+            "format": "{value}",
+            "position": 1,
+            "createOverload": true,
+            "help": "The solution or project file to inspect."
+          },
+          {
+            "name": "Output",
+            "type": "string",
+            "format": "--output={value}",
+            "help": "The report file. Use <c>-</c> to write the report to stdout."
+          },
+          {
+            "name": "Stdout",
+            "type": "bool",
+            "format": "--stdout",
+            "help": "Write the report to stdout."
+          },
+          {
+            "name": "Format",
+            "type": "ReSharperFormat",
+            "format": "--format={value}",
+            "help": "The report format. The default is <c>Sarif</c>."
+          },
+          {
+            "name": "Jobs",
+            "type": "int",
+            "format": "--jobs={value}",
+            "help": "Run up to this many jobs in parallel. <c>0</c> means as many as possible, which is the default."
+          },
+          {
+            "name": "AbsolutePaths",
+            "type": "bool",
+            "format": "--absolute-paths",
+            "help": "Write absolute paths to the report. By default, paths are relative to the solution file."
+          },
+          {
+            "name": "NoSwea",
+            "type": "bool",
+            "format": "--no-swea",
+            "help": "Turn off solution-wide analysis."
+          },
+          {
+            "name": "Swea",
+            "type": "bool",
+            "format": "--swea",
+            "help": "Turn on solution-wide analysis."
+          },
+          {
+            "name": "Project",
+            "type": "string",
+            "format": "--project={value}",
+            "help": "Inspect only the projects that match this wildcard, for example <c>--project=*Billing</c>. By default, all projects in the solution are inspected."
+          },
+          {
+            "name": "TargetFramework",
+            "type": "string",
+            "format": "--target-framework={value}",
+            "help": "Inspect for one target framework only, for example <c>net10.0</c>. By default, all frameworks are inspected."
+          },
+          {
+            "name": "Severity",
+            "type": "ReSharperSeverity",
+            "format": "--severity={value}",
+            "help": "The lowest severity to report. The default is <c>SUGGESTION</c>."
+          },
+          {
+            "name": "DumpIssuesTypes",
+            "type": "bool",
+            "format": "--dumpIssuesTypes",
+            "help": "Write all known <a href=\"https://www.jetbrains.com/help/resharper/Code_Analysis__Code_Inspections.html\">code inspections</a> to the report instead of inspecting code. Use it without a target path."
+          }
+        ]
+      }
+    },
+    {
+      "help": "CleanupCode runs a code cleanup profile on a solution or project, so that formatting and code style issues are fixed across the code base.",
+      "postfix": "CleanupCode",
+      "commonPropertySets": [
+        "resharper",
+        "auxiliary",
+        "msbuild",
+        "include-exclude"
+      ],
+      "definiteArgument": "cleanupcode",
+      "officialUrl": "https://www.jetbrains.com/help/resharper/CleanupCode.html",
+      "settingsClass": {
+        "properties": [
+          {
+            "name": "TargetPath",
+            "type": "string",
+            "format": "{value}",
+            "position": 1,
+            "createOverload": true,
+            "help": "The solution or project file to clean up."
+          },
+          {
+            "name": "Profile",
+            "type": "string",
+            "format": "--profile={value}",
+            "help": "The name of the code cleanup profile to run. By default, the <a href=\"https://www.jetbrains.com/help/resharper/Code_Cleanup__Index.html#profiles\">Built-in: Full Cleanup</a> profile is used."
+          }
+        ]
+      }
+    }
+  ],
+  "commonTaskPropertySets": {
+    "resharper": [
+      {
+        "name": "Settings",
+        "type": "string",
+        "format": "--settings={value}",
+        "help": "A <c>.DotSettings</c> file whose settings override all other settings layers. By default, the <a href=\"https://www.jetbrains.com/help/resharper/Sharing_Configuration_Options.html#solution-team-shared-layer\">team-shared layer</a> of the solution is used if it exists."
+      },
+      {
+        "name": "DisableSettingsLayers",
+        "type": "List<ReSharperSettingsLayers>",
+        "format": "--disable-settings-layers={value}",
+        "separator": ";",
+        "help": "The <a href=\"https://www.jetbrains.com/help/resharper/Sharing_Configuration_Options.html#layers\">settings layers</a> to turn off."
+      },
+      {
+        "name": "NoBuiltinSettings",
+        "type": "bool",
+        "format": "--no-buildin-settings",
+        "help": "Turn off all global, solution and project settings layers. Same as <c>--disable-settings-layers=GlobalAll;GlobalPerProduct;SolutionShared;SolutionPersonal;ProjectShared;ProjectPersonal</c>."
+      },
+      {
+        "name": "Extensions",
+        "type": "List<string>",
+        "format": "--eXtensions={value}",
+        "separator": ";",
+        "help": "ReSharper extensions to install and use. Available extensions are listed in the <a href=\"https://plugins.jetbrains.com/resharper\">plugin repository</a>."
+      },
+      {
+        "name": "Sources",
+        "type": "List<string>",
+        "format": "--source={value}",
+        "separator": ";",
+        "help": "The sources to install extensions from."
+      }
+    ],
+    "auxiliary": [
+      {
+        "name": "CachesHome",
+        "type": "string",
+        "format": "--caches-home={value}",
+        "help": "The directory for ReSharper's caches."
+      },
+      {
+        "name": "CreateConfigFile",
+        "type": "string",
+        "format": "--config-create={value}",
+        "help": "Save the current parameters to this configuration file."
+      },
+      {
+        "name": "ConfigFile",
+        "type": "string",
+        "format": "--config={value}",
+        "help": "Load the parameters from this configuration file."
+      },
+      {
+        "name": "Verbosity",
+        "type": "ReSharperVerbosity",
+        "format": "--verbosity={value}",
+        "help": "How much information to write to the console. The default is <c>INFO</c>."
+      },
+      {
+        "name": "Debug",
+        "type": "bool",
+        "format": "--debug",
+        "help": "Show debugging messages."
+      },
+      {
+        "name": "NoUpdates",
+        "type": "bool",
+        "format": "--no-updates",
+        "help": "Don't check for updates."
+      },
+      {
+        "name": "LogLevel",
+        "type": "ReSharperVerbosity",
+        "format": "--LogLevel={value}",
+        "help": "The logging level."
+      },
+      {
+        "name": "LogFile",
+        "type": "string",
+        "format": "--LogFile={value}",
+        "help": "The log file."
+      },
+      {
+        "name": "LogFolder",
+        "type": "string",
+        "format": "--LogFolder={value}",
+        "help": "The log folder."
+      },
+      {
+        "name": "Measure",
+        "type": "ReSharperMeasure",
+        "format": "--measure={value}",
+        "help": "Measure the tool's own performance."
+      }
+    ],
+    "msbuild": [
+      {
+        "name": "Properties",
+        "type": "Dictionary<string, string>",
+        "format": "--properties:{key}={value}",
+        "help": "MSBuild properties that apply to all analyzed projects."
+      },
+      {
+        "name": "Toolset",
+        "type": "string",
+        "format": "--toolset={value}",
+        "help": "The MSBuild toolset version, for example <c>17.0</c>. By default, the highest available version is used."
+      },
+      {
+        "name": "ToolsetPath",
+        "type": "string",
+        "format": "--toolset-path={value}",
+        "help": "The path to the MSBuild executable or DLL."
+      },
+      {
+        "name": "DotNetCore",
+        "type": "string",
+        "format": "--dotnetcore={value}",
+        "help": "The path to the <c>dotnet</c> executable. By default, it is detected automatically."
+      },
+      {
+        "name": "DotNetCoreSdk",
+        "type": "string",
+        "format": "--dotnetcoresdk={value}",
+        "help": "The .NET SDK version that provides MSBuild, for example <c>10.0.100</c>."
+      },
+      {
+        "name": "MonoPath",
+        "type": "string",
+        "format": "--mono={value}",
+        "help": "The path to Mono. Leave it empty to ignore Mono."
+      },
+      {
+        "name": "ReferenceTargets",
+        "type": "List<string>",
+        "format": "--targets-for-references={value}",
+        "separator": ";",
+        "help": "MSBuild targets that are run to get the referenced assemblies of projects."
+      },
+      {
+        "name": "ItemTargets",
+        "type": "List<string>",
+        "format": "--targets-for-items={value}",
+        "separator": ";",
+        "help": "MSBuild targets that are run to get other items of projects, for example <c>Compile</c> items."
+      },
+      {
+        "name": "Build",
+        "type": "bool",
+        "format": "--build",
+        "help": "Build the solution before processing. This is the default."
+      },
+      {
+        "name": "NoBuild",
+        "type": "bool",
+        "format": "--no-build",
+        "help": "Don't build the solution before processing. Use it when the solution is already built."
+      },
+      {
+        "name": "Target",
+        "type": "string",
+        "format": "--target={value}",
+        "help": "The MSBuild target to run before processing. The default is <c>Build</c>."
+      }
+    ],
+    "include-exclude": [
+      {
+        "name": "Includes",
+        "type": "List<string>",
+        "format": "--include={value}",
+        "separator": ";",
+        "help": "Process only the files that match these relative paths or wildcards (<c>*</c> and <c>**</c>)."
+      },
+      {
+        "name": "Excludes",
+        "type": "List<string>",
+        "format": "--exclude={value}",
+        "separator": ";",
+        "help": "Skip the files that match these relative paths or wildcards (<c>*</c> and <c>**</c>). <c>--exclude</c> wins over <c>--include</c>."
+      }
+    ]
+  },
+  "enumerations": [
+    {
+      "name": "ReSharperSettingsLayers",
+      "values": [
+        "GlobalAll",
+        "GlobalPerProduct",
+        "SolutionShared",
+        "SolutionPersonal",
+        "ProjectShared",
+        "ProjectPersonal"
+      ]
+    },
+    {
+      "name": "ReSharperFormat",
+      "values": [
+        "Xml",
+        "Html",
+        "Text",
+        "Sarif"
+      ]
+    },
+    {
+      "name": "ReSharperVerbosity",
+      "values": [
+        "OFF",
+        "FATAL",
+        "ERROR",
+        "WARN",
+        "INFO",
+        "VERBOSE",
+        "TRACE"
+      ]
+    },
+    {
+      "name": "ReSharperSeverity",
+      "values": [
+        "INFO",
+        "HINT",
+        "SUGGESTION",
+        "WARNING",
+        "ERROR"
+      ]
+    },
+    {
+      "name": "ReSharperMeasure",
+      "values": [
+        "MEMORY",
+        "SAMPLING",
+        "TIMELINE"
+      ]
+    }
+  ]
+}

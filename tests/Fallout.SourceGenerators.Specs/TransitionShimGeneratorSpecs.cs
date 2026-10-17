@@ -124,6 +124,67 @@ public class TransitionShimGeneratorSpecs
         result.Diagnostics.Should().BeEmpty();
     }
 
+    // An [Experimental] type is new surface without NUKE-era consumers. A shim deriving from it
+    // would fail the shim project's build with the experimental diagnostic, so it gets none.
+    [Fact]
+    public void SkipsExperimentalTypesSilently()
+    {
+        var canonical = CompileCanonicalAssembly("""
+                                                 namespace System.Diagnostics.CodeAnalysis
+                                                 {
+                                                     [System.AttributeUsage(System.AttributeTargets.All)]
+                                                     public sealed class ExperimentalAttribute : System.Attribute
+                                                     {
+                                                         public ExperimentalAttribute(string diagnosticId) {}
+                                                     }
+                                                 }
+
+                                                 namespace Fallout.Common
+                                                 {
+                                                     [System.Diagnostics.CodeAnalysis.Experimental("FALLOUT999")]
+                                                     public interface INewSurface { }
+
+                                                     [System.Diagnostics.CodeAnalysis.Experimental("FALLOUT999")]
+                                                     public sealed class NewSealedSurface { }
+
+                                                     public class Stable
+                                                     {
+                                                         public Stable() {}
+
+                                                         [System.Diagnostics.CodeAnalysis.Experimental("FALLOUT999")]
+                                                         public class NewNested { public NewNested() {} }
+                                                     }
+                                                 }
+                                                 """);
+
+        var shimCompilation = CSharpCompilation.Create("Nuke.Experimental",
+            new[]
+            {
+                CSharpSyntaxTree.ParseText("""
+                                           [assembly: Fallout.Migrate.Shims.ShimAllPublicTypesUnder("Fallout.Common", "Nuke.Common")]
+                                           """)
+            },
+            NetStandard20.References.All
+                .Concat(new[]
+                {
+                    canonical
+                }),
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+        var driver = CSharpGeneratorDriver.Create(new TransitionShimGenerator());
+        var result = driver.RunGenerators(shimCompilation).GetRunResult();
+
+        // Only the stable type gets a shim, and it leaves out the experimental nested type.
+        var shims = result.GeneratedTrees
+            .Where(t => !t.FilePath.EndsWith("ShimAllPublicTypesUnderAttribute.g.cs", StringComparison.Ordinal))
+            .ToList();
+        shims.Should().ContainSingle();
+        shims[0].ToString().Should().Contain("class Stable").And.NotContain("NewNested");
+
+        // No SHIM001 for the sealed experimental class either.
+        result.Diagnostics.Should().BeEmpty();
+    }
+
     [Fact]
     public void EmitsNothingWhenNoMarkerAttributePresent()
     {

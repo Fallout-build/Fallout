@@ -50,6 +50,9 @@ Status values: **Experimental** (live, opt-in), **Promoted** (attribute removed,
 | ID | Surface | Introduced | Status | Notes |
 |----|---------|------------|--------|-------|
 | `FALLOUT001` | `Fallout.Components.IPublish.PublishTargets` / `.PublishTo` (multi-channel publishing) | 10.5.x | Experimental | Fan a single `Pack` output across multiple feeds with per-feed package-ID routing (`PublishTarget`). Shape may change while the CD model firms up (epic #332). Promote by deleting the attribute once `ReleaseChannel`/`DeploymentTarget` (#334) settle. |
+| `FALLOUT005` | `Fallout.Components.IInspect`, `InspectReport`, `InspectRuleTable`, `InspectFinding`, `InspectBucket` (inspection triage) | 10.5.x | Experimental | `Inspect` target: one Roslyn SARIF error log per project plus ReSharper `inspectcode`, merged and sorted into triage buckets (`inspect.sarif`, `inspect.tsv`, `inspect.md`). The rule table and bucket names may change after use in more repositories. |
+
+`FALLOUT002` to `FALLOUT004` are taken by warnings that are not experimental APIs: the legacy environment variable warning, the legacy keychain warning and the `fallout-migrate` analyzer. Allocate the next experimental ID after the highest `FALLOUT0xx` used anywhere in the repository.
 
 <!--
 Allocation example (do not uncomment unless a real API is marked):

@@ -324,6 +324,13 @@ public sealed class TransitionShimGenerator : IIncrementalGenerator
             return;
         }
 
+        // An [Experimental] type is new surface with no NUKE-era consumers to bridge, and a
+        // shim that derives from it would trip the experimental diagnostic in the shim project.
+        if (IsExperimental(type))
+        {
+            return;
+        }
+
         var fqn = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         if (ambiguousFqns.Contains(fqn))
         {
@@ -358,6 +365,10 @@ public sealed class TransitionShimGenerator : IIncrementalGenerator
         var source = EmitTopLevelShim(type, marker);
         ctx.AddSource(hint, source);
     }
+
+    private static bool IsExperimental(INamedTypeSymbol type)
+        => type.GetAttributes().Any(x =>
+            x.AttributeClass?.ToDisplayString() == "System.Diagnostics.CodeAnalysis.ExperimentalAttribute");
 
     private static bool IsLanguageLimitKind(string skipReason)
         => skipReason is "enum" or "delegate" or "struct";
@@ -531,9 +542,9 @@ public sealed class TransitionShimGenerator : IIncrementalGenerator
                 continue;
             }
 
-            if (ClassifyForSkip(nested) is not null)
+            if (ClassifyForSkip(nested) is not null || IsExperimental(nested))
             {
-                continue; // skip Hard-tier nesteds silently for now
+                continue; // skip Hard-tier and experimental nesteds silently for now
             }
 
             sb.AppendLine();
