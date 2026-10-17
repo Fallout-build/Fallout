@@ -20,6 +20,7 @@
     <PackageVersion Include="Azure.Security.KeyVault.Secrets" Version="4.8.0" />
     <!-- Fallout.Common GitHubTasks + Fallout.Components ICreateGitHubRelease -->
     <PackageVersion Include="Octokit" Version="14.0.0" />
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="8.0.2" />
     <!-- Fallout.Utilities.Text.Yaml: SerializerBuilder / DeserializerBuilder -->
     <PackageVersion Include="YamlDotNet" Version="16.3.0" />
     <!-- Build code calls Serilog.Log directly -->

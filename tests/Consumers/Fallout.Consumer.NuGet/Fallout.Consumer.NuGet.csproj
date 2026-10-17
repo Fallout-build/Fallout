@@ -28,6 +28,7 @@
     <PackageReference Include="Fallout.Build" Version="11.0.8" />
     <PackageReference Include="Fallout.SolutionModel" Version="11.0.8" />
     <PackageReference Include="Fallout.Components" Version="11.0.8" />
+    <PackageReference Include="System.Security.Cryptography.Xml" VersionOverride="10.0.13" />
   </ItemGroup>
 
 </Project>
