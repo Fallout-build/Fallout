@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Fallout.Common.IO;
 
 namespace Fallout.Migrate.Common;
@@ -45,18 +46,51 @@ internal static class MigrationFileOperations
         Func<string, RewriteResult> rewriter,
         Summary summary)
     {
-        string original;
+        if (TryRead(context, path, summary, out string original))
+        {
+            ApplyRewrite(context, path, original, rewriter, summary);
+        }
+    }
+
+    /// <summary>
+    /// Reads a file and reports an unreadable file as a warning.
+    /// </summary>
+    /// <remarks>
+    /// Only file access failures are handled here: an <see cref="IOException"/>, such as a missing file,
+    /// and an <see cref="UnauthorizedAccessException"/>, such as a directory or a denied permission.
+    /// Exceptions from rewriting or writing a file propagate to the caller.
+    /// A failed read must be skipped, not classified as an empty file.
+    /// </remarks>
+    public static bool TryRead(MigrationContext context, AbsolutePath path, Summary summary, out string content)
+    {
         try
         {
-            original = path.ReadAllText();
+            // Not AbsolutePath.ReadAllText: it throws an ArgumentException for a missing file before reading.
+            content = File.ReadAllText(path, Encoding.UTF8);
+            return true;
         }
-        catch (IOException ex)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             summary.Warnings.Add($"could not read {RelativePath(context.RootDirectory, path)}: {ex.Message}");
-            return;
+            content = string.Empty;
+            return false;
         }
+    }
 
-        var result = rewriter(original);
+    /// <summary>
+    /// Rewrites previously read content, records the edits, and writes them unless this is a dry run.
+    /// </summary>
+    /// <remarks>
+    /// Use this overload when classification and rewriting must use the same file contents.
+    /// </remarks>
+    public static void ApplyRewrite(
+        MigrationContext context,
+        AbsolutePath path,
+        string original,
+        Func<string, RewriteResult> rewriter,
+        Summary summary)
+    {
+        RewriteResult result = rewriter(original);
         if (result.EditCount == 0)
         {
             return;

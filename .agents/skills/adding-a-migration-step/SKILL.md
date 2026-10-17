@@ -6,12 +6,12 @@ description: How to make fallout-migrate handle a new rename, removal, or rewrit
 `fallout-migrate` runs a fixed, ordered list of `IMigrationStep` implementations,
 built in `src/Fallout.Migrate/Migration.cs`. A **step is one operation over one
 set of files**, and it owns the rewrite rules for those files.
-`RewriteCsprojsStep` holds the rules for `*.csproj`; `RewriteCsFilesStep` holds
+`RewriteCsprojsStep` holds the rules for `*.csproj` and `*.props`; `RewriteCsFilesStep` holds
 the rules for `*.cs`.
 
 ## Adding a new rename, removal, or rewrite
 
-1. Find the step for that file type — `RewriteCsprojsStep` for `*.csproj`,
+1. Find the step for that file type — `RewriteCsprojsStep` for `*.csproj` and `*.props`,
    `RewriteCsFilesStep` for `*.cs`, `RewriteBootstrapScriptsStep` for the
    bootstrap scripts.
 2. Add a `private static readonly Regex` field to that step, with a comment
