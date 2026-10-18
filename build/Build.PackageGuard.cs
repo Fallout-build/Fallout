@@ -39,10 +39,13 @@ partial class Build
             var generateReports = IsOnLongLivedBranch;
 
             if (generateReports)
+            {
                 PackageGuardDirectory.CreateOrCleanDirectory();
+            }
 
             PackageGuardTasks.PackageGuard(_ => _
                 .SetProjectPath(Solution.Path)
+                .EnableUseCaching()
                 .SetGitHubApiKey(From<ICreateGitHubRelease>().GitHubToken)
                 .When(generateReports, _ => _
                     .SetReportRiskPath(PackageGuardSarifFile)

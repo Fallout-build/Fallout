@@ -16,6 +16,8 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 3
     allow:
       # Test-only
       - dependency-name: "coverlet.msbuild"
@@ -66,12 +68,16 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 3
 
   # GitHub Actions (.github/workflows/*.yml)
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 3
     groups:
       github-actions-dependencies:
         patterns:
