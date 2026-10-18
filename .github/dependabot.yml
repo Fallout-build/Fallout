@@ -40,6 +40,10 @@ updates:
       - dependency-name: "Spectre.Console.Cli"
       - dependency-name: "Microsoft.Extensions.DependencyInjection"
       - dependency-name: "JetBrains.Annotations"
+    ignore:
+      # 3.4.0 is deprecated and pulls in Verify 33, which fails the build (SponsorCheck SC021).
+      - dependency-name: "Verify.DiffPlex"
+        versions: [">=3.4.0"]
     groups:
       test-dependencies:
         patterns:
