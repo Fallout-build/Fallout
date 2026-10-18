@@ -1,6 +1,7 @@
 using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Fallout.Common.IO;
 using Fallout.Migrate.Common;
 
 namespace Fallout.Migrate.Steps;
@@ -77,19 +78,43 @@ internal sealed class BumpDotNetVersionStep : IMigrationStep
     /// <inheritdoc />
     public Task ExecuteAsync(MigrationContext context, Summary summary)
     {
-        foreach (var path in MigrationFileOperations.EnumerateFiles(context.RootDirectory, "_build.csproj"))
+        BumpBuildProjects(context, summary);
+        BumpGlobalJsonFiles(context, summary);
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Bumps the target framework of every <c>_build.csproj</c> below the repository root.
+    /// </summary>
+    /// <param name="context">The current migration context.</param>
+    /// <param name="summary">The summary that records the edits.</param>
+    private static void BumpBuildProjects(MigrationContext context, Summary summary)
+    {
+        foreach (AbsolutePath path in MigrationFileOperations.EnumerateFiles(context.RootDirectory, "_build.csproj"))
         {
             MigrationFileOperations.ApplyRewrite(context, path, BumpTargetFramework, summary);
         }
+    }
 
-        foreach (var path in MigrationFileOperations.EnumerateFiles(context.RootDirectory, "global.json"))
+    /// <summary>
+    /// Bumps the SDK pin of every <c>global.json</c> below the repository root, and warns when a
+    /// kept <c>rollForward</c> policy only accepts the pinned feature band.
+    /// </summary>
+    /// <param name="context">The current migration context.</param>
+    /// <param name="summary">The summary that records the edits and warnings.</param>
+    private static void BumpGlobalJsonFiles(MigrationContext context, Summary summary)
+    {
+        foreach (AbsolutePath path in MigrationFileOperations.EnumerateFiles(context.RootDirectory, "global.json"))
         {
             MigrationFileOperations.ApplyRewrite(
                 context,
                 path,
                 original =>
                 {
-                    var result = BumpSdkVersion(original);
+                    RewriteResult result = BumpSdkVersionAndAddRollForward(original);
+
+                    // No edit means the SDK pin was already new enough. The migration did not change
+                    // the pin, so a kept policy is the user's own choice and needs no warning.
                     if (result.EditCount > 0 && KeptPinnedFeatureBandPolicy(result.Content) is { } policy)
                     {
                         summary.Warnings.Add(
@@ -103,8 +128,6 @@ internal sealed class BumpDotNetVersionStep : IMigrationStep
                 },
                 summary);
         }
-
-        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -114,7 +137,7 @@ internal sealed class BumpDotNetVersionStep : IMigrationStep
     /// <param name="content">The <c>global.json</c> content after the SDK pin was bumped.</param>
     private static string KeptPinnedFeatureBandPolicy(string content)
     {
-        var value = sdkRollForwardPattern.Match(content).Groups["value"];
+        Group value = sdkRollForwardPattern.Match(content).Groups["value"];
         return value.Success && Array.Exists(pinnedFeatureBandPolicies, p => p.Equals(value.Value, StringComparison.OrdinalIgnoreCase))
             ? value.Value
             : null;
@@ -150,7 +173,7 @@ internal sealed class BumpDotNetVersionStep : IMigrationStep
     /// </summary>
     /// <param name="original">The original <c>global.json</c> content.</param>
     /// <returns>The rewritten content and the number of edits made.</returns>
-    public static RewriteResult BumpSdkVersion(string original)
+    private static RewriteResult BumpSdkVersionAndAddRollForward(string original)
     {
         Match match = sdkVersionPattern.Match(original);
         if (!match.Success || !IsOlderThanMinimumSupportedSdk(match.Value))

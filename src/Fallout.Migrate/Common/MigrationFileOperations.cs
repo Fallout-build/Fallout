@@ -22,7 +22,7 @@ internal static class MigrationFileOperations
     {
         foreach (var file in rootDirectory.GetFiles(pattern, depth: int.MaxValue))
         {
-            if (IsIgnored(rootDirectory, file))
+            if (IsIgnoredFolder(rootDirectory, file))
             {
                 continue;
             }
@@ -92,10 +92,10 @@ internal static class MigrationFileOperations
     /// <see cref="EnumerateFiles"/>. Only the path below the root counts, so a repository cloned
     /// under a folder named <c>bin</c> or <c>obj</c> is still migrated.
     /// </summary>
-    private static bool IsIgnored(AbsolutePath rootDirectory, AbsolutePath path)
+    private static bool IsIgnoredFolder(AbsolutePath rootDirectory, AbsolutePath path)
     {
-        var segments = RelativePath(rootDirectory, path).Split('/');
-        for (var i = 0; i < segments.Length - 1; i++)
+        string[] segments = RelativePath(rootDirectory, path).Split('/');
+        for (int i = 0; i < segments.Length - 1; i++)
         {
             if (segments[i] is "bin" or "obj" or ".git")
             {

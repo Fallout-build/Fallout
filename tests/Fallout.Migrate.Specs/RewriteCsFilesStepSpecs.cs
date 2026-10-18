@@ -71,7 +71,7 @@ public class RewriteCsFilesStepSpecs : IDisposable
 
         // Assert
         summary.EditCount.Should().Be(1);
-        var buildCs = (tempDirectory / "Build.cs").ReadAllText();
+        string buildCs = (tempDirectory / "Build.cs").ReadAllText();
         buildCs.Should().Contain("using Acme.Nuke.Tools;");
         buildCs.Should().Contain("using Fallout.Common;");
     }
@@ -92,7 +92,7 @@ public class RewriteCsFilesStepSpecs : IDisposable
 
         // Assert
         summary.EditCount.Should().Be(1);
-        var buildCs = (tempDirectory / "Build.cs").ReadAllText();
+        string buildCs = (tempDirectory / "Build.cs").ReadAllText();
         buildCs.Should().Contain("using Acme.Nuke.Common.ProjectModel;");
         buildCs.Should().Contain("using Fallout.Solutions;");
     }
@@ -105,7 +105,7 @@ public class RewriteCsFilesStepSpecs : IDisposable
     {
         // Arrange
         const string input = "using Nuke.Common;";
-        var ignoredFile = tempDirectory / "src" / folder / "Gen.cs";
+        AbsolutePath ignoredFile = tempDirectory / "src" / folder / "Gen.cs";
         ignoredFile.WriteAllText(input, eofLineBreak: false);
 
         // Act
@@ -120,7 +120,7 @@ public class RewriteCsFilesStepSpecs : IDisposable
     public async Task Files_are_rewritten_when_the_repository_sits_under_a_bin_folder()
     {
         // Arrange
-        var repository = tempDirectory / "bin" / "repo";
+        AbsolutePath repository = tempDirectory / "bin" / "repo";
         (repository / "Build.cs").WriteAllText("using Nuke.Common;");
         var repositoryContext = new MigrationContext(repository, dryRun: false, TextWriter.Null);
 
