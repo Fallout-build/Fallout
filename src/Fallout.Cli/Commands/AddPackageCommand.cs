@@ -1,3 +1,4 @@
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Fallout.Common;
@@ -6,13 +7,14 @@ using Fallout.Common.IO;
 using Fallout.Common.Tooling;
 using Fallout.Common.Tools.DotNet;
 using Fallout.Solutions;
+using Microsoft.Build.Evaluation;
 
 namespace Fallout.Cli.Commands;
 
 /// <summary>
 /// <c>fallout :add-package</c>: adds (or upgrades) a NuGet package reference in the build project.
 /// </summary>
-internal sealed class AddPackageCommand(IConfigurationReader configuration, IPackageManager packages) : IFalloutCommand
+internal sealed class AddPackageCommand(IPackageManager packages) : IFalloutCommand
 {
     public string Name => "add-package";
 
@@ -31,8 +33,7 @@ internal sealed class AddPackageCommand(IConfigurationReader configuration, IPac
                  .ToString())
             .NotNull("packageVersion != null");
 
-        var configuration1 = configuration.Read(buildScript, evaluate: true);
-        var buildProjectFile = configuration1[ConfigurationReader.BuildProjectFileKey];
+        var buildProjectFile = FindBuildProject(rootDirectory);
         Host.Information($"Installing {packageId}/{packageVersion} to {buildProjectFile} ...");
         packages.AddOrReplacePackage(packageId, packageVersion, PackageManager.DownloadType, buildProjectFile);
         DotNetTasks.DotNet($"restore {buildProjectFile}");
@@ -48,5 +49,44 @@ internal sealed class AddPackageCommand(IConfigurationReader configuration, IPac
 
         Host.Information($"Done installing {packageId}/{packageVersion} to {buildProjectFile}");
         return 0;
+    }
+
+    internal static AbsolutePath FindBuildProject(AbsolutePath rootDirectory)
+    {
+        var buildProject = rootDirectory.GlobFiles("**/*.csproj")
+            .Where(x => HasMatchingRootDirectory(x, rootDirectory))
+            .OrderBy(x => x.ToString().Length)
+            .FirstOrDefault();
+
+        Assert.True(buildProject != null,
+            $"Could not find a build project with a FalloutRootDirectory property pointing to '{rootDirectory}'.");
+
+        return buildProject;
+    }
+
+    private static bool HasMatchingRootDirectory(AbsolutePath projectFile, AbsolutePath rootDirectory)
+    {
+        ProjectProperty rootDirectoryProperty;
+        try
+        {
+            rootDirectoryProperty = ProjectModelTasks.ParseProject(projectFile).NotNull()
+                .GetProperty("FalloutRootDirectory");
+        }
+        catch
+        {
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(rootDirectoryProperty?.EvaluatedValue))
+        {
+            return false;
+        }
+
+        var configuredRootDirectory = rootDirectoryProperty.EvaluatedValue;
+        var resolvedRootDirectory = Path.IsPathRooted(configuredRootDirectory)
+            ? (AbsolutePath)configuredRootDirectory
+            : projectFile.Parent / configuredRootDirectory;
+
+        return resolvedRootDirectory == rootDirectory;
     }
 }
