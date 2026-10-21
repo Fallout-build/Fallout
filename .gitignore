@@ -74,4 +74,3 @@ _dotTrace*
 
 # Claude Memory
 memory/
-.packageguard/*.bin
