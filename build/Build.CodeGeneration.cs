@@ -1,4 +1,5 @@
-﻿using Fallout.Common;
+﻿using System.Linq;
+using Fallout.Common;
 using Fallout.Common.IO;
 using Fallout.Common.Utilities.Collections;
 using static Fallout.CodeGeneration.CodeGenerator;
@@ -41,13 +42,18 @@ partial class Build
     // wrapper code. `Requires` is asserted for the whole scheduled plan before any target runs,
     // so the "start clean" check below still fires before GenerateTools regenerates anything;
     // the explicit re-check afterward catches drift with a message pointing at the fix.
+    //
+    // Only the tool specification directory is checked, not the whole working copy. Other tracked
+    // files change during a build (the .packageguard/*.bin cache files are rewritten by every
+    // PackageGuard run and committed on purpose), and they must not fail this gate.
     Target VerifyGeneratedTools => _ => _
-        .Requires(() => GitHasCleanWorkingCopy())
         .DependsOn(GenerateTools)
         .Executes(() =>
         {
+            var relativePath = RootDirectory.GetUnixRelativePathTo(SpecificationsDirectory);
+
             Assert.True(
-                GitHasCleanWorkingCopy(),
+                !Git($"status --short -- {relativePath}", logOutput: false).Any(),
                 "Generated tool wrappers are out of sync with their .json specs. Run './build.ps1 GenerateTools' locally and commit the result.");
         });
 }
