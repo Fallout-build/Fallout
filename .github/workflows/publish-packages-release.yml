@@ -3,33 +3,28 @@
 # NuGetApiKey parameter, which would otherwise have to share a name).
 #
 # This is the DELIBERATE (production) release path. The fast test lane —
-# develop (-preview), push → GitHub Packages — lives in publish-packages-preview.yml.
-# See ADR-0009 (superseding ADR-0004, and carrying forward ADR-0008's no-`experimental`
-# decision onto `develop`).
+# develop (-alpha) and release/* (-beta), push → GitHub Packages — lives in
+# publish-packages-preview.yml. See ADR-0011 (GitVersion and tag-driven releases).
 #
 # Shape:
-#   - Trigger: tag push `v*` on a production branch — the classic GitFlow
-#     production trunk (main → tag v10.5.0), release stabilization lines
-#     (release/v10.5 → tag v10.5.0-rc.N), or gitflow support lines (support/v10 →
-#     v10.x, and eventually a retired support/v11 once a later major replaces it).
-#     develop is NEVER tagged for release. Tags keep the `v` prefix so the `v*`
-#     tag-protection ruleset applies; the package version core is the bare semver
-#     (e.g. 10.5.0). Tag protection restricts who can create those tags to repo
-#     admins.
+#   - Trigger: tag push `X.Y.Z[-label]` (no `v` prefix) on a production branch —
+#     the classic GitFlow production trunk (main → tag 10.5.0), release
+#     stabilization lines (release/v10.5 or release/10.5 → tag 10.5.0-rc.N), or
+#     gitflow support lines (support/v10). develop is NEVER tagged for release.
+#     Tag protection restricts who can create those tags to repo admins.
+#   - The tag IS the package version. It is passed to the build as ReleaseTag
+#     (see Build.cs); the branch does not matter for the version.
 #   - Optional fallback: workflow_dispatch with an existing-tag input, for
-#     re-runs after a transient publish-API failure, OR to opt into a
-#     nuget.org publish (see below).
+#     re-runs after a transient publish-API failure.
 #   - validate-ref → test-and-pack → fan out to three publish jobs in parallel:
-#       - publish-nuget-org   (opt-in via workflow_dispatch flag, approval-gated)
+#       - publish-nuget-org       (GA and -rc tags only)
 #       - publish-github-packages (all packages — Fallout.* + Nuke.*)
 #       - publish-github-releases (artifact bundling on the tag's GH Release)
 #
-# Channel routing (ADR-0009):
-#   - nuget.org is OPT-IN. Tag pushes do NOT auto-publish there. To publish
-#     Fallout.* to nuget.org you invoke workflow_dispatch with
-#     publish-to-nugetorg=true — a conscious "this release is stabilised enough"
-#     switch, used when a `main` GA release is ready for the broad consumer
-#     audience, or for a support/v10 legacy security patch.
+# Channel routing (ADR-0011):
+#   - nuget.org gets Fallout.* from a GA tag (10.5.0) or an -rc tag
+#     (10.5.0-rc.2). Any other prerelease tag (10.5.0-beta.1, ...) skips it.
+#     There is no approval step.
 #   - GitHub Packages gets every Fallout.* and Nuke.* build via tag push.
 #   - GitHub Releases bundles nupkgs on the tag's release page regardless.
 #
@@ -45,24 +40,14 @@ name: publish-packages-release
 on:
   push:
     tags:
-      - 'v*'
-  # Manual fallback for two scenarios:
-  #   1. Re-running a partial publish after a transient API failure (pick the
-  #      tag, leave publish-to-nugetorg at its default).
-  #   2. Opting into a nuget.org publish for a stabilised release (pick the
-  #      tag, set publish-to-nugetorg to true). Still gated by the nuget-org
-  #      env approval before the actual push.
-  # `--skip-duplicate` on each push makes re-runs idempotent.
+      - '[0-9]*.[0-9]*.[0-9]*'
+  # Manual fallback: re-run a partial publish after a transient API failure
+  # (pick the tag). `--skip-duplicate` on each push makes re-runs idempotent.
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Existing tag to (re-)release (e.g. v10.5.5)'
+        description: 'Existing tag to (re-)release (e.g. 10.5.5)'
         required: true
-      publish-to-nugetorg:
-        description: 'Publish Fallout.* to nuget.org? Default false — opt-in for stabilised releases only.'
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -84,7 +69,7 @@ jobs:
           # stabilization lines (release/v10.5, …, rc tags), and gitflow
           # support lines (support/v10 legacy semver, and eventually a retired
           # support/v11, …).
-          REACHABLE=$(git branch -r --contains "$TAG_SHA" | grep -E 'origin/(main|release/v[0-9]+(\.[0-9]+)?|support/v[0-9]+)$' || true)
+          REACHABLE=$(git branch -r --contains "$TAG_SHA" | grep -E 'origin/(main|release/v?[0-9]+(\.[0-9]+)?|support/v[0-9]+)$' || true)
           if [ -z "$REACHABLE" ]; then
             echo "::error::Tag ${GITHUB_REF_NAME} at $TAG_SHA is not reachable from any production branch."
             echo "Tag-triggered releases only fire from main (GA), release/vX.Y (rc), or support/* (legacy/retired) branches."
@@ -99,18 +84,31 @@ jobs:
     needs: [validate-ref]
     # Run when validate-ref succeeded (tag push) OR was skipped (workflow_dispatch).
     if: always() && (needs.validate-ref.result == 'success' || needs.validate-ref.result == 'skipped')
+    outputs:
+      push-to-nugetorg: ${{ steps.route.outputs.push }}
     steps:
+      - name: 'Route: does this tag go to nuget.org?'
+        id: route
+        run: |
+          TAG="${{ inputs.tag || github.ref_name }}"
+          if [[ "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-rc\.[0-9]+)?$ ]]; then
+            echo "push=true" >> "$GITHUB_OUTPUT"
+            echo "Tag $TAG goes to nuget.org."
+          else
+            echo "push=false" >> "$GITHUB_OUTPUT"
+            echo "Tag $TAG is neither GA nor -rc. Skipping nuget.org."
+          fi
       - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.tag || github.ref }}
-          fetch-depth: 0           # Nerdbank.GitVersioning needs full history
+          fetch-depth: 0           # GitVersion needs full history
       - name: 'Cache: .fallout/temp, ~/.nuget/packages'
         uses: actions/cache@v6
         with:
           path: |
             .fallout/temp
             ~/.nuget/packages
-          key: ${{ runner.os }}-release-${{ hashFiles('**/global.json', '**/*.csproj', '**/Directory.Packages.props', 'version.json') }}
+          key: ${{ runner.os }}-release-${{ hashFiles('**/global.json', '**/*.csproj', '**/Directory.Packages.props') }}
           restore-keys: |
             ${{ runner.os }}-release-
       - name: 'Setup: .NET SDK'
@@ -122,12 +120,10 @@ jobs:
       - name: 'Run: Test + Pack + PackageGuard'
         run: dotnet fallout Test Pack PackageGuard
         env:
-          # We check out the tag above, so HEAD is detached and matches none of
-          # version.json's publicReleaseRefSpec entries (they're all branch refs,
-          # and nbgv never matches that spec against refs/tags/*). Without this,
-          # NB.GV treats the build as non-public and stamps a git-height suffix
-          # onto every package — v10.4.0-rc.3 shipped as 10.4.0-rc.3.geabd043cc2.
-          PublicRelease: true
+          # The tag is the package version. The tag checkout above leaves HEAD
+          # detached, where GitVersion ignores a tag whose label differs from the
+          # branch label, so Build.cs takes the version straight from ReleaseTag.
+          ReleaseTag: ${{ inputs.tag || github.ref_name }}
           # PackageGuard's own target (build/Build.PackageGuard.cs) is gated on either being on
           # a long-lived branch or running in this workflow (GitHubActions.Workflow ==
           # "publish-packages-release") — the tag checkout above leaves HEAD detached, so the
@@ -150,23 +146,10 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
-  # Tier 1 — production / nuget.org. **OPT-IN ONLY.** Tag pushes do NOT trigger
-  # this job; you must invoke workflow_dispatch with publish-to-nugetorg=true.
-  # The env approval gate on `nuget-org` is the second layer — even after opting
-  # in via the input flag, you still approve the deployment.
-  #
-  # The opt-in defaults to false because the default channel is GitHub Packages
-  # (see header comment). When a `main` GA release is ready for the broad
-  # audience — or for cutting a support/v10 maintenance patch — invoke
-  # workflow_dispatch with the flag set.
-  #
-  # The condition below accepts the string 'true' as well as the boolean. A
-  # `type: boolean` input only arrives as a real boolean when the run is started
-  # from the Actions UI; the REST API — and therefore `gh workflow run`, which
-  # rejects a JSON boolean outright — can only send strings. Comparing a string
-  # to a boolean casts both to numbers ('true' → NaN, true → 1), so a bare
-  # `== true` silently skipped every CLI-triggered publish while the run still
-  # reported success. See the runbook's `gh workflow run` invocation.
+  # Tier 1 — production / nuget.org. A GA tag (10.5.0) or an -rc tag (10.5.0-rc.2)
+  # publishes Fallout.* here automatically. Any other prerelease tag
+  # (10.5.0-beta.1, ...) skips the push. There is no approval step: nuget.org
+  # pushes cannot be undone, so tag protection (admins only) is the gate.
   publish-nuget-org:
     name: publish → nuget.org
     runs-on: ubuntu-latest
@@ -176,10 +159,10 @@ jobs:
     # propagates through the graph — test-and-pack's own always() rescues only
     # itself, not its dependents. Without this the whole dispatch path silently
     # published nothing while the run still reported success.
+    # Routed at job level, so a skipped tag never creates a nuget-org deployment.
     if: >-
       always() && needs.test-and-pack.result == 'success'
-      && github.event_name == 'workflow_dispatch'
-      && (inputs.publish-to-nugetorg == true || inputs.publish-to-nugetorg == 'true')
+      && needs.test-and-pack.outputs.push-to-nugetorg == 'true'
     environment:
       name: nuget-org
       url: https://www.nuget.org/profiles/Fallout.build
@@ -213,8 +196,8 @@ jobs:
   # Tier 2 — GitHub Packages. The default release channel. Pushes both
   # Fallout.* AND Nuke.* transition shims. The Nuke.* shim IDs are owned by the
   # original NUKE maintainer on nuget.org (#47) — GitHub Packages is their
-  # permanent home. Fallout.* is here because nuget.org is opt-in by default
-  # (see header).
+  # permanent home. Fallout.* is here for every tag, including the ones that
+  # skip nuget.org (see header).
   publish-github-packages:
     name: publish → GitHub Packages
     runs-on: ubuntu-latest

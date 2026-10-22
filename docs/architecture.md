@@ -32,7 +32,7 @@ Canonical reference for how the Fallout repo is laid out, what each project does
 ├── Directory.Packages.props  Central package version management — never put Version= inline
 ├── fallout.slnx              Solution file (new XML format, not .sln)
 ├── global.json               Pinned .NET SDK
-├── version.json              Nerdbank.GitVersioning config
+├── GitVersion.yml            GitVersion config (versions come from branch + tags)
 ├── nuget.config              Restricts package sources to nuget.org with explicit mapping
 └── build.{ps1,sh}            Bootstrap entry points
 ```
@@ -164,11 +164,11 @@ This file covers *layout*. For how the build orchestrator works inside — the s
 |---|---|---|
 | `build.yml` (generated) | Every PR targeting `develop`, `main`, `release/*`, or `support/*` (with `paths-ignore` for docs/.assets/markdown) | `VerifyGeneratedTools`, `VerifyLlmsTxt`, `Test`, `Pack` and `PackageGuard` (license policy check) on Linux. The job `ubuntu-latest` is the only required status check. |
 | `build-skip.yml` | Docs-only PRs to the same branches | Reports the `ubuntu-latest` check so docs-only PRs aren't blocked, and runs `VerifyLlmsTxt`. |
-| `build-cross-platform.yml` (generated) | PRs targeting `main`, `release/*` or `support/*`, and `v*` tag pushes | Test + Pack on macOS **and** Windows (one job each). Gated to release intent. |
+| `build-cross-platform.yml` (generated) | PRs targeting `main`, `release/*` or `support/*`, and release tag pushes (`X.Y.Z*`) | Test + Pack on macOS **and** Windows (one job each). Gated to release intent. |
 | `security-scan.yml` (generated) | Push to `develop`, `main`, `release/*` or `support/*` | Runs PackageGuard and uploads its SARIF risk report to GitHub code scanning. |
-| `publish-packages-preview.yml` | Push to `develop` | Test + Pack + publish `-preview` packages to GitHub Packages only. |
-| `publish-packages-release.yml` | `v*` tag push on a production branch (or `workflow_dispatch`) | Test + Pack + publish to GitHub Packages + GitHub Releases (nuget.org opt-in). |
-| `prune-preview-packages.yml` | Mondays 03:00 UTC (or `workflow_dispatch`) | Deletes old `-preview` versions from GitHub Packages, which has no retention policy of its own. |
+| `publish-packages-preview.yml` | Push to `develop` or `release/**` | Test + Pack + publish `-alpha` / `-beta` packages to GitHub Packages only. |
+| `publish-packages-release.yml` | `X.Y.Z*` tag push (no `v`) on a production branch (or `workflow_dispatch`) | Test + Pack + publish to GitHub Packages + GitHub Releases (+ nuget.org for GA and `-rc` tags). |
+| `prune-preview-packages.yml` | Mondays 03:00 UTC (or `workflow_dispatch`) | Deletes old `-alpha`, `-beta` and `-preview` versions from GitHub Packages, which has no retention policy of its own. |
 
 Linux runs on every PR because it's cheap and fast. macOS and Windows only run for release intent (PRs to `main`, release and support branches, and release tags) to save CI minutes. If cross-platform breaks, it shows on a release PR or tag and we fix it before shipping.
 
