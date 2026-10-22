@@ -10,9 +10,9 @@ Maintainer reference for branching, releasing, hotfixing, and the GitHub Environ
 
 | Branch | Purpose | Cut from / merges from | Publishes | Ships to |
 |---|---|---|---|---|
-| `develop` (was `main`) | Integration trunk. All work lands here, including fast/AI-assisted work. Default branch. | — | Every push: `10.5.0-preview.<height>.g<sha>` | GitHub Packages only |
-| `release/vX.Y` | Stabilizes the next release. Cut on demand, at the first release of that minor — not ahead of time ([ADR-0007](adr/0007-cut-release-branch-on-demand.md)). Only non-breaking fixes land here. | `develop` | `-rc.N` prereleases | GitHub Packages |
-| `main` (was `release/v10.4`) | Production trunk. Receives only `release/vX.Y` (GA) or `hotfix/vX.Y.Z` merges. | `release/vX.Y`, `hotfix/*` | GA tags | GitHub Packages + Releases, nuget.org opt-in |
+| `develop` (was `main`) | Integration trunk. All work lands here, including fast/AI-assisted work. Default branch. | — | Every push: `10.5.0-alpha.<n>` (next minor after the last GA tag) | GitHub Packages only |
+| `release/vX.Y` | Stabilizes the next release. Cut on demand, at the first release of that minor — not ahead of time ([ADR-0007](adr/0007-cut-release-branch-on-demand.md)). Only non-breaking fixes land here. | `develop` | Every push: `10.5.0-beta.<n>` (GitHub Packages). `-rc.N` tags (nuget.org) | GitHub Packages, nuget.org for `-rc` tags |
+| `main` (was `release/v10.4`) | Production trunk. Receives only `release/vX.Y` (GA) or `hotfix/vX.Y.Z` merges. | `release/vX.Y`, `hotfix/*` | GA tags | GitHub Packages + Releases + nuget.org |
 | `support/v10` (+ `hotfix/v10.x`) | Older legacy line, versions before `10.4`. Security/critical fixes only. Separate from `main` — not affected by this model. | — | Tags | Same as `main` |
 | `support/vN` | What a major becomes once a later major replaces it. Not in use yet — the project hasn't cut a major. | — | Tags | Same as `main` |
 | `feature/<slug>`, `bugfix/<slug>`, `chore/<slug>`, `docs/<slug>` | Working branches, PR'd against `develop`. | `develop` | — | — |
@@ -21,14 +21,18 @@ Work moves **forward-only**: `develop → release/vX.Y → main`. A breaking cha
 
 ## Versioning
 
-`version.json`'s `version` field is set per branch:
+GitVersion (`GitVersion.yml`, GitFlow preset) computes the version from the branch and the tags ([ADR-0011](adr/0011-gitversion-and-tag-driven-releases.md)). Nobody edits a version file.
 
-- `develop` uses `{height}`, so its preview build always moves forward on its own: `10.5.0-preview.{height}`.
-- A `release/vX.Y` branch pins its prerelease number by hand — e.g. `10.5.0-rc.4`, not `10.5.0-rc.{height}`. **Bump it in a PR before tagging.** Two reasons: every commit reports the same version until you bump it (so the number reflects release intent, not commit count), and tagging twice without bumping silently republishes the same version (`--skip-duplicate` swallows it).
-- `publicReleaseRefSpec` matches `main`, `release/v\d+(\.\d+)?`, and `support/v\d+` — not `develop`. That's why `develop`'s previews carry the `.g<sha>` suffix (non-public build) while production lines don't.
+| Source | Version |
+|---|---|
+| `develop` | `10.5.0-alpha.<n>` (next minor after the last GA tag) |
+| `release/vX.Y` or `release/X.Y` | `10.5.0-beta.<n>` |
+| Tag `10.5.0-rc.1` | `10.5.0-rc.1` |
+| Tag `10.5.0` | `10.5.0` |
 
-`GitVersion` is still installed as a transitional helper for `MajorMinorPatchVersion` in `Build.cs`; full removal is a follow-up.
-
+- Tags have **no `v` prefix**. Older `v10.x` tags stay as they are.
+- On a tag build, the release workflow passes the tag to the build as `ReleaseTag`, and the tag is used as the package version. GitVersion alone cannot do this on a detached tag checkout.
+- To check a version locally: `dotnet tool install -g GitVersion.Tool --version 6.8.2`, then `dotnet-gitversion /showvariable FullSemVer`.
 ## Cutting a release
 
 1. **Cut the branch** (only when the release is actually ready — [ADR-0007](adr/0007-cut-release-branch-on-demand.md)):
@@ -40,40 +44,41 @@ Work moves **forward-only**: `develop → release/vX.Y → main`. A breaking cha
    ```
    Branch protection attaches automatically (see [Protection](#protection) below) — nothing else to do.
 
-2. **Bump `version.json` and tag an rc** on the release branch:
+2. **Tag an rc** on the release branch (no version commit is needed):
    ```bash
-   # version.json: "version": "10.5.0-rc.1"
-   PublicRelease=1 dotnet nbgv get-version -v NuGetPackageVersion   # confirm: 10.5.0-rc.1
-   gh release create v10.5.0-rc.1 --target release/v10.5 --title "v10.5.0-rc.1" \
+   gh release create 10.5.0-rc.1 --target release/v10.5 --title "10.5.0-rc.1" \
        --prerelease --generate-notes --notes-start-tag <last-GA-tag>
    ```
-   Repeat with `rc.2`, `rc.3`, ... as fixes land, cherry-picked or PR'd onto the release branch.
-
+   Repeat with `rc.2`, `rc.3`, ... as fixes land, cherry-picked or PR'd onto the release branch. Do not reuse a tag name: a GitHub Release with an immutable tag cannot take uploads again.
    > **`--notes-start-tag` must be the last GA tag, not the previous rc.** Left alone, `gh` picks the most recent tag, so an rc's notes only show what changed since the *last rc* — anchoring on the last GA shows the full set of changes since the last real release.
 
 3. **Merge to `main` and tag GA** once the release branch is ready:
    ```bash
    gh pr create --base main --head release/v10.5 ...   # rigorous review
    # once merged:
-   gh release create v10.5.0 --target main --generate-notes --notes-start-tag <last-GA-tag>
+   gh release create 10.5.0 --target main --generate-notes --notes-start-tag <last-GA-tag>
    # merge main back into develop so the trunk carries the GA commit:
    gh pr create --base develop --head main ...
    ```
 
-Both tag pushes (step 2 and step 3) fire `.github/workflows/publish-packages-release.yml`: `validate-ref` confirms the tag is reachable from `main`, `release/v*`, or `support/*`; `test-and-pack` builds and uploads the packages; then three jobs publish in parallel — `publish-github-packages` (all packages, always), `publish-github-releases` (attaches to the GH Release, always), and `publish-nuget-org` (**skipped unless you opt in**).
+Both tag pushes (step 2 and step 3) fire `.github/workflows/publish-packages-release.yml`: `validate-ref` confirms the tag is reachable from `main`, `release/v*`, or `support/*`; `test-and-pack` builds and uploads the packages; then three jobs publish in parallel — `publish-github-packages` (all packages, always), `publish-github-releases` (attaches to the GH Release, always), and `publish-nuget-org`.
 
-### Publishing to nuget.org
+### What goes to nuget.org
 
-nuget.org is always opt-in, via `workflow_dispatch`:
+- **GA tags** (`10.5.0`) and **`-rc` tags** (`10.5.0-rc.2`) publish `Fallout.*` to nuget.org automatically. There is no approval step.
+- **Any other prerelease tag** (`10.5.0-beta.1`, ...) skips nuget.org.
+- The `Nuke.*` shim packages never go to nuget.org.
+- A push to nuget.org cannot be undone (only unlisted), so only repo admins can create these tags (see [Protection](#protection)).
+
+To re-run a partial publish after a transient failure, dispatch the workflow with the existing tag:
 
 ```bash
-gh workflow run publish-packages-release.yml --ref main -f tag=v10.5.0 -f publish-to-nugetorg=true
+gh workflow run publish-packages-release.yml --ref main -f tag=10.5.0
 ```
 
 > **`--ref` must be the production branch, not the default branch.** `workflow_dispatch` runs whichever branch's *copy of the workflow* you dispatch against — `-f tag=` only picks which source gets packed. Dispatching against `develop` runs `develop`'s copy of the pipeline, which can differ from the release branch's.
 
-This re-runs `test-and-pack` (skipping `validate-ref`, since dispatch is a conscious action), then `publish-nuget-org` pauses for approval at the `nuget-org` environment gate before pushing. The other two jobs re-run idempotently. Re-running the same command later (e.g. after a transient failure) is safe: every `dotnet nuget push` uses `--skip-duplicate`, and omitting `-f publish-to-nugetorg=true` re-runs everything except the nuget.org push.
-
+Every `dotnet nuget push` uses `--skip-duplicate`, so re-running is safe.
 > **A green run is not proof anything published.** Every publish job is conditional and can silently skip on a misconfigured condition. After a release, verify:
 > ```bash
 > gh api repos/Fallout-build/Fallout/actions/runs/<run-id>/jobs --jq '.jobs[] | "\(.name): \(.conclusion)"'
@@ -91,7 +96,7 @@ If production needs a fix before the next scheduled release, cut a `hotfix/vX.Y.
 git switch -c hotfix-v10.5.1 main
 git cherry-pick <fix-sha>
 gh pr create --base main ...
-# once merged and tagged v10.5.1 on main:
+# once merged and tagged 10.5.1 on main:
 git switch -c forward-port-XXXX develop
 git cherry-pick <fix-sha>
 gh pr create --base develop ...
@@ -134,7 +139,7 @@ gh api -X PUT repos/Fallout-build/Fallout/rulesets/19766406 --input .github/rele
 
 **`develop`, `main`, and `support/*`** carry their own classic per-branch protection, configured individually rather than by pattern.
 
-**Tags** matching `v*` are protected by a separate ruleset ([17017817](https://github.com/Fallout-build/Fallout/rules/17017817)) — only repo admins can create, delete, or update one. Combined with the `nuget-org` environment's approval gate, that's two layers on who can ship to production.
+**Tags** matching `[0-9]*.[0-9]*.[0-9]*` (and the older `v*`) are protected by a separate ruleset ([17017817](https://github.com/Fallout-build/Fallout/rules/17017817)) — only repo admins can create, delete, or update one. The `nuget-org` environment has no approval step, so this ruleset is the only gate on who can ship to production.
 
 > **Maintainer follow-up.** This doc describes the target shape. Three GitHub-settings changes still need doing, separately from this repo's docs/CI: rename `main` to `develop`, rename `release/v10.4` to `main`, and make `develop` the default branch (which re-points `develop`'s branch protection from what used to apply to `main`). See [ADR-0009](adr/0009-gitflow-and-semver-reversion.md)'s Negative consequences.
 

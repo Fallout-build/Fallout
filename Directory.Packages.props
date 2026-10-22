@@ -99,7 +99,6 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing.XUnit" Version="1.1.2" />
     <!-- Build-time only (PrivateAssets="all") -->
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.401" />
-    <PackageVersion Include="Nerdbank.GitVersioning" Version="3.10.94" />
     <PackageVersion Include="IsExternalInit" Version="1.0.3" />
     <PackageVersion Include="PolySharp" Version="1.16.0" />
     <!-- Fallout.Cli / Fallout.Migrate only -->

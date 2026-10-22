@@ -34,7 +34,6 @@ updates:
       - dependency-name: "Microsoft.CodeAnalysis.CSharp.CodeFix.Testing.XUnit"
       # Build-time only (PrivateAssets="all", never in a package's dependencies)
       - dependency-name: "Microsoft.SourceLink.GitHub"
-      - dependency-name: "Nerdbank.GitVersioning"
       - dependency-name: "PolySharp"
       - dependency-name: "IsExternalInit"
       # Only used by the fallout / fallout-migrate tools, not by the libraries

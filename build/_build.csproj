@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <Import Project="..\src\Fallout.Common\Fallout.Common.props" />
 
@@ -54,10 +54,9 @@
 
   <ItemGroup>
     <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.13" />
-    <!-- Nerdbank.GitVersioning lets us read ThisAssembly.AssemblyInformationalVersion in
-         Build.cs as the canonical version source. Replaces GitVersion.Tool (#81). Direct
-         dependency because _build.csproj turns off central package management. -->
-    <PackageReference Include="Nerdbank.GitVersioning" Version="3.10.94" PrivateAssets="All" />
+    <!-- GitVersion computes the canonical version in Build.cs ([GitVersion] attribute, GitVersion.yml).
+         Direct version because _build.csproj turns off central package management. -->
+    <PackageDownload Include="GitVersion.Tool" Version="[6.8.2]" />
     <PackageDownload Include="PackageGuard" Version="[2.11.1]" />
     <PackageDownload Include="ReportGenerator" Version="[5.2.0]" />
     <!-- Used by Fallout.Tooling.Tests' ToolTasksToolPathTest as a sample package
