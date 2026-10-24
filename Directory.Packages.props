@@ -111,6 +111,7 @@
   <!-- NOT SHIPPED, BUT LOCKED: test-only pins that must stay on the NuGet.Packaging version,
        because the Roslyn analyzer test harness pulls in older copies (#677). Not on the Dependabot allow list. -->
   <ItemGroup>
+    <PackageVersion Include="NuGet.Frameworks" Version="7.9.0" />
     <PackageVersion Include="NuGet.Protocol" Version="7.9.0" />
     <PackageVersion Include="NuGet.Resolver" Version="7.9.0" />
   </ItemGroup>
