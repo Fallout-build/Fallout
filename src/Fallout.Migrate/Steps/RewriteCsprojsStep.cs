@@ -3,279 +3,226 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Fallout.Common.IO;
 using Fallout.Migrate.Common;
 
 namespace Fallout.Migrate.Steps;
 
 /// <summary>
-/// Rewrites every <c>*.csproj</c> file under the repository root: <c>Nuke.*</c> package/project
-/// references become <c>Fallout.*</c> (pinning the current Fallout version where an inline
-/// <c>Version</c> attribute was present), <c>Nuke*</c> MSBuild properties are renamed to
-/// <c>Fallout*</c>, and stale explicit <c>System.Security.Cryptography.Xml</c> pins are stripped.
+/// Rewrites every <c>*.csproj</c> and <c>*.props</c> file under the repository root: <c>Nuke.*</c>
+/// package/project references and central <c>PackageVersion</c> items become <c>Fallout.*</c>
+/// (pinning the current Fallout version where a <c>Version</c> or <c>VersionOverride</c> attribute
+/// was present), <c>Nuke*</c> MSBuild properties are renamed to <c>Fallout*</c>, version properties
+/// are bumped wherever they are defined, and stale explicit
+/// <c>System.Security.Cryptography.Xml</c> pins are stripped from <c>*.csproj</c> files.
 /// </summary>
 internal sealed class RewriteCsprojsStep : IMigrationStep
 {
-    // Combined rewrite: Nuke.X PackageReference WITH an inline Version attribute → Fallout.X
-    // at the current Fallout version. NUKE-era pins (e.g. `Version="10.1.0"`) don't exist as
-    // Fallout.* packages and produce NU1603 ("not found, falling back to next-higher") which
-    // `WarningsAsErrors` in the migrated project escalates. Bumping in the same pass avoids
-    // a broken post-migrate build (#217). Tolerates extra attributes between Include and Version
-    // (e.g. `PrivateAssets="all"`).
-    // We don't mach MSBuild variables (`$(...)`) here, because they are handled below
-    private static readonly Regex nukePackageWithInlineVersionPattern = new(
-        @"(?<prefix><PackageReference\s+Include="")Nuke\.(?<name>[A-Z][A-Za-z0-9.]+)(?<between>""[^>]*?\s+Version="")(?!\$\()[^""]+",
-        RegexOptions.Compiled);
-
-    // PackageReference / ProjectReference `Include="Nuke.X"` → `Include="Fallout.X"` — namespace
-    // only. Catches references that DON'T have an inline Version (central package management).
-    // Must run AFTER NukePackageWithInlineVersionPattern so it only touches what's left.
-    private static readonly Regex packageReferencePattern =
-        new(@"(?<=\b(?:Include|Update|Remove)="")Nuke\.(?=[A-Z])", RegexOptions.Compiled);
-
-    // Detects MSBuild variables used by already-rewritten Fallout.* PackageReferences:
-    // Version="$(MyVar)". Scoped to Fallout.* so variables shared with unrelated packages
-    // aren't mistaken for Fallout version variables.
-    private static readonly Regex falloutPackageReferenceVariablePattern = new(
-        @"<PackageReference\s+Include=""Fallout\.[^""]+""[^>]*?Version=""\$\((?<variable>[^)]+)\)""",
-        RegexOptions.Compiled);
-
-    // Same variable-usage detection, but for PackageReferences that are NOT Fallout.* — used to
-    // detect a variable ambiguously shared between a Fallout package and an unrelated one.
-    private static readonly Regex nonFalloutPackageReferenceVariablePattern = new(
-        @"<PackageReference\s+Include=""(?!Fallout\.)[^""]+""[^>]*?Version=""\$\((?<variable>[^)]+)\)""",
-        RegexOptions.Compiled);
-
-    // MSBuild element/property names that begin with `Nuke` followed by an uppercase
-    // letter (e.g. <NukeRootDirectory>...). Limited to known consumer-facing names from
-    // P3.5b so we don't rewrite unrelated user-defined identifiers that happen to start
-    // with the literal "Nuke".
-    private static readonly Regex msBuildPropertyPattern = new(
-        @"\bNuke(?=" +
-        "(?:Version|RootDirectory|ScriptDirectory|BaseDirectory|BaseNamespace|" +
-        "UseNestedNamespaces|RepositoryUrl|UpdateReferences|ContinueOnError|TaskTimeout|" +
-        "Timeout|TasksEnabled|DefaultExcludes|ExcludeBoot|ExcludeConfig|ExcludeLogs|" +
-        "ExcludeDirectoryBuild|ExcludeCi|SpecificationFiles|ExternalFiles|TasksAssembly|" +
-        "TasksDirectory)\\b)",
-        RegexOptions.Compiled);
-
-    // Strip the telemetry-version property entirely — telemetry was removed from Fallout
-    // (ADR-0010), so a migrated project must not carry a dead <FalloutTelemetryVersion>.
-    // Matches the whole element line (either legacy Nuke* or already-Fallout* spelling).
-    private static readonly Regex telemetryVersionPropertyPattern = new(
-        @"^[ \t]*<(?<tag>(?:Nuke|Fallout)TelemetryVersion)>.*?</\k<tag>>[ \t]*\r?\n?",
-        RegexOptions.Compiled | RegexOptions.Multiline);
-
-    // Strip explicit `System.Security.Cryptography.Xml` PackageReferences. NUKE-era projects
-    // often pinned this directly at an older major (e.g. 9.x). Fallout.Common 10.2.12+ transitively
-    // requires a newer version (10.0.6+) and the conflict trips NU1605 ("Detected package
-    // downgrade"). Removing the explicit pin lets the transitive version win, which is what the
-    // migrated project wants (#217). Matches a self-closing element with optional surrounding
-    // indentation + trailing newline.
-    private static readonly Regex cryptographyXmlPackageRefPattern = new(
-        @"^[ \t]*<PackageReference\s+Include=""System\.Security\.Cryptography\.Xml""[^/]*/>[ \t]*\r?\n?",
-        RegexOptions.Compiled | RegexOptions.Multiline);
-
     /// <inheritdoc />
     public Task ExecuteAsync(MigrationContext context, Summary summary)
     {
-        foreach (var path in MigrationFileOperations.EnumerateFiles(context.RootDirectory, "*.csproj"))
+        Dictionary<AbsolutePath, string> fileContents = ReadFileContents(context, summary);
+
+        // A variable can be used in Directory.Packages.props and defined in an imported Version.props.
+        // Classify all readable files before rewriting any of them, using the same contents for both.
+        VersionVariables variables = VersionVariables.Collect(fileContents.Values);
+
+        foreach ((AbsolutePath path, string content) in fileContents)
         {
             MigrationFileOperations.ApplyRewrite(
                 context,
                 path,
-                content => Rewrite(content, context.FalloutVersion),
+                content,
+                original => Rewrite(original, context.FalloutVersion, variables, path.HasExtension(".csproj")),
                 summary);
         }
 
         return Task.CompletedTask;
     }
 
-    /// <summary>
-    /// Rewrites <paramref name="original"/> content, replacing <c>Nuke.*</c> references and MSBuild
-    /// properties with their <c>Fallout.*</c> equivalents and stripping stale pins.
-    /// </summary>
-    /// <param name="original">The original <c>.csproj</c> file content.</param>
-    /// <param name="falloutVersion">The Fallout version to pin into rewritten inline-versioned references.</param>
-    /// <returns>The rewritten content and the number of edits made.</returns>
-    private static RewriteResult Rewrite(string original, string falloutVersion)
+    private static Dictionary<AbsolutePath, string> ReadFileContents(MigrationContext context, Summary summary)
     {
-        var edits = 0;
-        var content = original;
+        IEnumerable<AbsolutePath> paths = MigrationFileOperations.EnumerateFiles(context.RootDirectory, "*.csproj")
+            .Concat(MigrationFileOperations.EnumerateFiles(context.RootDirectory, "*.props"));
+        var fileContents = new Dictionary<AbsolutePath, string>();
 
-        // Pass 1 — combined Include + Version rewrite for Nuke.X PackageReferences with inline Version.
-        content = nukePackageWithInlineVersionPattern.Replace(content, m =>
+        foreach (AbsolutePath path in paths)
         {
-            edits++;
-            return m.Groups["prefix"].Value
-                   + "Fallout." + m.Groups["name"].Value
-                   + m.Groups["between"].Value
-                   + falloutVersion;
-        });
-
-        // Pass 2 — namespace-only rewrites for anything Pass 1 didn't consume (CPM-managed
-        // PackageReferences without inline Version, ProjectReferences, MSBuild properties).
-        content = packageReferencePattern.Replace(content, _ =>
-        {
-            edits++;
-            return "Fallout.";
-        });
-
-        content = msBuildPropertyPattern.Replace(content, _ =>
-        {
-            edits++;
-            return "Fallout";
-        });
-
-        // Pass 3 — strip the telemetry-version property (feature removed in ADR-0010).
-        content = telemetryVersionPropertyPattern.Replace(content, _ =>
-        {
-            edits++;
-            return string.Empty;
-        });
-
-        // Pass 4 — strip the stale System.Security.Cryptography.Xml direct pin.
-        content = cryptographyXmlPackageRefPattern.Replace(content, _ =>
-        {
-            edits++;
-            return string.Empty;
-        });
-
-        return HandleMsBuildVariable(falloutVersion, content, edits);
-    }
-
-    // Pass 5 — extract variables used by Fallout.* PackageReferences, decouple the ones ambiguously
-    // shared with non-Fallout packages via a dedicated $(FalloutVersion) property, and bump every
-    // variable that's now exclusively Fallout's to the current Fallout version.
-    private static RewriteResult HandleMsBuildVariable(string falloutVersion, string content, int edits)
-    {
-        const string falloutVersionVariable = "FalloutVersion";
-
-        var (variablesToBump, ambiguousVariables) =
-            ClassifyPackageReferenceVariables(content, falloutVersionVariable);
-
-        (content, int redirectEdits) =
-            RedirectAmbiguousVariablesToFalloutVersion(content, ambiguousVariables, falloutVersionVariable);
-
-        edits += redirectEdits;
-
-        content = EnsureFalloutVersionPropertyExists(content, ambiguousVariables, falloutVersionVariable, falloutVersion,
-            ref edits);
-
-        (content, int bumpEdits) = BumpVariableProperties(content, variablesToBump, falloutVersion);
-        edits += bumpEdits;
-
-        return new RewriteResult(content, edits);
-    }
-
-    // A variable also shared with a non-Fallout package is ambiguous: bumping it directly would
-    // change that unrelated package's version too, so it's decoupled instead — the Fallout
-    // reference is redirected to a dedicated $(FalloutVersion) property.
-    private static (HashSet<string> variablesToBump, HashSet<string> ambiguousVariables) ClassifyPackageReferenceVariables(
-        string content, string falloutVersionVariable)
-    {
-        var nonFalloutVariables = nonFalloutPackageReferenceVariablePattern.Matches(content)
-            .Select(m => m.Groups["variable"].Value)
-            .ToHashSet();
-
-        var variablesToBump = new HashSet<string>
-        {
-            falloutVersionVariable
-        };
-
-        var ambiguousVariables = new HashSet<string>();
-
-        foreach (var variable in falloutPackageReferenceVariablePattern.Matches(content)
-                     .Select(m => m.Groups["variable"].Value))
-        {
-            (nonFalloutVariables.Contains(variable) ? ambiguousVariables : variablesToBump).Add(variable);
-        }
-
-        return (variablesToBump, ambiguousVariables);
-    }
-
-    private static (string content, int edits) RedirectAmbiguousVariablesToFalloutVersion(
-        string content, HashSet<string> ambiguousVariables, string falloutVersionVariable)
-    {
-        var edits = 0;
-
-        foreach (var variable in ambiguousVariables)
-        {
-            // Matches `Version="$(variable)"` on a Fallout.* PackageReference only, capturing
-            // everything up to and including the opening `Version="` so it can be re-emitted
-            // unchanged while just swapping the variable reference.
-            var redirectPattern = new Regex(
-                $@"(<PackageReference\s+Include=""Fallout\.[^""]+""[^>]*?Version="")\$\({Regex.Escape(variable)}\)");
-
-            content = redirectPattern.Replace(content, m =>
+            if (MigrationFileOperations.TryRead(context, path, summary, out string content))
             {
-                edits++;
-                return m.Groups[1].Value + $"$({falloutVersionVariable})";
-            });
+                fileContents.Add(path, content);
+            }
         }
 
-        return (content, edits);
+        return fileContents;
     }
 
-    private static string EnsureFalloutVersionPropertyExists(
-        string content, HashSet<string> ambiguousVariables, string falloutVersionVariable, string falloutVersion, ref int edits)
+    /// <summary>
+    /// Applies the ordered rewrite passes to one MSBuild file and counts their edits.
+    /// </summary>
+    private static RewriteResult Rewrite(string original, string falloutVersion, VersionVariables variables, bool isProjectFile)
     {
-        if (ambiguousVariables.Count == 0 || content.Contains($"<{falloutVersionVariable}>"))
+        var result = new RewriteResult(original, 0);
+        result = RenamePackageItemsAndPinLiteralVersions(result, falloutVersion);
+        result = RenameRemainingItemNames(result);
+        result = RenameMsBuildProperties(result);
+        result = RemoveTelemetryVersionProperty(result);
+
+        if (isProjectFile)
         {
-            return content;
+            result = RemoveCryptographyXmlPackageReference(result);
         }
 
-        var propertyGroupIndex = content.IndexOf("<PropertyGroup>", StringComparison.Ordinal);
+        result = RedirectSharedVersionReferences(result, variables, falloutVersion);
+        result = UpdateVersionProperties(result, variables.ToBump, falloutVersion);
+        return result;
+    }
+
+    private static RewriteResult RenamePackageItemsAndPinLiteralVersions(RewriteResult previous, string falloutVersion)
+    {
+        int edits = 0;
+        string content = MsBuildPatterns.PackageItem.Replace(previous.Content, match =>
+        {
+            string renamedItem = MsBuildPatterns.NukeItemName.Replace(match.Value, "Fallout.");
+            if (renamedItem == match.Value)
+            {
+                return match.Value;
+            }
+
+            // Count one edit per item. Already migrated Fallout items keep their literal version.
+            edits++;
+            return MsBuildPatterns.LiteralVersion.Replace(renamedItem, _ => falloutVersion);
+        });
+
+        return new RewriteResult(content, previous.EditCount + edits);
+    }
+
+    private static RewriteResult RenameRemainingItemNames(RewriteResult previous) =>
+        ReplaceAndCount(previous, MsBuildPatterns.NukeItemName, "Fallout.");
+
+    private static RewriteResult RenameMsBuildProperties(RewriteResult previous) =>
+        ReplaceAndCount(previous, MsBuildPatterns.NukePropertyName, "Fallout");
+
+    private static RewriteResult RemoveTelemetryVersionProperty(RewriteResult previous) =>
+        ReplaceAndCount(previous, MsBuildPatterns.TelemetryVersionProperty, string.Empty);
+
+    private static RewriteResult RemoveCryptographyXmlPackageReference(RewriteResult previous) =>
+        ReplaceAndCount(previous, MsBuildPatterns.CryptographyXmlPackageReference, string.Empty);
+
+    private static RewriteResult ReplaceAndCount(RewriteResult previous, Regex pattern, string replacement)
+    {
+        int edits = 0;
+        string content = pattern.Replace(previous.Content, _ =>
+        {
+            edits++;
+            return replacement;
+        });
+
+        return new RewriteResult(content, previous.EditCount + edits);
+    }
+
+    private static RewriteResult RedirectSharedVersionReferences(
+        RewriteResult previous, VersionVariables variables, string falloutVersion)
+    {
+        int edits = 0;
+        string content = MsBuildPatterns.VariableVersionItem.Replace(previous.Content, match =>
+        {
+            Group variableName = MsBuildPatterns.VariableNameOf(match);
+            if (!MsBuildPatterns.PackageNameOf(match).Value.StartsWith("Fallout.", StringComparison.Ordinal) ||
+                !variables.Ambiguous.Contains(variableName.Value))
+            {
+                return match.Value;
+            }
+
+            // Runs after renaming packages. Change only the variable name in Fallout references,
+            // leaving the shared property and the unrelated package references unchanged.
+            edits++;
+            return ReplaceGroupValue(match, variableName, VersionVariables.FalloutVersionVariable);
+        });
+
+        var result = new RewriteResult(content, previous.EditCount + edits);
+
+        // Only a file with a redirected reference needs a property, and only if no file defines it.
+        // Each such file gets its own property. A property in one project file is not visible in
+        // another, and this step does not follow MSBuild imports to find a file that both import.
+        return edits > 0 && !variables.DefinesFalloutVersion
+            ? InsertFalloutVersionProperty(result, falloutVersion)
+            : result;
+    }
+
+    /// <summary>
+    /// Replaces the text one group captured and keeps the rest of the matched text as written.
+    /// </summary>
+    private static string ReplaceGroupValue(Match match, Group group, string replacement)
+    {
+        int offset = group.Index - match.Index;
+        return match.Value.Remove(offset, group.Length).Insert(offset, replacement);
+    }
+
+    private static RewriteResult InsertFalloutVersionProperty(RewriteResult previous, string falloutVersion)
+    {
+        string content = previous.Content;
+        string newLine = content.Contains("\r\n", StringComparison.Ordinal) ? "\r\n" : "\n";
+        int propertyGroupIndex = content.IndexOf("<PropertyGroup>", StringComparison.Ordinal);
         if (propertyGroupIndex >= 0)
         {
-            edits++;
-            return content.Insert(
+            content = content.Insert(
                 propertyGroupIndex + "<PropertyGroup>".Length,
-                $"\n    <{falloutVersionVariable}>{falloutVersion}</{falloutVersionVariable}>");
+                $"{newLine}    <FalloutVersion>{falloutVersion}</FalloutVersion>");
+            return new RewriteResult(content, previous.EditCount + 1);
         }
 
-        // No PropertyGroup exists at all (e.g. a project relying solely on Directory.Build.props
-        // for properties) — synthesize one right after the opening <Project> tag so the newly
-        // introduced $(FalloutVersion) reference has somewhere to resolve from.
-        var projectTagStart = content.IndexOf("<Project", StringComparison.Ordinal);
-        var projectTagEnd = projectTagStart >= 0
+        // A file without an unconditional PropertyGroup needs one after the opening Project tag.
+        int projectTagStart = content.IndexOf("<Project", StringComparison.Ordinal);
+        int projectTagEnd = projectTagStart >= 0
             ? content.IndexOf('>', projectTagStart)
             : -1;
 
         if (projectTagEnd < 0)
         {
-            return content;
+            return previous;
         }
 
-        edits++;
-        return content.Insert(
+        content = content.Insert(
             projectTagEnd + 1,
-            $"\n  <PropertyGroup>\n    <{falloutVersionVariable}>{falloutVersion}</{falloutVersionVariable}>\n  </PropertyGroup>");
+            $"{newLine}  <PropertyGroup>{newLine}    <FalloutVersion>{falloutVersion}</FalloutVersion>{newLine}  </PropertyGroup>");
+        return new RewriteResult(content, previous.EditCount + 1);
     }
 
-    private static (string content, int edits) BumpVariableProperties(string content, HashSet<string> variablesToBump,
-        string falloutVersion)
+    private static RewriteResult UpdateVersionProperties(
+        RewriteResult previous, HashSet<string> variablesToBump, string falloutVersion)
     {
-        var edits = 0;
+        int edits = 0;
+        string content = previous.Content;
 
-        foreach (var variable in variablesToBump)
+        foreach (string variableName in variablesToBump)
         {
-            // Matches the text content of the <variable>...</variable> property element itself
-            // (via lookbehind/lookahead, so the tags aren't part of the match and stay intact).
-            var pattern = $@"(?<=<{variable}\s*>)[^<]+(?=</{variable}\s*>)";
-            content = Regex.Replace(content,
-                pattern,
-                m =>
+            content = CreatePropertyValuePattern(variableName).Replace(content, match =>
+            {
+                if (match.Value == falloutVersion)
                 {
-                    if (m.Value == falloutVersion)
-                    {
-                        return m.Value;
-                    }
+                    return match.Value;
+                }
 
-                    edits++;
-                    return falloutVersion;
-                });
+                edits++;
+                return falloutVersion;
+            });
         }
 
-        return (content, edits);
+        return new RewriteResult(content, previous.EditCount + edits);
+    }
+
+    /// <summary>
+    /// Matches the text value inside a named MSBuild property element.
+    /// </summary>
+    /// <remarks>
+    /// Lookarounds leave the opening and closing tags outside the match. Whitespace before
+    /// <c>&gt;</c> is allowed, but attributes, empty values, and nested elements are not matched.
+    /// Property names and values are case-sensitive. The name comes from the file, so it is escaped.
+    /// </remarks>
+    private static Regex CreatePropertyValuePattern(string variableName)
+    {
+        string name = Regex.Escape(variableName);
+        return new Regex($"""(?<=<{name}\s*>)[^<]+(?=</{name}\s*>)""");
     }
 }
