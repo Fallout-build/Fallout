@@ -32,6 +32,7 @@
     <ProjectReference Include="..\..\Fallout.SourceGenerators\Fallout.SourceGenerators.csproj"
                       ReferenceOutputAssembly="false"
                       OutputItemType="Analyzer" />
+    <PackageReference Include="Microsoft.Build" ExcludeAssets="runtime" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>
