@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <PackageDownload Include="xunit.runner.console" Version="[2.9.3]" />
+    <PackageReference Include="NuGet.Frameworks" />
   </ItemGroup>
 
 </Project>

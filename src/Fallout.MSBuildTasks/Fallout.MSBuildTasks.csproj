@@ -16,8 +16,11 @@
 
   <ItemGroup>
     <!-- MSBuild and dependencies only acquired through MSBuild shall not make it into the final package -->
+    <PackageReference Include="Microsoft.Build" CopyLocal="false" Publish="false" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.Build.Framework" CopyLocal="false" Publish="false" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.Build.Utilities.Core" CopyLocal="false" Publish="false" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.Build.Framework" CopyLocal="false" Publish="false" ExcludeAssets="runtime" />
+    <PackageReference Include="NuGet.Frameworks" CopyLocal="false" Publish="false" ExcludeAssets="runtime" />
   </ItemGroup>
 
   <ItemGroup>
