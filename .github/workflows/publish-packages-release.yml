@@ -1,6 +1,8 @@
 # Hand-written (not auto-generated) — see Build.CI.GitHubActions.cs for the
-# rationale (lets us bridge GitHub's NUGET_API_KEY secret to Fallout's
-# NuGetApiKey parameter, which would otherwise have to share a name).
+# rationale. nuget.org publishing uses Trusted Publishing (OIDC via NuGet/login):
+# no NUGET_API_KEY secret. Set the NUGET_USER repo variable and add a trusted
+# publishing policy on nuget.org (repo Fallout-build/Fallout, workflow
+# publish-packages-release.yml, environment nuget-org).
 #
 # This is the DELIBERATE (production) release path. The fast test lane —
 # develop (-alpha) and release/* (-beta), push → GitHub Packages — lives in
@@ -166,6 +168,9 @@ jobs:
     environment:
       name: nuget-org
       url: https://www.nuget.org/profiles/Fallout.build
+    permissions:
+      contents: read
+      id-token: write   # OIDC token for nuget.org Trusted Publishing (no long-lived API key)
     steps:
       - name: 'Setup: .NET SDK'
         uses: actions/setup-dotnet@v6
@@ -176,6 +181,12 @@ jobs:
         with:
           name: packages
           path: output/packages
+      - name: 'Login: nuget.org (Trusted Publishing)'
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          # nuget.org profile name (not email) that owns the trusted-publishing policy.
+          user: ${{ vars.NUGET_USER }}
       - name: 'Push: Fallout.* to nuget.org'
         run: |
           set -euo pipefail
@@ -189,7 +200,7 @@ jobs:
             echo "Pushing $pkg to nuget.org..."
             dotnet nuget push "$pkg" \
               --source "https://api.nuget.org/v3/index.json" \
-              --api-key "${{ secrets.NUGET_API_KEY }}" \
+              --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" \
               --skip-duplicate
           done
 
