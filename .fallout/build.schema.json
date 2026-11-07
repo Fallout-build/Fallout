@@ -163,6 +163,9 @@
             "type": "string"
           }
         },
+        "ReleaseTag": {
+          "type": "string"
+        },
         "Solution": {
           "type": "string",
           "description": "Path to a solution file that is automatically loaded"

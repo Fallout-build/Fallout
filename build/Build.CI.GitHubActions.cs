@@ -28,7 +28,7 @@ using Fallout.Components;
 //                             Cross-platform full Test+Pack is gated to RELEASE
 //                             INTENT (#318/#326): it runs only on a PR into a
 //                             production branch (main, release/*, support/*) and on
-//                             a release tag push (v*) — never on routine pushes/PRs to
+//                             a release tag push (X.Y.Z*) — never on routine pushes/PRs to
 //                             develop. On develop "we've got our edge": the
 //                             ubuntu-latest gate above + the preview pipeline
 //                             (.github/workflows/publish-packages-preview.yml).
@@ -81,7 +81,7 @@ using Fallout.Components;
     ConcurrencyCancelInProgress = true,
     OnPushTags = new[]
     {
-        "v*"
+        "[0-9]*.[0-9]*.[0-9]*"
     },
     // main is the production trunk now (ADR-0009). A PR into it is always a
     // release/vX.Y GA merge or a hotfix, so it belongs on this release-intent gate,

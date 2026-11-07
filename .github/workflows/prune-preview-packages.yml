@@ -13,10 +13,11 @@
 # Shape:
 #   - Discovers the org's NuGet packages from the API rather than hard-coding a
 #     list, so a newly-added package is covered the moment it first publishes.
-#   - Prunes ONLY `-preview.` versions, keeping the newest `keep` of them.
-#   - `ignore-versions` protects everything that is not a per-commit preview:
-#     GA, `-rc.N`, and the legacy `-alpha.N` versions are never touched. Those are
-#     the durable release markers and must outlive any cleanup.
+#   - Prunes ONLY `-alpha.`, `-beta.` and (legacy) `-preview.` versions, keeping the
+#     newest `keep` of them.
+#   - `ignore-versions` protects everything that is not a per-commit build:
+#     GA and `-rc.N` versions are never touched. Those are the durable release
+#     markers and must outlive any cleanup.
 #   - Runs weekly, matching the Dependabot cadence, and on demand.
 #
 # "Newest" means most-recently-created, not highest version number: the action
@@ -103,7 +104,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           for p in $(echo '${{ steps.list.outputs.packages }}' | jq -r '.[]'); do
             n=$(gh api "/orgs/${{ github.repository_owner }}/packages/nuget/$p/versions?per_page=100" \
-              --paginate -q '.[].name' | grep -c -- '-preview\.' || true)
+              --paginate -q '.[].name' | grep -cE -- '-(preview|alpha|beta)\.' || true)
             d=$(( n > KEEP ? n - KEEP : 0 ))
             total=$(( total + d ))
             echo "| \`$p\` | $n | $d |" >> "$GITHUB_STEP_SUMMARY"
@@ -130,14 +131,14 @@ jobs:
       matrix:
         package: ${{ fromJSON(needs.discover.outputs.packages) }}
     steps:
-      - name: 'Prune: old -preview versions'
+      - name: 'Prune: old -alpha, -beta and -preview versions'
         uses: actions/delete-package-versions@v5
         with:
           owner: ${{ github.repository_owner }}
           package-name: ${{ matrix.package }}
           package-type: nuget
           min-versions-to-keep: ${{ env.KEEP }}
-          # Protect every version that is NOT a per-commit preview — GA, `-rc.N`,
-          # and legacy `-alpha.N` all match this and are ignored. Deliberately not
-          # `delete-only-pre-release-versions`, which would also eat rc + alpha.
-          ignore-versions: '^(?!.*-preview\.).*$'
+          # Protect every version that is NOT a per-commit build — GA and `-rc.N`
+          # match this and are ignored. Deliberately not `delete-only-pre-release-versions`,
+          # which would also eat rc.
+          ignore-versions: '^(?!.*-(preview|alpha|beta)\.).*$'

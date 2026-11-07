@@ -50,7 +50,6 @@
   <!-- Central package management is off for build/_build.csproj; skip these refs there since they'd require explicit versions. -->
   <ItemGroup Condition="'$(ManagePackageVersionsCentrally)' != 'false'">
     <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
-    <PackageReference Include="Nerdbank.GitVersioning" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup Condition="$(MSBuildProjectName.EndsWith('Tests')) Or $(MSBuildProjectName.EndsWith('Specs'))">

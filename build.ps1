@@ -23,6 +23,13 @@ $env:DOTNET_CLI_TELEMETRY_OPTOUT = 1
 $env:DOTNET_NOLOGO = 1
 $env:DOTNET_ROLL_FORWARD = "Major"
 
+# Install by channel or version.
+# .NET 11+ packages are tar.gz. Windows tar refuses to extract when the
+# destination is reached through a symlink (Windows Runner's C:\Runner:
+# "too many symbolic link levels"). This switch makes the install script
+# download the zip and extract it with System.IO.Compression.
+$env:DOTNET_INSTALL_SKIP_TAR = "1"
+
 ###########################################################################
 # EXECUTION
 ###########################################################################

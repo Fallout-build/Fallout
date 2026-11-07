@@ -87,16 +87,21 @@ partial class Build
     // regenerates anything; the explicit re-check afterward catches drift with a message pointing
     // at the fix.
     //
+    // Only docs/llms.txt is checked, not the whole working copy. Other tracked files change during
+    // a build (the .packageguard/*.bin cache files are rewritten by every PackageGuard run and
+    // committed on purpose), and they must not fail this gate.
+    //
     // Wired into BOTH workflows on purpose. build.yml ignores docs/**, so on its own it would never
     // fire on the change that actually invalidates the file; build-skip.yml is the workflow that
     // handles those PRs, and it runs this target for exactly that reason.
     Target VerifyLlmsTxt => _ => _
-        .Requires(() => GitHasCleanWorkingCopy())
         .DependsOn(GenerateLlmsTxt)
         .Executes(() =>
         {
+            var relativePath = RootDirectory.GetUnixRelativePathTo(LlmsTxtFile);
+
             Assert.True(
-                GitHasCleanWorkingCopy(),
+                !Git($"status --short -- {relativePath}", logOutput: false).Any(),
                 "docs/llms.txt is out of sync with docs/website. Run './build.ps1 GenerateLlmsTxt' "
                 + "locally and commit the result.");
         });
