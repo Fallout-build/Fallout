@@ -7,7 +7,8 @@ namespace Fallout.Migrate.Steps;
 /// <summary>
 /// Rewrites every <c>*.cs</c> file under the repository root: <c>Nuke.*</c> namespace prefixes become
 /// <c>Fallout.</c>, the bare <c>NukeBuild</c>/<c>INukeBuild</c> types become
-/// <c>FalloutBuild</c>/<c>IFalloutBuild</c>, and the solution-model namespace (which moved out of
+/// <c>FalloutBuild</c>/<c>IFalloutBuild</c>, the <c>IHaz*</c> component interfaces become
+/// <c>IHas*</c>, and the solution-model namespace (which moved out of
 /// <c>*.Common.ProjectModel</c> in v11) becomes <c>Fallout.Solutions</c>.
 /// </summary>
 internal sealed class RewriteCsFilesStep : IMigrationStep
@@ -18,19 +19,31 @@ internal sealed class RewriteCsFilesStep : IMigrationStep
     // the canonical v11 namespace in one edit instead of the now-dead
     // `Fallout.Common.ProjectModel`. Matching both source prefixes also fixes
     // already-partially-migrated code. Mirrors the codefix mapping from #253.
+    // The leading `(?<![\w.])` lookbehind keeps the namespace inside another dotted name
+    // (`Acme.Nuke.Common.ProjectModel`) as it is, the same as in namespacePrefix below.
     private static readonly Regex projectModelNamespace =
-        new(@"\b(?:Nuke|Fallout)\.Common\.ProjectModel\b", RegexOptions.Compiled);
+        new(@"(?<![\w.])(?:Nuke|Fallout)\.Common\.ProjectModel\b", RegexOptions.Compiled);
 
-    // Anchored prefix swap: `\bNuke\.` → `Fallout.`. Covers using directives,
+    // Anchored prefix swap: `Nuke.` → `Fallout.`. Covers using directives,
     // attribute references, qualified type names, namespace declarations.
+    // The leading `(?<![\w.])` lookbehind keeps a `Nuke` segment inside another
+    // dotted name (`Acme.Nuke.Tools`) as it is.
     // The trailing `(?=[A-Z])` lookahead avoids matching `Nuke.json` filenames
     // or other lowercase tails the prefix audit deliberately preserved.
     private static readonly Regex namespacePrefix =
-        new(@"\bNuke\.(?=[A-Z])", RegexOptions.Compiled);
+        new(@"(?<![\w.])Nuke\.(?=[A-Z])", RegexOptions.Compiled);
 
     // Bare type renames done in the Fallout rebrand (#59).
     private static readonly Regex nukeBuildType = new(@"\bNukeBuild\b", RegexOptions.Compiled);
     private static readonly Regex iNukeBuildType = new(@"\bINukeBuild\b", RegexOptions.Compiled);
+
+    // NUKE's IHaz* component interfaces are IHas* in Fallout.Components. The [Obsolete]
+    // IHaz* aliases ship only in the Nuke.Components shim, which the namespace swap above
+    // moves the code away from. Limited to the shipped names, so a user-defined IHaz*
+    // interface keeps its name.
+    private static readonly Regex iHazComponentType = new(
+        @"\bIHaz(?=(?:Artifacts|Changelog|Configuration|GitRepository|GitVersion|NerdbankGitVersioning|Reports|Solution|TwitterCredentials)\b)",
+        RegexOptions.Compiled);
 
     /// <inheritdoc />
     public Task ExecuteAsync(MigrationContext context, Summary summary)
@@ -75,6 +88,12 @@ internal sealed class RewriteCsFilesStep : IMigrationStep
         {
             edits++;
             return "FalloutBuild";
+        });
+
+        content = iHazComponentType.Replace(content, _ =>
+        {
+            edits++;
+            return "IHas";
         });
 
         return new RewriteResult(content, edits);

@@ -1,10 +1,10 @@
 using System;
 using System.Reflection;
-using FluentAssertions;
+using Fallout.Build.Execution;
 using Fallout.Common.Execution;
-using Fallout.Common.IO;
 using Fallout.Common.Tooling;
 using Fallout.Common.ValueInjection;
+using FluentAssertions;
 using Serilog.Events;
 using Serilog.Parsing;
 using Xunit;
@@ -42,6 +42,66 @@ public class BuildContextSpecs
         context.Dispose();
 
         BuildContext.Current.Should().BeNull();
+    }
+
+    [Fact]
+    public void Parameter_service_facade_resolves_the_current_contexts_instance()
+    {
+        // Arrange
+        using var context = BuildContext.Activate();
+
+        // Act
+        var instance = ParameterService.Instance;
+
+        // Assert
+        instance.Should().BeSameAs(context.Parameters);
+    }
+
+    [Fact]
+    public void Parameter_service_facade_falls_back_to_a_shared_instance_outside_a_run()
+    {
+        // Arrange
+        BuildContext.Current.Should().BeNull();
+
+        // Act
+        var first = ParameterService.Instance;
+        var second = ParameterService.Instance;
+
+        // Assert
+        first.Should().NotBeNull();
+        first.Should().BeSameAs(second);
+    }
+
+    [Fact]
+    public void Each_run_gets_its_own_parameter_service()
+    {
+        // Arrange
+        ParameterService first;
+        ParameterService second;
+
+        // Act
+        using (var context = BuildContext.Activate())
+            first = context.Parameters;
+        using (var context = BuildContext.Activate())
+            second = context.Parameters;
+
+        // Assert
+        second.Should().NotBeSameAs(first);
+    }
+
+    [Fact]
+    public void Parameter_service_state_does_not_leak_into_the_next_run()
+    {
+        // Arrange
+        using (BuildContext.Activate())
+            ParameterService.Instance.ArgumentsFromCommitMessageService = new ArgumentParser(["-arg", "value"]);
+
+        // Act
+        using var next = BuildContext.Activate();
+
+        // Assert
+        // The first run set the commit-message arguments. The new run must not see them.
+        ParameterService.Instance.ArgumentsFromCommitMessageService.Should().BeNull();
     }
 
     [Fact]
@@ -83,7 +143,7 @@ public class BuildContextSpecs
         {
             NuGetToolPathResolver.EmbeddedPackagesDirectory = "/packages";
             NuGetToolPathResolver.NuGetPackagesConfigFile = "/packages.config";
-            NpmToolPathResolver.NpmPackageJsonFile = (AbsolutePath)"/npm/package.json";
+            NpmToolPathResolver.NpmPackageJsonFile = "/npm/package.json";
         }
 
         NuGetToolPathResolver.EmbeddedPackagesDirectory.Should().BeNull();
@@ -99,7 +159,9 @@ public class BuildContextSpecs
         var subject = new Subject();
 
         using (BuildContext.Activate())
+        {
             ValueInjectionUtility.TryGetValue(() => subject.Value).Should().Be("1");
+        }
 
         // The context's teardown cleared the cache, so this read re-injects rather than replaying the
         // value the previous run computed.
@@ -130,7 +192,9 @@ public class BuildContextSpecs
         var sentinel = $"build-context-teardown-{Guid.NewGuid()}";
 
         using (BuildContext.Activate())
+        {
             sink.Emit(CreateLogEvent(sentinel));
+        }
 
         // Leaving the scope disposes the context, whose teardown clears the shared in-memory sink so a
         // subsequent run in the same process starts clean. Assert on the sentinel specifically so a

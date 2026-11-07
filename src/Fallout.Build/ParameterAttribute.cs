@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
+using Fallout.Build.Execution;
 using Fallout.Common.Utilities;
 using Fallout.Common.ValueInjection;
 
@@ -83,7 +83,7 @@ public class OnDemandValueInjectionAttribute : Attribute;
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property)]
 public class OnDemandAttribute : Attribute;
 
-[AttributeUsage(AttributeTargets.Interface, AllowMultiple = false, Inherited = false)]
+[AttributeUsage(AttributeTargets.Interface)]
 public class ParameterPrefixAttribute : Attribute
 {
     public ParameterPrefixAttribute(string prefix)

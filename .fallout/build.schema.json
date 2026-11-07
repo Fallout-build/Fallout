@@ -30,10 +30,12 @@
         "CreateGitHubRelease",
         "DeletePackages",
         "DownloadLicenses",
+        "GenerateLlmsTxt",
         "GeneratePublicApi",
         "GenerateTools",
         "Install",
         "Pack",
+        "PackageGuard",
         "Publish",
         "References",
         "ReportCoverage",
@@ -42,7 +44,8 @@
         "Test",
         "UpdateContributors",
         "UpdateStargazers",
-        "VerifyGeneratedTools"
+        "VerifyGeneratedTools",
+        "VerifyLlmsTxt"
       ]
     },
     "Verbosity": {
@@ -159,6 +162,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "ReleaseTag": {
+          "type": "string"
         },
         "Solution": {
           "type": "string",

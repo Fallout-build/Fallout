@@ -27,7 +27,8 @@ gotchas worth knowing before you start.
 - **A green pipeline run is not proof anything published** — every publish job
   is conditional. Verify job conclusions and the nuget.org index after a
   release (commands in the runbook).
-- **nuget.org is always opt-in** via `workflow_dispatch -f publish-to-nugetorg=true`;
-  a tag push alone only reaches GitHub Packages + GitHub Releases.
+- **GA (`10.5.0`) and `-rc` (`10.5.0-rc.1`) tags publish to nuget.org on their own**,
+  with no approval. Tags have no `v` prefix. Any other prerelease tag skips nuget.org.
+  Do not reuse a tag name.
 - Never bypass a hotfix through direct pushes — branch protection blocks it
   everywhere; even a one-commit cherry-pick goes through a PR.

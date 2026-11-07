@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Fallout.Build.Execution;
 using Fallout.Common.Execution;
 using Fallout.Common.Utilities.Collections;
 using static Fallout.Common.CI.BuildServerConfigurationGeneration;
@@ -14,9 +15,11 @@ public class GenerateBuildServerConfigurationsAttribute
     {
         var configurationId = ParameterService.GetParameter<string>(ConfigurationParameterName);
         if (configurationId == null)
+        {
             return;
+        }
 
-        Assert.NotNull(Build.RootDirectory);
+        Build.RootDirectory.NotNull();
 
         var generator = GetGenerators(Build)
             .Where(x => x.Id == configurationId)

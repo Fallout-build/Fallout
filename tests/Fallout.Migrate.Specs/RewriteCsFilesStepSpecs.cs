@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Fallout.Common.IO;
 using Fallout.Migrate.Common;
@@ -30,10 +32,10 @@ public class RewriteCsFilesStepSpecs : IDisposable
     public async Task Nuke_using_directives_are_rewritten_to_fallout()
     {
         (tempDirectory / "Build.cs").WriteAllText("""
-                                                   using Nuke.Common;
-                                                   using Nuke.Common.IO;
-                                                   using Fallout.Common;
-                                                   """);
+                                                  using Nuke.Common;
+                                                  using Nuke.Common.IO;
+                                                  using Fallout.Common;
+                                                  """);
 
         await new RewriteCsFilesStep().ExecuteAsync(context, summary);
 
@@ -53,6 +55,83 @@ public class RewriteCsFilesStepSpecs : IDisposable
         summary.EditCount.Should().Be(1);
         var buildCs = (tempDirectory / "Build.cs").ReadAllText().Trim();
         buildCs.Should().Be("var x = new Fallout.Common.Tools.DotNet.DotNetTasks();");
+    }
+
+    [Fact]
+    public async Task Nuke_inside_another_dotted_name_is_left_alone()
+    {
+        // Arrange
+        const string input = """
+                             using Acme.Nuke.Tools;
+                             using Nuke.Common;
+                             """;
+
+        (tempDirectory / "Build.cs").WriteAllText(input, eofLineBreak: false);
+
+        // Act
+        await new RewriteCsFilesStep().ExecuteAsync(context, summary);
+
+        // Assert
+        summary.EditCount.Should().Be(1);
+        string buildCs = (tempDirectory / "Build.cs").ReadAllText();
+        buildCs.Should().Contain("using Acme.Nuke.Tools;");
+        buildCs.Should().Contain("using Fallout.Common;");
+    }
+
+    [Fact]
+    public async Task Project_model_namespace_inside_another_dotted_name_is_left_alone()
+    {
+        // Arrange
+        const string input = """
+                             using Acme.Nuke.Common.ProjectModel;
+                             using Nuke.Common.ProjectModel;
+                             """;
+
+        (tempDirectory / "Build.cs").WriteAllText(input, eofLineBreak: false);
+
+        // Act
+        await new RewriteCsFilesStep().ExecuteAsync(context, summary);
+
+        // Assert
+        summary.EditCount.Should().Be(1);
+        string buildCs = (tempDirectory / "Build.cs").ReadAllText();
+        buildCs.Should().Contain("using Acme.Nuke.Common.ProjectModel;");
+        buildCs.Should().Contain("using Fallout.Solutions;");
+    }
+
+    [Theory]
+    [InlineData("bin")]
+    [InlineData("obj")]
+    [InlineData(".git")]
+    public async Task Files_in_an_ignored_folder_below_the_root_are_skipped(string folder)
+    {
+        // Arrange
+        const string input = "using Nuke.Common;";
+        AbsolutePath ignoredFile = tempDirectory / "src" / folder / "Gen.cs";
+        ignoredFile.WriteAllText(input, eofLineBreak: false);
+
+        // Act
+        await new RewriteCsFilesStep().ExecuteAsync(context, summary);
+
+        // Assert
+        summary.EditCount.Should().Be(0);
+        ignoredFile.ReadAllText().Should().Be(input);
+    }
+
+    [Fact]
+    public async Task Files_are_rewritten_when_the_repository_sits_under_a_bin_folder()
+    {
+        // Arrange
+        AbsolutePath repository = tempDirectory / "bin" / "repo";
+        (repository / "Build.cs").WriteAllText("using Nuke.Common;");
+        var repositoryContext = new MigrationContext(repository, dryRun: false, TextWriter.Null);
+
+        // Act
+        await new RewriteCsFilesStep().ExecuteAsync(repositoryContext, summary);
+
+        // Assert
+        summary.EditCount.Should().Be(1);
+        (repository / "Build.cs").ReadAllText().Should().Contain("using Fallout.Common;");
     }
 
     [Fact]
@@ -156,5 +235,63 @@ public class RewriteCsFilesStepSpecs : IDisposable
         summary.EditCount.Should().Be(1);
         var buildCs = (tempDirectory / "Build.cs").ReadAllText().Trim();
         buildCs.Should().Be("using Fallout.Common.ProjectModelFoo;");
+    }
+
+    [Fact]
+    public async Task IHaz_component_interfaces_are_renamed_to_IHas()
+    {
+        // Arrange
+        (tempDirectory / "Build.cs").WriteAllText("""
+                                                  interface IBuildPaths : IHazSolution, IHazArtifacts;
+                                                  var solution = From<IHazSolution>().Solution;
+                                                  """);
+
+        // Act
+        await new RewriteCsFilesStep().ExecuteAsync(context, summary);
+
+        // Assert
+        summary.EditCount.Should().Be(3);
+        var buildCs = (tempDirectory / "Build.cs").ReadAllText();
+        buildCs.Should().Contain("IBuildPaths : IHasSolution, IHasArtifacts;");
+        buildCs.Should().Contain("From<IHasSolution>()");
+        buildCs.Should().NotContain("IHaz");
+    }
+
+    [Fact]
+    public async Task User_defined_IHaz_interfaces_keep_their_name()
+    {
+        // Arrange
+        (tempDirectory / "Build.cs").WriteAllText("interface IHazSourcePaths : IHazSolution;");
+
+        // Act
+        await new RewriteCsFilesStep().ExecuteAsync(context, summary);
+
+        // Assert
+        summary.EditCount.Should().Be(1);
+        var buildCs = (tempDirectory / "Build.cs").ReadAllText().Trim();
+        buildCs.Should().Be("interface IHazSourcePaths : IHasSolution;");
+    }
+
+    [Fact]
+    public async Task Every_IHaz_alias_in_the_Nuke_Components_shim_is_renamed()
+    {
+        // The rename list is hard-coded. This spec fails when the shim gains an IHaz* alias
+        // that the list doesn't have.
+        // Arrange
+        var shimDirectory = AbsolutePath.Create(AppContext.BaseDirectory)
+            .FindParentOrSelf(x => (x / "fallout.slnx").FileExists()) / "src" / "Shims" / "Nuke.Components";
+        var aliases = shimDirectory.GetFiles("*.cs")
+            .SelectMany(x => Regex.Matches(x.ReadAllText(), @"\binterface\s+(?<name>IHaz\w+)"))
+            .Select(x => x.Groups["name"].Value)
+            .ToList();
+        (tempDirectory / "Build.cs").WriteAllText(string.Join("\n", aliases), eofLineBreak: false);
+
+        // Act
+        await new RewriteCsFilesStep().ExecuteAsync(context, summary);
+
+        // Assert
+        aliases.Should().NotBeEmpty();
+        (tempDirectory / "Build.cs").ReadAllText()
+            .Should().Be(string.Join("\n", aliases.Select(x => "IHas" + x["IHaz".Length..])));
     }
 }

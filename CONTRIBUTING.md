@@ -38,11 +38,21 @@ Fallout welcomes contributions. As a community, we want to help each other, prov
 - Rebrand-track work (see the [Fallout rebrand milestone](https://github.com/Fallout-build/Fallout/milestone/1)).
 - Demand-driven items where multiple users have weighed in.
 
+### Proposing new public API
+
+This applies to a new public type or member, not a small additive overload or a bug fix.
+
+- Open a [Feature Idea](https://github.com/Fallout-build/Fallout/issues/new?template=feature_idea.yml) issue. Describe the proposed shape and how you'd use it.
+- If a maintainer identifies it as new public API, they relabel it `api-suggestion` — an early idea, not yet ready for implementation.
+- After review, the label moves to `api-needs-work` (revise the proposal; it goes back for another look) or `api-approved` (the shape is right).
+- Once `api-approved`, implement it in a PR that references the issue.
+
 ## Pull requests
 
 ### Before opening a PR
 
 - Branch from `develop` (the base for all PRs). Name your branch `feature/<slug>`, `bugfix/<slug>`, or `chore/<slug>`.
+- **Open it as a draft** (`gh pr create --draft`, or the draft option in the GitHub UI). Mark it ready for review only once it's done — this keeps incomplete work out of the review queue.
 - Make sure your employer allows the contribution.
 - Read [AGENTS.md](AGENTS.md) for the codebase conventions — package versions go in `Directory.Packages.props`, tests live next to code, no per-file license headers (the `LICENSE` file at the root is the single source of truth). (AGENTS.md is the canonical brief for both human contributors and AI tools; GitHub Copilot reads it natively and `CLAUDE.md` points to it.)
 - The bootstrappers are now thin: `./build.ps1` / `./build.sh` provision .NET if needed, then run `dotnet tool restore` + `dotnet fallout "$@"`. The `Fallout.GlobalTool` version is pinned in `.config/dotnet-tools.json`.

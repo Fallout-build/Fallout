@@ -1,12 +1,7 @@
 using System;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Text.Json;
-using FluentAssertions;
-using Fallout.Common.Tools.MSBuild;
-using Fallout.Common.Tools.OpenCover;
-using Fallout.Common.Tools.Xunit;
+using System.Threading.Tasks;
 using Fallout.Common.IO;
 using Fallout.Common.Tooling;
 using Fallout.Common.Tools.CorFlags;
@@ -14,7 +9,12 @@ using Fallout.Common.Tools.Discord;
 using Fallout.Common.Tools.Docker;
 using Fallout.Common.Tools.DotNet;
 using Fallout.Common.Tools.Kubernetes;
+using Fallout.Common.Tools.MSBuild;
+using Fallout.Common.Tools.OpenCover;
+using Fallout.Common.Tools.PackageGuard;
+using Fallout.Common.Tools.Xunit;
 using Fallout.Common.Utilities;
+using FluentAssertions;
 using VerifyXunit;
 using Xunit;
 
@@ -176,6 +176,7 @@ public class SettingsSpecs
                 .SetType(DiscordEmbedType.article)
                 .SetAuthor(_ => _
                     .SetName("author-name")));
+
         var result = JsonSerializer.Serialize(message, message.GetType(), Options.SerializerOptions);
 
         return Verifier.Verify(result);
@@ -190,6 +191,30 @@ public class SettingsSpecs
                 .SetArguments("arg1", "arg2")
                 .SetCluster("cluster"),
             "exec --container=container --cluster=cluster -- command arg1 arg2");
+    }
+
+    [Fact]
+    public void TestPackageGuard()
+    {
+        Assert(new PackageGuardSettings()
+                .SetProjectPath("MySolution.sln")
+                .SetConfigPath("packageguard.config.json")
+                .EnableForceRestore()
+                .SetRiskCacheMaxAgeHours(48)
+                .SetNpmPackageManager(NpmPackageManager.Yarn)
+                .EnableReportRisk()
+                .SetSbom(SbomFormat.cyclonedx)
+                .SetSbomOutput("sbom.json"),
+            "MySolution.sln --config-path packageguard.config.json --force-restore --risk-cache-max-age-hours 48 --npm Yarn --report-risk --sbom cyclonedx --sbom-output sbom.json");
+    }
+
+    [Fact]
+    public void TestPackageGuardReportRiskPath()
+    {
+        Assert(new PackageGuardSettings()
+                .SetProjectPath("MySolution.sln")
+                .SetReportRiskPath("output/packageguard/risk-report.sarif"),
+            "MySolution.sln --report-risk output/packageguard/risk-report.sarif");
     }
 
     private static void Assert<T>(T options, string expected)

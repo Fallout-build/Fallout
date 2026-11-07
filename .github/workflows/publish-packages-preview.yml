@@ -1,20 +1,19 @@
-# Hand-written. The "preview" channel — `develop` (ADR-0009, superseding ADR-0004).
+# Hand-written. The "preview" channels — `develop` and `release/*` (ADR-0011,
+# superseding ADR-0009's versioning).
 #
 # Shape:
-#   - Trigger: push to `develop`. `develop` is the integration trunk / `-preview`
-#     channel — the deliberate lane where work stabilises. Nerdbank.GitVersioning
-#     produces a prerelease of the form `10.5.0-preview.<height>.g<commit>`
-#     (`develop` is intentionally NOT a public-release ref in version.json), so these
-#     never look like a stable release.
+#   - Trigger: push to `develop` or a `release/*` branch. GitVersion (GitVersion.yml)
+#     computes the version from the branch: `10.5.0-alpha.<n>` on `develop`,
+#     `10.5.0-beta.<n>` on `release/v10.5`. Neither looks like a stable release.
+#     `-rc` and GA versions only come from tags (publish-packages-release.yml).
 #   - Builds + packs, then pushes every *.nupkg to GitHub Packages ONLY.
 #   - Deliberately does NOT touch nuget.org and does NOT create a GitHub Release.
 #     GitHub Packages is the test/preview channel and is opt-in for consumers
 #     (they add the feed), so it causes none of the nuget.org Dependabot
 #     fan-out that ADR-0001 / ADR-0002 were avoiding.
 #
-# `develop` is the only continuous prerelease lane. ADR-0008 folded the former
-# `experimental` `-alpha` lane into the trunk; ADR-0009 keeps that, just renamed
-# onto `develop`. Stable and legacy releases are deliberate and tag-triggered —
+# `develop` and `release/*` are the continuous prerelease lanes. Stable and
+# legacy releases are deliberate and tag-triggered —
 # see publish-packages-release.yml. Cross-platform validation (macOS/Windows)
 # only runs on release intent (build-cross-platform.yml), not on `develop`
 # pushes — `develop` relies on the ubuntu-latest gate (build.yml) instead.
@@ -26,6 +25,7 @@ on:
   push:
     branches:
       - develop
+      - 'release/**'
     paths-ignore:
       - 'docs/**'
       - '.assets/**'
@@ -51,14 +51,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0           # Nerdbank.GitVersioning needs full history
+          fetch-depth: 0           # GitVersion needs full history
       - name: 'Cache: .fallout/temp, ~/.nuget/packages'
         uses: actions/cache@v6
         with:
           path: |
             .fallout/temp
             ~/.nuget/packages
-          key: ${{ runner.os }}-preview-${{ hashFiles('**/global.json', '**/*.csproj', '**/Directory.Packages.props', 'version.json') }}
+          key: ${{ runner.os }}-preview-${{ hashFiles('**/global.json', '**/*.csproj', '**/Directory.Packages.props') }}
           restore-keys: |
             ${{ runner.os }}-preview-
       - name: 'Setup: .NET SDK'

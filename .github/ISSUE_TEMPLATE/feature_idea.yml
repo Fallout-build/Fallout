@@ -9,6 +9,8 @@ body:
         
         _Before you continue, please check the [contribution guidelines](https://github.com/Fallout-build/Fallout/blob/main/CONTRIBUTING.md)._
 
+        _Proposing a new public API (a new type or member)? It goes through an extra review — see [Proposing new public API](https://github.com/Fallout-build/Fallout/blob/main/CONTRIBUTING.md#proposing-new-public-api)._
+
   - type: textarea
     attributes:
       label: Description

@@ -3,37 +3,43 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using Fallout.Common;
 using Fallout.Common.Tooling;
 using Fallout.Common.Utilities;
 using Serilog;
 using static Fallout.Common.Utilities.ReflectionUtility;
 
-namespace Fallout.Common;
+namespace Fallout.Build.Execution;
 
-internal partial class ParameterService
+/// <summary>
+/// Finds the value of a build parameter, and describes <c>[Parameter]</c> members (names, descriptions, value sets).
+/// </summary>
+/// <remarks>
+/// <para>
+/// The static members describe a <c>[Parameter]</c> member and do not depend on a run.
+/// The instance members look up values. <see cref="GetParameter(string, Type, char?)"/> checks these sources in order:
+/// commit message, command line, positional command-line arguments, environment variables, parameter files.
+/// </para>
+/// <para>
+/// Each build run has its own instance, owned by <see cref="BuildContext.Parameters"/>. The two settable sources
+/// (<see cref="ArgumentsFromFilesService"/> and <see cref="ArgumentsFromCommitMessageService"/>) are therefore
+/// discarded when the run ends. The static <see cref="Instance"/> returns the instance of the current
+/// <see cref="BuildContext"/>. Outside a run, it returns one shared instance.
+/// </para>
+/// </remarks>
+internal partial class ParameterService(
+    Func<ArgumentParser> argumentParserProvider,
+    Func<IReadOnlyDictionary<string, string>> environmentVariablesProvider)
 {
-    // internal ArgumentParser ArgumentsFromFilesService;
+    /// <summary>Reads arguments from parameter files. Set by <c>ArgumentsFromParametersFileAttribute</c>.</summary>
     internal Func<string, Type, object> ArgumentsFromFilesService;
+
+    /// <summary>Reads arguments from the commit message. Set by <c>ArgumentsFromGitCommitMessageAttribute</c>.</summary>
     internal ArgumentParser ArgumentsFromCommitMessageService;
 
-    private readonly Func<ArgumentParser> argumentParserProvider;
-    private readonly Func<IReadOnlyDictionary<string, string>> environmentVariablesProvider;
-
-    public ParameterService(
-        Func<ArgumentParser> argumentParserProvider,
-        Func<IReadOnlyDictionary<string, string>> environmentVariablesProvider)
-    {
-        this.argumentParserProvider = argumentParserProvider;
-        this.environmentVariablesProvider = environmentVariablesProvider;
-    }
-
     private ArgumentParser ArgumentsParser => argumentParserProvider.Invoke();
-    private IReadOnlyDictionary<string, string> Variables => environmentVariablesProvider.Invoke();
 
-    public static bool IsParameter(string value)
-    {
-        return value != null && value.StartsWith("-");
-    }
+    private IReadOnlyDictionary<string, string> Variables => environmentVariablesProvider.Invoke();
 
     public static string GetParameterDashedName(MemberInfo member)
     {
@@ -43,11 +49,6 @@ internal partial class ParameterService
     public static string GetParameterDashedName(string name)
     {
         return name.SplitCamelHumpsWithKnownWords().JoinDash().ToLowerInvariant();
-    }
-
-    public static string GetParameterMemberName(string name)
-    {
-        return name.Replace("-", string.Empty);
     }
 
     public static string GetParameterMemberName<T>(Expression<Func<T>> expression)
@@ -77,17 +78,20 @@ internal partial class ParameterService
         IEnumerable<(string Text, object Object)> TryGetFromValueProvider()
         {
             if (attribute.ValueProviderMember == null)
+            {
                 return null;
+            }
 
             var valueProviderType = attribute.ValueProviderType ?? instance.GetType();
             var valueProvider = valueProviderType
                 .GetMember(attribute.ValueProviderMember, All)
                 .SingleOrDefault()
                 .NotNull($"No single provider '{valueProviderType.Name}.{member.Name}' found");
+
             Assert.True(valueProvider.GetMemberType() == typeof(IEnumerable<string>),
                 $"Value provider '{valueProvider.Name}' must be of type '{typeof(IEnumerable<string>).GetDisplayShortName()}'");
 
-            return valueProvider.GetValue<IEnumerable<string>>(instance).Select(x => (x, (object) x));
+            return valueProvider.GetValue<IEnumerable<string>>(instance).Select(x => (x, (object)x));
         }
 
         IEnumerable<(string Text, object Object)> TryGetFromEnumerationClass() =>
@@ -102,9 +106,8 @@ internal partial class ParameterService
                 : Nullable.GetUnderlyingType(memberType) is { } underlyingType && underlyingType.IsEnum
                     ? underlyingType
                     : null;
-            return enumType != null
-                ? enumType.GetEnumNames().Select(x => (x, Enum.Parse(enumType, x)))
-                : null;
+
+            return enumType?.GetEnumNames().Select(x => (x, Enum.Parse(enumType, x)));
         }
 
         try
@@ -159,27 +162,27 @@ internal partial class ParameterService
                TryFromProfileArguments();
     }
 
-    public object GetCommandLineArgument(string argumentName, Type destinationType, char? separator)
+    private object GetCommandLineArgument(string argumentName, Type destinationType, char? separator)
     {
         return ArgumentsParser.GetNamedArgument(argumentName, destinationType, separator);
     }
 
-    public object GetCommandLineArgument(int position, Type destinationType, char? separator)
+    private object GetCommandLineArgument(int position, Type destinationType, char? separator)
     {
         return ArgumentsParser.GetPositionalArgument(position, destinationType, separator);
     }
 
-    public object GetPositionalCommandLineArguments(Type destinationType, char? separator = null)
+    private object GetPositionalCommandLineArguments(Type destinationType, char? separator = null)
     {
         return ArgumentsParser.GetAllPositionalArguments(destinationType, separator);
     }
 
-    public bool HasCommandLineArgument(string argumentName)
+    private bool HasCommandLineArgument(string argumentName)
     {
         return ArgumentsParser.HasArgument(argumentName);
     }
 
-    public object GetEnvironmentVariable(string variableName, Type destinationType, char? separator)
+    private object GetEnvironmentVariable(string variableName, Type destinationType, char? separator)
     {
         static string GetTrimmedName(string name)
             => new(name.Where(char.IsLetterOrDigit).ToArray());
@@ -187,16 +190,31 @@ internal partial class ParameterService
         if (!Variables.TryGetValue(variableName, out var value))
         {
             var trimmedVariableName = GetTrimmedName(variableName);
-            var alternativeValues = Variables
-                .Where(x => GetTrimmedName(x.Key).EqualsOrdinalIgnoreCase(trimmedVariableName) ||
+
+            // Prefixed names are matched before the bare parameter name. Otherwise an unrelated
+            // bare variable would shadow the prefixed one, for example the HOST variable that login
+            // shells on openSUSE export would shadow FALLOUT_HOST.
+            var prefixedValues = Variables
+                .Where(x => GetTrimmedName(x.Key).EqualsOrdinalIgnoreCase($"FALLOUT{trimmedVariableName}") ||
                             GetTrimmedName(x.Key).EqualsOrdinalIgnoreCase($"NUKE{trimmedVariableName}")).ToList();
+
+            var alternativeValues = prefixedValues.Count > 0
+                ? prefixedValues
+                : Variables.Where(x => GetTrimmedName(x.Key).EqualsOrdinalIgnoreCase(trimmedVariableName)).ToList();
+
             if (alternativeValues.Count > 1)
+            {
                 Log.Warning("Could not resolve {VariableName} since multiple values are provided", variableName);
+            }
 
             if (alternativeValues.Count == 1)
+            {
                 value = alternativeValues.Single().Value;
+            }
             else
+            {
                 return destinationType.GetDefaultValue();
+            }
         }
 
         try
@@ -205,9 +223,17 @@ internal partial class ParameterService
         }
         catch (Exception ex)
         {
-            Assert.Fail(new[] { ex.Message, $"Resolving parameter '{variableName}' failed. Environment variable was:", value }.JoinNewLine());
-            // ReSharper disable once HeuristicUnreachableCode
-            return null;
+            // The environment is shared with the operating system, so an unrelated variable such as
+            // the Unix HOST can match a parameter by accident. Built-in parameters are also resolved
+            // in FalloutBuild's static constructor, where throwing aborts the process before any
+            // target runs. Warn and use the default instead.
+            Log.Warning(
+                "Could not resolve {VariableName} from environment variable value {Value}. Using the default value instead. {Reason}",
+                variableName,
+                value,
+                ex.Message);
+
+            return destinationType.GetDefaultValue();
         }
     }
 }

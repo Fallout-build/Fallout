@@ -55,5 +55,7 @@ jobs:
           global-json-file: global.json
       - name: 'Restore: dotnet tools'
         run: dotnet tool restore
-      - name: 'Run: VerifyGeneratedTools, Test, Pack'
-        run: dotnet fallout VerifyGeneratedTools Test Pack
+      - name: 'Run: VerifyGeneratedTools, VerifyLlmsTxt, Test, Pack, PackageGuard'
+        run: dotnet fallout VerifyGeneratedTools VerifyLlmsTxt Test Pack PackageGuard
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,17 +1,22 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using FluentAssertions;
+using Fallout.Build.Execution;
+using Fallout.Common.Execution;
 using Fallout.Common.IO;
-using Fallout.Common.Utilities.Collections;
+using FluentAssertions;
+using Serilog;
+using Serilog.Core;
+using Serilog.Events;
 using Xunit;
 using static Fallout.Common.Utilities.ReflectionUtility;
 
 namespace Fallout.Common.Specs;
 
+[Collection(ProcessGlobalStateCollection.Name)]
 public class ParameterServiceSpecs
 {
-    private ParameterService GetService(string[] commandLineArguments = null, IDictionary<string, string> environmentVariables = null)
+    private ParameterService GetService(string[] commandLineArguments = null,
+        IDictionary<string, string> environmentVariables = null)
     {
         commandLineArguments ??= new string[0];
         environmentVariables ??= new Dictionary<string, string>();
@@ -43,7 +48,11 @@ public class ParameterServiceSpecs
     [InlineData("switch3", typeof(bool), false)]
     [InlineData("switch4", typeof(bool), false)]
     [InlineData("switch5", typeof(bool), true)]
-    [InlineData("array1", typeof(string[]), new[] { "element1", "element2" })]
+    [InlineData("array1", typeof(string[]), new[]
+    {
+        "element1",
+        "element2"
+    })]
     [InlineData("array2", typeof(string[]), new string[0])]
     [InlineData("array3", typeof(string[]), null)]
     [InlineData("notsupplied1", typeof(bool), false)]
@@ -68,6 +77,7 @@ public class ParameterServiceSpecs
                 { "array1", "element1+element2" },
                 { "array2", "" },
             });
+
         service.GetParameter(parameter, destinationType, separator: '+').Should().BeEquivalentTo(expectedValue);
     }
 
@@ -75,14 +85,14 @@ public class ParameterServiceSpecs
     public void TestExpression()
     {
         var service = GetService(
-            [
-                "--string",
-                "--set",
-                "1",
-                "2",
-                "3",
-                "--interface-param"
-            ]);
+        [
+            "--string",
+            "--set",
+            "1",
+            "2",
+            "3",
+            "--interface-param"
+        ]);
 
         var build = new TestBuild();
 
@@ -93,9 +103,15 @@ public class ParameterServiceSpecs
             .Should().BeOfType<bool>().Subject.Should().BeTrue();
 
         ParameterService.GetFromMemberInfo(GetMemberInfo(() => build.Set), destinationType: null, service.GetParameter)
-            .Should().BeOfType<int[]>().Subject.Should().BeEquivalentTo(new[] { 1, 2, 3 });
+            .Should().BeOfType<int[]>().Subject.Should().BeEquivalentTo(new[]
+            {
+                1,
+                2,
+                3
+            });
 
-        ParameterService.GetFromMemberInfo(GetMemberInfo(() => ((ITestComponent)build).Param), destinationType: null, service.GetParameter)
+        ParameterService.GetFromMemberInfo(GetMemberInfo(() => ((ITestComponent)build).Param), destinationType: null,
+                service.GetParameter)
             .Should().BeOfType<bool>().Subject.Should().BeTrue();
     }
 
@@ -111,8 +127,10 @@ public class ParameterServiceSpecs
             (nameof(Verbosity.Quiet), Verbosity.Quiet),
             (nameof(Verbosity.Verbose), Verbosity.Verbose),
         };
+
         ParameterService.GetParameterValueSet(GetMemberInfo(() => FalloutBuild.Verbosity), instance: null)
             .Should().BeEquivalentTo(verbosities);
+
         ParameterService.GetParameterValueSet(GetMemberInfo(() => build.Verbosities), instance: null)
             .Should().BeEquivalentTo(verbosities);
     }
@@ -123,7 +141,11 @@ public class ParameterServiceSpecs
         var emptyArguments = new ArgumentParser(string.Empty);
         var emptyEnvironmentVariables = new Dictionary<string, string>();
 
-        var environmentVariables = new Dictionary<string, string> { ["string"] = "environmentVariables" };
+        var environmentVariables = new Dictionary<string, string>
+        {
+            ["string"] = "environmentVariables"
+        };
+
         var commandLineArguments = new ArgumentParser("--string commandLine");
         var parameterFileArguments = new Func<string, Type, object>((_, _) => "parameterFile");
         var commitMessageArguments = new ArgumentParser("--string commitMessage");
@@ -132,9 +154,14 @@ public class ParameterServiceSpecs
         {
             ArgumentsFromFilesService = parameterFileArguments
         };
+
         service.GetParameter("string", typeof(string), separator: null).Should().Be("parameterFile");
 
-        service = new ParameterService(() => emptyArguments, () => environmentVariables) { ArgumentsFromFilesService = parameterFileArguments };
+        service = new ParameterService(() => emptyArguments, () => environmentVariables)
+        {
+            ArgumentsFromFilesService = parameterFileArguments
+        };
+
         service.GetParameter("string", typeof(string), separator: null).Should().Be("environmentVariables");
 
         service = new ParameterService(() => commandLineArguments, () => environmentVariables);
@@ -145,21 +172,169 @@ public class ParameterServiceSpecs
             ArgumentsFromFilesService = parameterFileArguments,
             ArgumentsFromCommitMessageService = commitMessageArguments
         };
+
         service.GetParameter("string", typeof(string), separator: null).Should().Be("commitMessage");
+    }
+
+    [Fact]
+    public void UnusableHostEnvironmentValue_UsesDefaultAndWarns()
+    {
+        // Arrange. The standard Unix HOST variable. FalloutBuild resolves the Host parameter
+        // from the environment before any target runs.
+        var environmentVariables = new Dictionary<string, string> { ["HOST"] = "M2" };
+
+        // Act
+        var (value, warnings) = ResolveWithEnvironment("Host", typeof(Host), environmentVariables);
+
+        // Assert
+        value.Should().BeNull();
+        warnings.Should().ContainSingle().Which.Should().Contain("Host").And.Contain("M2");
+    }
+
+    [Fact]
+    public void UnusableEnvironmentValue_UsesDefaultAndWarns()
+    {
+        // Arrange
+        var environmentVariables = new Dictionary<string, string> { ["VERBOSITY"] = "bogus" };
+
+        // Act
+        var (value, warnings) = ResolveWithEnvironment("Verbosity", typeof(Verbosity?), environmentVariables);
+
+        // Assert
+        value.Should().BeNull();
+        warnings.Should().ContainSingle().Which.Should().Contain("Verbosity").And.Contain("bogus");
+    }
+
+    [Fact]
+    public void SeveralMatchingEnvironmentValues_UseDefaultAndWarn()
+    {
+        // Arrange. Two spellings of the same parameter name, neither an exact match.
+        var environmentVariables = new Dictionary<string, string>
+        {
+            ["verbosity"] = "Normal",
+            ["VERBOSITY"] = "Verbose"
+        };
+
+        // Act
+        var (value, warnings) = ResolveWithEnvironment("Verbosity", typeof(Verbosity?), environmentVariables);
+
+        // Assert
+        value.Should().BeNull();
+        warnings.Should().ContainSingle().Which.Should().Contain("multiple values are provided");
+    }
+
+    [Theory]
+    [InlineData("FALLOUT_VERBOSITY")]
+    [InlineData("fallout_verbosity")]
+    [InlineData("Fallout_Verbosity")]
+    public void PrefixedEnvironmentValue_IsResolved(string name)
+    {
+        // Arrange
+        var environmentVariables = new Dictionary<string, string> { [name] = "Verbose" };
+
+        // Act
+        var (value, _) = ResolveWithEnvironment("Verbosity", typeof(Verbosity?), environmentVariables);
+
+        // Assert
+        value.Should().Be(Verbosity.Verbose);
+    }
+
+    [Fact]
+    public void PrefixedHostValue_TakesPrecedenceOverBareHost()
+    {
+        // Arrange. The Unix hostname variable is present and cannot be converted.
+        var environmentVariables = new Dictionary<string, string>
+        {
+            ["HOST"] = "M2",
+            ["FALLOUT_HOST"] = "Terminal"
+        };
+
+        // Act
+        var (value, warnings) = ResolveWithEnvironment("Host", typeof(Host), environmentVariables);
+
+        // Assert
+        value.Should().BeOfType<Terminal>();
+        warnings.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void LegacyPrefixedHostValue_TakesPrecedenceOverBareHost()
+    {
+        // Arrange
+        var environmentVariables = new Dictionary<string, string>
+        {
+            ["HOST"] = "M2",
+            ["NUKE_HOST"] = "Terminal"
+        };
+
+        // Act
+        var (value, warnings) = ResolveWithEnvironment("Host", typeof(Host), environmentVariables);
+
+        // Assert
+        value.Should().BeOfType<Terminal>();
+        warnings.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// Resolves one parameter from the given environment and returns it together with the warnings
+    /// logged for that parameter. Swaps the process-wide logger for the duration of the call, so
+    /// the sink keeps only events tagged with the parameter name. Test classes outside the shared
+    /// collection run in parallel and would otherwise leak their log output into the result.
+    /// </summary>
+    private (object Value, IReadOnlyList<string> Warnings) ResolveWithEnvironment(
+        string parameterName,
+        Type destinationType,
+        IDictionary<string, string> environmentVariables)
+    {
+        var service = GetService(environmentVariables: environmentVariables);
+        var sink = new ParameterWarningSink(parameterName);
+        var original = Log.Logger;
+
+        try
+        {
+            Log.Logger = new LoggerConfiguration().WriteTo.Sink(sink, LogEventLevel.Warning).CreateLogger();
+            var value = service.GetParameter(parameterName, destinationType, separator: null);
+            return (value, sink.Messages);
+        }
+        finally
+        {
+            Log.Logger = original;
+        }
+    }
+
+    private class ParameterWarningSink(string parameterName) : ILogEventSink
+    {
+        public List<string> Messages { get; } = new();
+
+        public void Emit(LogEvent logEvent)
+        {
+            if (logEvent.Properties.TryGetValue("VariableName", out var property) &&
+                property is ScalarValue { Value: string name } &&
+                name == parameterName)
+            {
+                Messages.Add(logEvent.RenderMessage());
+            }
+        }
     }
 
 #pragma warning disable CS0649
     private class TestBuild : FalloutBuild, ITestComponent
     {
-        [Parameter] public string String;
-        [Parameter] public int[] Set;
-        [Parameter] public Verbosity[] Verbosities;
+        [Parameter]
+        public string String;
+
+        [Parameter]
+        public int[] Set;
+
+        [Parameter]
+        public Verbosity[] Verbosities;
     }
 
     [ParameterPrefix("Interface")]
     private interface ITestComponent : IFalloutBuild
     {
-        [Parameter] bool Param => TryGetValue<bool?>(() => Param) ?? false;
+        [Parameter]
+        bool Param => TryGetValue<bool?>(() => Param) ?? false;
     }
 #pragma warning restore CS0649
 }

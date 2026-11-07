@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using Fallout.Common.Utilities;
+﻿using Fallout.Common.Utilities;
 
 namespace Fallout.Common.Git;
 
@@ -50,5 +48,11 @@ public static class GitRepositoryExtensions
     {
         return (repository.Branch?.StartsWithOrdinalIgnoreCase("hotfix/") ?? false) ||
                (repository.Branch?.StartsWithOrdinalIgnoreCase("hotfixes/") ?? false);
+    }
+
+    public static bool IsOnSupportBranch(this GitRepository repository)
+    {
+        return (repository.Branch?.StartsWithOrdinalIgnoreCase("support/") ?? false) ||
+               (repository.Branch?.StartsWithOrdinalIgnoreCase("supports/") ?? false);
     }
 }

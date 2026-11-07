@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Fallout.Build.Execution;
 using Fallout.Common.IO;
 using Fallout.Common.Utilities;
 using Fallout.Common.Utilities.Collections;
@@ -49,7 +50,9 @@ internal static class BuildExecutor
 
         void ExecuteAssuredTargets()
         {
-            var assuredScheduledTargets = build.ExecutionPlan.Where(x => x.AssuredAfterFailure && x.Status == ExecutionStatus.Scheduled);
+            var assuredScheduledTargets =
+                build.ExecutionPlan.Where(x => x.AssuredAfterFailure && x.Status == ExecutionStatus.Scheduled);
+
             assuredScheduledTargets.ForEach(x => Execute(build, x, previouslyExecutedTargets, failureMode: true));
         }
     }
@@ -60,12 +63,15 @@ internal static class BuildExecutor
         var invocation = EnvironmentInfo.CommandLineArguments
             .Where(x => !x.StartsWith("-") || x.TrimStart("-").EqualsOrdinalIgnoreCase(continueParameterName))
             .JoinSpace();
+
         var invocationHash = invocation.GetMD5Hash();
 
         IReadOnlyCollection<string> GetPreviouslyExecutedTargets()
         {
             if (!build.Continue || !BuildAttemptFile.Exists())
+            {
                 return new string[0];
+            }
 
             var previousBuild = BuildAttemptFile.ReadAllLines();
             if (previousBuild.FirstOrDefault() != invocationHash)
@@ -78,7 +84,11 @@ internal static class BuildExecutor
         }
 
         var previouslyExecutedTargets = GetPreviouslyExecutedTargets();
-        BuildAttemptFile.WriteAllLines(new[] { invocationHash }.Concat(previouslyExecutedTargets));
+        BuildAttemptFile.WriteAllLines(new[]
+        {
+            invocationHash
+        }.Concat(previouslyExecutedTargets));
+
         return previouslyExecutedTargets;
     }
 
@@ -112,7 +122,9 @@ internal static class BuildExecutor
             try
             {
                 if (target.Intercept == null || !target.Intercept.Invoke())
+                {
                     target.Actions.ForEach(x => x());
+                }
 
                 target.Stopwatch.Stop();
                 target.Status = ExecutionStatus.Succeeded;
@@ -137,12 +149,15 @@ internal static class BuildExecutor
                 build.ExecuteExtension<IOnTargetFailed>(x => x.OnTargetFailed(target));
 
                 if (!target.ProceedAfterFailure && !failureMode)
+                {
                     throw new TargetExecutionException(target.Name, exception);
+                }
             }
         }
     }
 
-    private static bool CheckConditions(IFalloutBuild build, ExecutableTarget target, IEnumerable<(string Text, Func<bool> Delegate)> conditions)
+    private static bool CheckConditions(IFalloutBuild build, ExecutableTarget target,
+        IEnumerable<(string Text, Func<bool> Delegate)> conditions)
     {
         string Format(string condition)
             => condition
@@ -177,7 +192,9 @@ internal static class BuildExecutor
     private static void MarkTargetSkipped(IFalloutBuild build, ExecutableTarget target, string reason = null)
     {
         if (target.Status != ExecutionStatus.Scheduled)
+        {
             return;
+        }
 
         if (!target.Invoked)
         {
@@ -186,7 +203,9 @@ internal static class BuildExecutor
         }
 
         if (target.DependencyBehavior == DependencyBehavior.Execute)
+        {
             return;
+        }
 
         bool HasOtherDependencies(ExecutableTarget dependentTarget)
             => build.ExecutionPlan
@@ -195,11 +214,15 @@ internal static class BuildExecutor
 
         var skippableDependencies = target.ExecutionDependencies.Concat(target.Triggers)
             .Where(x => !HasOtherDependencies(x)).ToList();
+
         skippableDependencies.ForEach(x => MarkTargetSkipped(build, x, $"because of {target.Name}"));
     }
 
     private static void AppendToBuildAttemptFile(string value)
     {
-        File.AppendAllLines(BuildAttemptFile, new[] { value });
+        File.AppendAllLines(BuildAttemptFile, new[]
+        {
+            value
+        });
     }
 }

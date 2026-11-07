@@ -1,125 +1,50 @@
 # Third-party dependencies
 
-A flat overview of the non-trivial libraries Fallout pulls in, what each is for, and where it's used. Tiny utility packages (single-purpose helpers, transitive-only deps) are omitted. Anything load-bearing or notable is here.
+The list of third-party packages lives in [`Directory.Packages.props`](https://github.com/Fallout-build/Fallout/blob/develop/Directory.Packages.props). It is grouped by what an update means for people who build with Fallout, and each group's header comment states its rule. This page explains why those rules exist. For how the Fallout packages depend on each other, see the [package graph](architecture.md#package-graph).
 
-**Keep this current.** When adding or removing a meaningful library, update the table. Reviewers should call this out if a PR introduces a new dep without a row here.
+## Updating dependencies
 
-Central package versions are pinned in `Directory.Packages.props`; this page links each entry back to it.
+Every `10.x` release must be non-breaking ([ADR-0009](adr/0009-gitflow-and-semver-reversion.md)). For a library, that covers more than our own code:
 
----
+- **A dependency version in a package is a minimum.** When we raise a version, every consumer gets at least that version. A consumer that pins a lower version gets the `NU1605` downgrade error.
+- **Transitive pinning makes every package a direct dependency.** `CentralPackageTransitivePinningEnabled` is on, so the `.nuspec` of `Fallout.Common` and `Fallout.Components` lists every third-party package they use (21 today), not just the Fallout packages. Raising a version anywhere in the graph changes what consumers of those two packages receive.
+- **Some third-party types are part of our public API.** If a consumer's code uses `GitHubTasks.GitHubClient`, a breaking change in Octokit breaks their build, even though our own code did not change.
+- **Some packages run inside the consumer's tools.** `Fallout.Common` bundles the MSBuild tasks and the source generator, with their dependencies (see [What `Fallout.Common` bundles](architecture.md#what-falloutcommon-bundles)). Those DLLs load next to the versions that MSBuild, Visual Studio or the C# compiler already loaded.
 
-## Microsoft / .NET BCL
+So `Directory.Packages.props` has four groups:
 
-| Package | Purpose | Used by |
+| Group | Meaning | Rule |
 |---|---|---|
-| `Microsoft.Build` (+ `.Framework`, `.Tasks.Core`, `.Utilities.Core`) | MSBuild engine — read/evaluate `.csproj`/`.props` files | `Fallout.ProjectModel`, `Fallout.MSBuildTasks` |
-| `Microsoft.Build.Locator` | Locate an installed MSBuild at runtime | `Fallout.ProjectModel` |
-| `Microsoft.CodeAnalysis.*` (CSharp, Workspaces, MSBuild, Analyzers) | Roslyn — C# parsing/compilation/analysis | `Fallout.SourceGenerators`, `Fallout.Cli` (Cake rewriter) |
-| `Microsoft.Extensions.DependencyModel` | Parse `.deps.json` runtime metadata | `Fallout.Build` |
-| `Microsoft.SourceLink.GitHub` | Source-link symbols into published nupkgs so debuggers can step into Fallout | All packable libs |
-| `Nerdbank.GitVersioning` | Build-time semver derived from git history | All packable libs |
-| `System.Text.Json` | Modern JSON parser/serializer | `Fallout.Utilities.Text.Json` |
-| `System.Net.Http`, `System.Security.Cryptography.Xml`, `System.ComponentModel.Annotations` | BCL fillers needed for `netstandard2.0` multi-targeting | various |
+| **Public API** | Types from the package appear in Fallout's public API. | Never raise the major version in `10.x`. Raise the minor or patch version only for a security fix or a fix we need. |
+| **Runs in host** | Bundled inside `Fallout.Common` and loaded into the consumer's MSBuild, Visual Studio or C# compiler. | Test with the oldest supported SDK and Visual Studio before raising a version. |
+| **Shipped, internal only** | Consumers receive the package as a dependency, but its types are not in our API. | Patch and minor updates are fine when there is a reason. Don't update on a schedule. |
+| **Not shipped** | Only used by tests, this repo's build, or the `fallout` / `fallout-migrate` tools. | Safe to update at any time. |
 
-## Logging
+A few packages have extra constraints, noted in comments next to them:
 
-| Package | Purpose |
-|---|---|
-| `Serilog` + `Sinks.Console` + `Sinks.File` | The logging framework. All `Log.Information/Warning/Error` calls route through this. |
-| `Serilog.Formatting.Compact` (+ `.Reader`) | Structured JSON log format for machine-readable logs |
+- **NuGet.\*** must match the NuGet version that the .NET SDK loads into MSBuild. A mismatch breaks the build when MSBuild loads our tasks (#677, the NuGet.Frameworks load failure on SDK 10.0.400).
+- **Roslyn**: the version of `Microsoft.CodeAnalysis.CSharp` sets the oldest C# compiler that can load `Fallout.Migrate.Analyzers`. `Fallout.SourceGenerators` pins 4.7.0 with `VersionOverride` for the same reason. All Roslyn packages stay on one version, including the ones only `Fallout.Cli` and the tests use.
+- **NuGet.Protocol / NuGet.Resolver** are not shipped, but are pinned to the `NuGet.Packaging` version because the Roslyn analyzer test harness pulls in older copies (#677).
 
-## Azure
+## Dependabot
 
-| Package | Purpose | Notes |
-|---|---|---|
-| `Azure.Identity`, `Azure.Security.KeyVault.{Certificates,Keys,Secrets}` | Power the `[AzureKeyVaultSecret]` value-injection attribute | Pure consumer-tool surface — currently in `Fallout.Common` but will split out under [#73](https://github.com/Fallout-build/Fallout/issues/73). Consumers who don't use Azure today still pay for these. |
+Dependabot opens monthly, grouped PRs for the **Not shipped** group only. Those packages are listed by name in the `allow` list of [`.github/dependabot.yml`](https://github.com/Fallout-build/Fallout/blob/develop/.github/dependabot.yml). Dependabot cannot read `Directory.Packages.props` groups, so the two lists must be kept in sync by hand.
 
-## GitHub
+The `allow` list also stops Dependabot from opening *security* PRs for the other groups. That is on purpose: a vulnerability in a shipped package still shows up as a Dependabot alert in the repository's Security tab, and a maintainer raises the version deliberately, following the rules above.
 
-| Package | Purpose | Used by |
-|---|---|---|
-| `Octokit` | GitHub REST API client | `ICreateGitHubRelease`, `Build.Contributors`, `Build.Stargazers` |
+## Adding or removing a dependency
 
-## JSON / templating
+- **Adding:** put the package in the right group of `Directory.Packages.props`. For **Public API** and **Runs in host** packages, add a short comment saying why. For **Not shipped** packages, also add the name to the Dependabot `allow` list.
+- **Removing:** remove it from `Directory.Packages.props`, and from the `allow` list if it was there.
+- **Raising the major version** of a **Public API** or **Runs in host** package: explain why in the PR body. In `10.x`, a **Public API** major needs a deliberate maintainer decision.
 
-| Package | Purpose | Notes |
-|---|---|---|
-| `NJsonSchema` + `.NewtonsoftJson` | Generate `build.schema.json` so IDEs can auto-complete `--params` | Drags `Newtonsoft.Json` transitively |
-| `Newtonsoft.Json` | Legacy JSON — direct usage in older codepaths | Long-term consolidation to `System.Text.Json` tracked in [#83](https://github.com/Fallout-build/Fallout/issues/83) |
-| `Scriban` | Templating engine | Used by `Fallout.Cli` Cake rewriter only. **Open CVE NU1903 tracked in [#84](https://github.com/Fallout-build/Fallout/issues/84).** |
-
-## Text, IO, archives
-
-| Package | Purpose | Used by |
-|---|---|---|
-| `YamlDotNet` | YAML parse + serialize | CI config generation, `Fallout.Utilities.Text.Yaml` |
-| `Glob` | Glob pattern matching | `Fallout.Utilities.IO.Globbing` |
-| `SharpZipLib` | Zip and tar archives | `Fallout.Utilities.IO.Compression` |
-| `HtmlAgilityPack` | HTML parsing + XPath | Only used by `ReferenceUpdater` for the upstream CLI doc snapshots in `docs/cli-tools/`. Goes away if we retire that target. |
-| `Humanizer` | Pluralize / camelize / titleize string helpers | A handful of call sites — could be inlined if we wanted one fewer dep. |
-
-## NuGet
-
-| Package | Purpose |
-|---|---|
-| `NuGet.Packaging` | Read .nupkg metadata. Used by `NuGetVersionResolver`, `ProjectUpdater`. |
-
-## Vendored source
-
-| Package | Source | Why vendored |
-|---|---|---|
-| `Fallout.VisualStudio.SolutionPersistence` (assembly name remains `Microsoft.VisualStudio.SolutionPersistence` for drop-in type identity) — published to nuget.org alongside the rest of `Fallout.*`. | Submodule at `vendor/vs-solutionpersistence/` tracking [`Fallout-build/vs-solutionpersistence`](https://github.com/Fallout-build/vs-solutionpersistence) — our fork of [`matkoch/vs-solutionpersistence`](https://github.com/matkoch/vs-solutionpersistence), which itself forked from [`microsoft/vs-solutionpersistence`](https://github.com/microsoft/vs-solutionpersistence). MIT-licensed; full attribution chain preserved. | Upstream Microsoft package ships only `net472` + `net8.0`, no `netstandard2.0`. Our source generator must target `netstandard2.0` (Roslyn requirement). Matt added netstandard2.0 patches that we now own forward. Compiled into the wrapper project `src/Fallout.VisualStudio.SolutionPersistence/` so we control the build infra without touching the submodule. Packs as `Fallout.VisualStudio.SolutionPersistence` so `Fallout.SolutionModel` consumers get a valid transitive dep on nuget.org. |
-
-## ⚠️ Matt-era personal forks — to replace
-
-Still on Matt's personal NuGet account; supply-chain SPOF, high-priority to replace.
-
-| Package | Upstream equivalent | Tracked in |
-|---|---|---|
-| `matkoch.spectre.console` | `Spectre.Console` | [#78](https://github.com/Fallout-build/Fallout/issues/78) — confirmed clean swap, just needs the PR |
-
-## Testing
-
-| Package | Purpose |
-|---|---|
-| `xunit` (+ `runner.visualstudio`) | Test framework |
-| `Microsoft.NET.Test.Sdk` | Test host wiring |
-| `FluentAssertions` | Readable assertion DSL — see [licensing note](#fluentassertions-licensing) below |
-| `Verify.Xunit` (+ `.DiffPlex`, `.SourceGenerators`) | Snapshot-based testing (the `*.verified.txt` / `*.received.txt` pattern) |
-| `coverlet.msbuild` | Code coverage |
-| `GitHubActionsTestLogger` | Format test output for GitHub Actions annotations |
-| `Basic.Reference.Assemblies.NetStandard20` | Reference assemblies for source-generator compile tests |
-| `NetArchTest.Rules` | Architecture-fitness tests (e.g. `Fallout.Core` purity); broader suite tracked in #95 |
-
-### FluentAssertions licensing
-
-As of **v8.0** (Jan 2025) FluentAssertions dropped Apache 2.0 for the proprietary **Xceed Community License**: free for open-source / non-commercial use, paid (per-seat) for commercial use. v7.x remains Apache 2.0. We pin **8.x** (`Directory.Packages.props`) and stay current — this is fine for Fallout because it's (a) an OSS project covered by the free community license, and (b) a **test-only / dev-time** dependency that is never redistributed to consumers of the framework. The standard assertion convention (xUnit + FluentAssertions + Verify) is unchanged — see [AGENTS.md](../AGENTS.md).
-
-## Build-time CLI tools (`PackageDownload`)
-
-These are downloaded by `build/_build.csproj` for use during this repo's own build — not shipped to consumers.
-
-| Tool | Purpose | Status |
-|---|---|---|
-| `ReportGenerator` | HTML coverage reports | Active. |
-| `JetBrains.ReSharper.GlobalTools` | InspectCode (static analysis) | **Decision pending** ([#75](https://github.com/Fallout-build/Fallout/issues/75)) — keep, drop, or just drop from this repo's build. |
-| `Codecov.Tool` | Upload coverage to codecov.io | **Likely dead** — `IReportCoverage.ReportToCodecov` is `false`. Removal tracked in [#80](https://github.com/Fallout-build/Fallout/issues/80). |
-| `GitVersion.Tool` | Version computation (legacy) | **Transitional** — fully replace with `Nerdbank.GitVersioning` per [#81](https://github.com/Fallout-build/Fallout/issues/81). |
-| `xunit.runner.console` | Standalone xunit runner | **Likely redundant** with `Microsoft.NET.Test.Sdk`. Removal tracked in [#82](https://github.com/Fallout-build/Fallout/issues/82). |
-
----
-
-## How to keep this current
-
-- Adding a dependency? Add a row here in the same PR. Reviewers will ask.
-- Removing a dependency? Remove the row. No half-states.
-- Bumping a major version of something load-bearing (Roslyn, MSBuild, Newtonsoft, Spectre, …)? Mention it in the PR body but leave the table alone unless the purpose changes.
-- Transitive-only packages don't need rows — only what we declare in `Directory.Packages.props` or directly in a `.csproj`.
-
-If you're auditing the live dependency graph, run:
+To see which packages a project uses, and which third-party packages a Fallout package really depends on:
 
 ```pwsh
-dotnet list fallout.slnx package --include-transitive
+dotnet list fallout.slnx package --include-transitive   # whole dependency graph
+dotnet pack src/Fallout.Common                           # then read the .nuspec inside the .nupkg
 ```
 
-The text above is curated — that command is authoritative.
+## FluentAssertions licensing
+
+As of **v8.0** (Jan 2025) FluentAssertions dropped Apache 2.0 for the proprietary **Xceed Community License**: free for open-source / non-commercial use, paid (per-seat) for commercial use. v7.x remains Apache 2.0. We pin **8.x** (`Directory.Packages.props`) and stay current — this is fine for Fallout because it's (a) an OSS project covered by the free community license, and (b) a **test-only / dev-time** dependency that is never redistributed to consumers of the framework. The standard assertion convention (xUnit + FluentAssertions + Verify) is unchanged — see [AGENTS.md](../AGENTS.md).

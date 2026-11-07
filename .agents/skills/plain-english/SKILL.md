@@ -136,8 +136,6 @@ Closes #<issue>
   in a series). Summarize the need in a line — don't recite the issue's
   Problem/Outcome/criteria back; the reader can click through. The PR explains
   *the change*; the issue holds *the requirement*.
-- **Create PRs as draft by default.** Use `gh pr create --draft` unless the user explicitly asks for a ready-for-review PR. Convert to ready only when the user explicitly requests it. This keeps incomplete work from accidentally entering review and ensures work stays flexible during early development.
-- **Label the PR at creation time.** [`.github/release.yml`](../../../.github/release.yml) is the source of truth for the changelog-category labels (`enhancement`, `bug`, `security`, `documentation`, `breaking-change`, `skip-changelog`) and a one-line blurb on each. Apply the one category that matches the change, in the same `gh pr create --label …` call — alongside the `target/vCurrent` (or `target/vNext`) process label — never as a follow-up. Don't leave a PR uncategorized; it falls through to "Other Changes".
 - Add the `⚠️ Breaking change` callout **only** when the change is breaking — see the [creating-a-pr skill](../creating-a-pr/SKILL.md) for what that requires.
 - **Don't** restate the title, paste large code/log blocks, recount your
   process, or enumerate every touched file — the diff already shows that.

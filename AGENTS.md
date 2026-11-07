@@ -19,13 +19,13 @@ One topic, one home — anything that duplicates another layer gets deleted, not
 
 ## Versioning & channels
 
-Classic GitFlow, staying on semver `10.x` — see [ADR-0009](docs/adr/0009-gitflow-and-semver-reversion.md) (replaces the calendar-versioning [ADR-0004](docs/adr/0004-calendar-versioning-and-dual-pace-channels.md)). **GitHub Packages = test/preview/rc; nuget.org = production.**
+Classic GitFlow, staying on semver `10.x` — see [ADR-0009](docs/adr/0009-gitflow-and-semver-reversion.md) (replaces the calendar-versioning [ADR-0004](docs/adr/0004-calendar-versioning-and-dual-pace-channels.md)). **GitHub Packages = every build; nuget.org = GA and `-rc` tags only.** GitVersion computes versions from the branch and tags — see [ADR-0011](docs/adr/0011-gitversion-and-tag-driven-releases.md). Tags have no `v` prefix.
 
 | Branch | Role | Publishes |
 | --- | --- | --- |
-| `develop` | Integration trunk, default branch, sole preview lane. All work lands here, including breaking work gated behind `[Experimental]`. | `-preview` → GitHub Packages only |
-| `release/vX.Y` | Stabilizes the next release; cut from `develop` on demand, not ahead of time. Non-breaking fixes only after the cut. | `-rc.N` → GitHub Packages |
-| `main` | Production trunk; takes only `release/vX.Y` (GA) or `hotfix/vX.Y.Z` merges. | GA tags → nuget.org (opt-in) + GitHub Packages + Releases |
+| `develop` | Integration trunk, default branch, sole preview lane. All work lands here, including breaking work gated behind `[Experimental]`. | `-alpha.N` → GitHub Packages only |
+| `release/vX.Y` | Stabilizes the next release; cut from `develop` on demand, not ahead of time. Non-breaking fixes only after the cut. | `-beta.N` → GitHub Packages. `-rc.N` tags → nuget.org + GitHub Packages |
+| `main` | Production trunk; takes only `release/vX.Y` (GA) or `hotfix/vX.Y.Z` merges. | GA tags → nuget.org + GitHub Packages + Releases |
 | `support/v10` (+ `hotfix/v10.x`) | Legacy line for versions before `10.4`. Security/critical fixes only. | Tags, same channels as `main` |
 
 `MAJOR` stays `10` until a breaking change is actually needed — there's no fixed date for v11, and it's deferred as long as possible. Not-yet-stable public APIs ship behind `[Experimental("FALLOUT0xx")]` on any channel — see the `marking-experimental-apis` skill. Full model: [docs/branching-and-release.md](docs/branching-and-release.md).
@@ -38,7 +38,7 @@ Classic GitFlow, staying on semver `10.x` — see [ADR-0009](docs/adr/0009-gitfl
 - Central package versions in `Directory.Packages.props` — never add a `Version=` to an individual `PackageReference`.
 - xUnit + FluentAssertions + Verify.Xunit for tests.
 - Solution file is `fallout.slnx` (new XML solution format, not `.sln`).
-- Dependency updates: handled by Dependabot (weekly grouped PRs). Adding a meaningful library? Add a row to [docs/dependencies.md](docs/dependencies.md) in the same PR.
+- Dependency updates: Dependabot opens monthly grouped PRs, but only for the test, build-time and tool-only packages in the `allow` list of `.github/dependabot.yml`. Packages that ship to consumers are updated deliberately — see "Updating dependencies" in [docs/dependencies.md](docs/dependencies.md). Adding a library? Put it in the right group of `Directory.Packages.props`.
 
 ## Common commands
 
@@ -98,6 +98,7 @@ Production code lives under `src/`, tests under `tests/` — don't reintroduce a
 | Writing any PR, commit, issue, or doc text | `plain-english` skill |
 | Adding/extending a `Tools/<Tool>/<Tool>.json` wrapper | `adding-a-tool-wrapper` skill |
 | Adding public API that isn't stable yet, or deprecating one | `marking-experimental-apis` skill |
+| Proposing a new public API before writing code | [CONTRIBUTING.md § Proposing new public API](CONTRIBUTING.md#proposing-new-public-api) |
 | Touching `.github/workflows/**` or `build/Build.CI.GitHubActions.cs` | `editing-ci-workflows` skill |
 | Tagging, publishing, hotfixing, or cutting a release branch | `cutting-a-release` skill |
 | Adding a rename/rewrite rule to `fallout-migrate` | `adding-a-migration-step` skill |

@@ -85,6 +85,10 @@ SET MY_PARAMETER = <value>
 SET FALLOUT_MY_PARAMETER = <value>
 ```
 
+Environment variables are checked in this order: the exact parameter name, then the `FALLOUT_` or `NUKE_` prefixed name, then the bare name with casing and underscores ignored. Use the prefix when the bare name collides with an unrelated variable. For example, login shells on some systems export `HOST` with the machine's hostname, which would otherwise be read as the `Host` parameter.
+
+If a value cannot be converted, Fallout logs a warning and uses the default for that parameter. It does not stop the build.
+
 ## Required Parameters
 
 You can specify a parameter as a [target requirement](../02-fundamentals/05-targets.md#requirements) using the following shorthand syntax:

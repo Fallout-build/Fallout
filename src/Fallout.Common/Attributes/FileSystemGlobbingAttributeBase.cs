@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Fallout.Build.Execution;
 using Fallout.Common.Utilities;
 using Fallout.Common.Utilities.Collections;
 
@@ -55,6 +56,7 @@ public abstract class FileSystemGlobbingAttributeBase : ParameterAttribute
                 Assert.True(
                     globbedElements.Contains(x),
                     $"Value '{x}' for member '{member.Name}' is not contained any pattern '{patterns.JoinCommaSpace()}'"));
+
             Assert.True(parameterValue.Length == 1 || memberType == typeof(AbsolutePath[]),
                 $"Member '{member.Name}' can only accept a single value but got:"
                     .Concat(parameterValue.Select(x => x.ToString()))
@@ -74,7 +76,7 @@ public abstract class FileSystemGlobbingAttributeBase : ParameterAttribute
 
     public override IEnumerable<(string, object)> GetValueSet(MemberInfo member, object instance)
     {
-        return GetGlobbedElements(member).Select(x => (PathConstruction.GetRelativePath(Build.RootDirectory, x), (object) x));
+        return GetGlobbedElements(member).Select(x => (PathConstruction.GetRelativePath(Build.RootDirectory, x), (object)x));
     }
 
     private AbsolutePath[] GetGlobbedElements(MemberInfo member)

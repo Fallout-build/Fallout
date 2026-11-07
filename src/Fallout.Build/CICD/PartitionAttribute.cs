@@ -1,6 +1,5 @@
-using System;
-using System.Linq;
 using System.Reflection;
+using Fallout.Build.Execution;
 
 namespace Fallout.Common.CI;
 
@@ -19,7 +18,11 @@ public class PartitionAttribute : ParameterAttribute
     {
         var part = ParameterService.GetParameter<int?>(member);
         return part.HasValue
-            ? new Partition { Part = part.Value, Total = Total }
+            ? new Partition
+            {
+                Part = part.Value,
+                Total = Total
+            }
             : Partition.Single;
     }
 }

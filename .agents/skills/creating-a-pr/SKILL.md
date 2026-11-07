@@ -23,7 +23,8 @@ Skip this for a plain single-remote clone.
 
 ## 1. Create as a draft
 
-`gh pr create --draft` unless the user explicitly asked for ready-for-review.
+**Every new PR starts as a draft** — `gh pr create --draft` — unless the user
+explicitly asked for ready-for-review. Never omit `--draft` by default.
 
 ## 2. Label at creation time, not as a follow-up
 
