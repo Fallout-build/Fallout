@@ -43,9 +43,12 @@ updates:
       - dependency-name: "Microsoft.Extensions.DependencyInjection"
       - dependency-name: "JetBrains.Annotations"
     ignore:
-      # 3.4.0 is deprecated and pulls in Verify 33, which fails the build (SponsorCheck SC021).
+      # Stay on 3.1.2. 3.3.1 needs Verify 31.24, but the latest Verify.Xunit (31.12.5) is built
+      # against an older Verify core, so every snapshot test fails with a MethodAccessException.
+      # 3.4.0 is also deprecated and pulls in Verify 33, which fails the build (SponsorCheck SC021).
+      # Remove this once Verify.Xunit ships a release that matches a newer Verify core.
       - dependency-name: "Verify.DiffPlex"
-        versions: [">=3.4.0"]
+        versions: [">3.1.2"]
     groups:
       test-dependencies:
         patterns:
