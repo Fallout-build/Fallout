@@ -12,10 +12,11 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Build.Locator" />
-    <PackageReference Include="Microsoft.Build" ExcludeAssets="runtime" />
-    <PackageReference Include="Microsoft.Build.Framework" ExcludeAssets="runtime" />
-    <PackageReference Include="Microsoft.Build.Tasks.Core" ExcludeAssets="runtime" />
-    <PackageReference Include="Microsoft.Build.Utilities.Core" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.Build" ExcludeAssets="runtime" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Build.Framework" ExcludeAssets="runtime" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Build.Tasks.Core" ExcludeAssets="runtime" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Build.Utilities.Core" ExcludeAssets="runtime" PrivateAssets="all" />
+    <PackageReference Include="NuGet.Frameworks" ExcludeAssets="runtime" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>
