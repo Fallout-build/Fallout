@@ -22,6 +22,16 @@ public interface ITest : ICompile, IHasArtifacts
 
     int TestDegreeOfParallelism => 1;
 
+    /// <summary>
+    ///     Run the test projects on Microsoft.Testing.Platform (<c>dotnet test --project</c>) instead of VSTest.
+    ///     Required for test frameworks that no longer support VSTest on the .NET 10 SDK, such as xunit.v3.
+    ///     Test projects need the <c>Microsoft.Testing.Extensions.TrxReport</c> package, and the
+    ///     <c>coverlet.MTP</c> package for coverage. The repository's
+    ///     <c>global.json</c> must opt in to the platform (<c>"test": { "runner": "Microsoft.Testing.Platform" }</c>).
+    ///     Off by default, so existing builds keep using VSTest.
+    /// </summary>
+    bool UseTestingPlatform => false;
+
     Target Test => _ => _
         .DependsOn(Compile)
         .Produces(TestResultDirectory / "*.trx")
@@ -30,6 +40,12 @@ public interface ITest : ICompile, IHasArtifacts
         {
             try
             {
+                if (UseTestingPlatform)
+                {
+                    RunTestingPlatform();
+                    return;
+                }
+
                 DotNetTest(_ => _
                         .Apply(TestSettingsBase)
                         .Apply(TestSettings)
@@ -45,6 +61,36 @@ public interface ITest : ICompile, IHasArtifacts
                 ReportTestCount();
             }
         });
+
+    void RunTestingPlatform()
+    {
+        var collectCoverage = InvokedTargets.Contains((this as IReportCoverage)?.ReportCoverage) || IsServerBuild;
+        var failed = new List<string>();
+
+        foreach (var project in TestProjects)
+        {
+            var arguments =
+                $"test --project {project.Path} --configuration {Configuration} --results-directory {TestResultDirectory}" +
+                $" --report-trx --report-trx-filename {project.Name}.trx";
+
+            if (SucceededTargets.Contains(Compile))
+                arguments += " --no-build";
+
+            if (collectCoverage)
+                arguments += " --coverlet --coverlet-output-format cobertura";
+
+            try
+            {
+                DotNet(arguments);
+            }
+            catch
+            {
+                failed.Add(project.Name);
+            }
+        }
+
+        Assert.True(failed.Count == 0, $"Tests failed in: {string.Join(", ", failed)}");
+    }
 
     void ReportTestResults()
     {
