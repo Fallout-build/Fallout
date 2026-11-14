@@ -64,7 +64,7 @@ public interface ITest : ICompile, IHasArtifacts
 
     void RunTestingPlatform()
     {
-        var collectCoverage = InvokedTargets.Contains((this as IReportCoverage)?.ReportCoverage) || IsServerBuild;
+        var collectCoverage = InvokedTargets.Contains((this as IReportCoverage)?.ReportCoverage);
         var failed = new List<string>();
 
         foreach (var project in TestProjects)
