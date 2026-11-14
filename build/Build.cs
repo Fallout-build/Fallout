@@ -166,6 +166,8 @@ partial class Build
     [Parameter]
     public int TestDegreeOfParallelism { get; } = 1;
 
+    bool ITest.UseTestingPlatform => true;
+
     Target ITest.Test => _ => _
         .Inherit<ITest>()
         .Partition(2);
