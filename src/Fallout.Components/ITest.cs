@@ -32,6 +32,12 @@ public interface ITest : ICompile, IHasArtifacts
     /// </summary>
     bool UseTestingPlatform => false;
 
+    /// <summary>
+    ///     Optional coverage settings file, passed as <c>--coverage-settings</c> when
+    ///     <see cref="UseTestingPlatform"/> is on, for example to limit which assemblies are instrumented.
+    /// </summary>
+    AbsolutePath TestingPlatformCoverageSettings => null;
+
     Target Test => _ => _
         .DependsOn(Compile)
         .Produces(TestResultDirectory / "*.trx")
@@ -64,7 +70,7 @@ public interface ITest : ICompile, IHasArtifacts
 
     void RunTestingPlatform()
     {
-        var collectCoverage = InvokedTargets.Contains((this as IReportCoverage)?.ReportCoverage);
+        var collectCoverage = InvokedTargets.Contains((this as IReportCoverage)?.ReportCoverage) || IsServerBuild;
         var failed = new List<string>();
 
         foreach (var project in TestProjects)
@@ -78,6 +84,9 @@ public interface ITest : ICompile, IHasArtifacts
 
             if (collectCoverage)
                 arguments += $" --coverage --coverage-output-format cobertura --coverage-output {project.Name}.xml";
+
+            if (collectCoverage && TestingPlatformCoverageSettings != null)
+                arguments += $" --coverage-settings {TestingPlatformCoverageSettings}";
 
             try
             {
