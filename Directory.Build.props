@@ -62,7 +62,9 @@
     <PackageReference Include="Verify.DiffPlex"  />
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
-    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
+    <PackageReference Include="coverlet.MTP" />
+    <!-- coverlet.MTP needs a newer version than the pin that ships with Fallout.Common. Test projects only. -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" VersionOverride="10.0.12" />
     <PackageReference Include="xunit.runner.visualstudio" />
   </ItemGroup>
 

@@ -26,17 +26,11 @@ public interface ITest : ICompile, IHasArtifacts
     ///     Run the test projects on Microsoft.Testing.Platform (<c>dotnet test --project</c>) instead of VSTest.
     ///     Required for test frameworks that no longer support VSTest on the .NET 10 SDK, such as xunit.v3.
     ///     Test projects need the <c>Microsoft.Testing.Extensions.TrxReport</c> package, and the
-    ///     <c>Microsoft.Testing.Extensions.CodeCoverage</c> package for coverage. The repository's
+    ///     <c>coverlet.MTP</c> package for coverage. The repository's
     ///     <c>global.json</c> must opt in to the platform (<c>"test": { "runner": "Microsoft.Testing.Platform" }</c>).
     ///     Off by default, so existing builds keep using VSTest.
     /// </summary>
     bool UseTestingPlatform => false;
-
-    /// <summary>
-    ///     Optional coverage settings file, passed as <c>--coverage-settings</c> when
-    ///     <see cref="UseTestingPlatform"/> is on, for example to limit which assemblies are instrumented.
-    /// </summary>
-    AbsolutePath TestingPlatformCoverageSettings => null;
 
     Target Test => _ => _
         .DependsOn(Compile)
@@ -83,10 +77,7 @@ public interface ITest : ICompile, IHasArtifacts
                 arguments += " --no-build";
 
             if (collectCoverage)
-                arguments += $" --coverage --coverage-output-format cobertura --coverage-output {project.Name}.xml";
-
-            if (collectCoverage && TestingPlatformCoverageSettings != null)
-                arguments += $" --coverage-settings {TestingPlatformCoverageSettings}";
+                arguments += " --coverlet --coverlet-output-format cobertura";
 
             try
             {

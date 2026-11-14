@@ -168,8 +168,6 @@ partial class Build
 
     bool ITest.UseTestingPlatform => true;
 
-    AbsolutePath ITest.TestingPlatformCoverageSettings => RootDirectory / "build" / "coverage.settings.xml";
-
     Target ITest.Test => _ => _
         .Inherit<ITest>()
         .Partition(2);
