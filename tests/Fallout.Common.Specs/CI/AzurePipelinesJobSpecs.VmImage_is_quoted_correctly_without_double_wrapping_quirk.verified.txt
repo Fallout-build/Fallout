@@ -1,0 +1,6 @@
+﻿- job: Compile
+  displayName: 'Compile Job'
+  dependsOn: [  ]
+  pool:
+    vmImage: 'ubuntu-22.04'
+  steps:

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -9,7 +8,11 @@ namespace Fallout.Common.Tools.MSBuild;
 
 public static class MSBuildToolPathResolver
 {
-    private static readonly MSBuildPlatform[] s_platforms = { MSBuildPlatform.x86, MSBuildPlatform.x64 };
+    private static readonly MSBuildPlatform[] platforms =
+    {
+        MSBuildPlatform.x86,
+        MSBuildPlatform.x64
+    };
 
     public static string Resolve(MSBuildVersion? msBuildVersion = null, MSBuildPlatform? msBuildPlatform = null)
     {
@@ -17,7 +20,8 @@ public static class MSBuildToolPathResolver
             .NotNull("Could not find a suitable MSBuild instance.");
     }
 
-    private static IEnumerable<string> ResolveInternal(MSBuildVersion? msBuildVersion = null, MSBuildPlatform? msBuildPlatform = null)
+    private static IEnumerable<string> ResolveInternal(MSBuildVersion? msBuildVersion = null,
+        MSBuildPlatform? msBuildPlatform = null)
     {
         Assert.True(!EnvironmentInfo.IsUnix || msBuildVersion == null);
         Assert.True(!EnvironmentInfo.IsUnix || msBuildPlatform == null);
@@ -25,27 +29,35 @@ public static class MSBuildToolPathResolver
         if (EnvironmentInfo.IsUnix)
         {
             return new[]
-                   {
-                       "/usr/bin/msbuild",
-                       "/usr/local/bin/msbuild",
-                       "/Library/Frameworks/Mono.framework/Versions/Current/Commands/msbuild"
-                   }.Where(File.Exists);
+            {
+                "/usr/bin/msbuild",
+                "/usr/local/bin/msbuild",
+                "/Library/Frameworks/Mono.framework/Versions/Current/Commands/msbuild"
+            }.Where(File.Exists);
         }
 
         var instances = new List<Instance>();
 
         instances.AddRange(
-            from version in new[] { MSBuildVersion.VS2022, MSBuildVersion.VS2019, MSBuildVersion.VS2017 }
-            from platform in s_platforms
+            from version in new[]
+            {
+                MSBuildVersion.VS2026,
+                MSBuildVersion.VS2022,
+                MSBuildVersion.VS2019,
+                MSBuildVersion.VS2017
+            }
+            from platform in platforms
             from edition in typeof(VisualStudioEdition).GetEnumValues<VisualStudioEdition>()
-            let folder = version == MSBuildVersion.VS2022 && edition != VisualStudioEdition.BuildTools
-                ? SpecialFolders.ProgramFiles
-                : SpecialFolders.ProgramFilesX86
+            let folder = GetProgramFilesFolder(version, edition)
             select GetFromVs2017Instance(version, platform, edition, folder));
 
         instances.AddRange(
-            from version in new[] { MSBuildVersion.VS2015, MSBuildVersion.VS2013 }
-            from platform in s_platforms
+            from version in new[]
+            {
+                MSBuildVersion.VS2015,
+                MSBuildVersion.VS2013
+            }
+            from platform in platforms
             select GetVs2013To2015Instance(platform, version));
 
         var preferedPlatform = EnvironmentInfo.Is64Bit ? MSBuildPlatform.x64 : MSBuildPlatform.x86;
@@ -66,10 +78,9 @@ public static class MSBuildToolPathResolver
         VisualStudioEdition edition,
         SpecialFolders specialFolder)
     {
-        var versionDirectoryName = version.ToString().TrimStart("VS");
         var basePath = Path.Combine(
             EnvironmentInfo.SpecialFolder(specialFolder).NotNull(),
-            $@"Microsoft Visual Studio\{versionDirectoryName}\{edition}\MSBuild\{GetVersionFolder(version)}\Bin");
+            $@"Microsoft Visual Studio\{GetVisualStudioFolder(version)}\{edition}\MSBuild\{GetVersionFolder(version)}\Bin");
 
         return new Instance(
             version,
@@ -91,6 +102,33 @@ public static class MSBuildToolPathResolver
             platform == MSBuildPlatform.x64
                 ? Path.Combine(basePath, "amd64")
                 : basePath);
+    }
+
+    private static SpecialFolders GetProgramFilesFolder(MSBuildVersion version, VisualStudioEdition edition)
+    {
+        if (edition == VisualStudioEdition.BuildTools)
+        {
+            return SpecialFolders.ProgramFilesX86;
+        }
+
+        return version switch
+        {
+            MSBuildVersion.VS2013 => SpecialFolders.ProgramFilesX86,
+            MSBuildVersion.VS2015 => SpecialFolders.ProgramFilesX86,
+            MSBuildVersion.VS2017 => SpecialFolders.ProgramFilesX86,
+            MSBuildVersion.VS2019 => SpecialFolders.ProgramFilesX86,
+            // Versions VS2022+ are 64-bit
+            _ => SpecialFolders.ProgramFiles
+        };
+    }
+
+    private static string GetVisualStudioFolder(MSBuildVersion version)
+    {
+        return version switch
+        {
+            MSBuildVersion.VS2026 => "18",
+            _ => version.ToString().TrimStart("VS")
+        };
     }
 
     private static string GetVersionFolder(MSBuildVersion version)
@@ -115,7 +153,9 @@ public static class MSBuildToolPathResolver
         }
 
         public MSBuildPlatform Platform { get; }
+
         public MSBuildVersion Version { get; }
+
         public string ToolPath { get; }
     }
 

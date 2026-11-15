@@ -1,34 +1,33 @@
 using System;
 using System.IO;
-using System.Linq;
 
 namespace Fallout.Common.Utilities;
 
 public class CustomFileWriter
 {
-    private readonly StreamWriter _streamWriter;
-    private readonly int _indentationFactor;
-    private readonly string _commentPrefix;
-    private int _indentation;
+    private readonly StreamWriter streamWriter;
+    private readonly int indentationFactor;
+    private readonly string commentPrefix;
+    private int indentation;
 
     public CustomFileWriter(StreamWriter streamWriter, int indentationFactor, string commentPrefix)
     {
-        _streamWriter = streamWriter;
-        _indentationFactor = indentationFactor;
-        _commentPrefix = commentPrefix;
+        this.streamWriter = streamWriter;
+        this.indentationFactor = indentationFactor;
+        this.commentPrefix = commentPrefix;
     }
 
     public void WriteLine(string text = null)
     {
-        _streamWriter.WriteLine(
+        streamWriter.WriteLine(
             text != null
-                ? $"{' '.Repeat(_indentation * _indentationFactor)}{text}"
+                ? $"{' '.Repeat(indentation * indentationFactor)}{text}"
                 : string.Empty);
     }
 
     public void WriteComment(string text = null)
     {
-        WriteLine($"{_commentPrefix} {text}".TrimEnd());
+        WriteLine($"{commentPrefix} {text}".TrimEnd());
     }
 
     public void Write(Action<CustomFileWriter> writer)
@@ -39,7 +38,7 @@ public class CustomFileWriter
     public IDisposable Indent()
     {
         return DelegateDisposable.CreateBracket(
-            () => _indentation++,
-            () => _indentation--);
+            () => indentation++,
+            () => indentation--);
     }
 }

@@ -1,12 +1,15 @@
+#if NET6_0_OR_GREATER
+using System.Text.Json.Serialization;
+using Fallout.Utilities.Converters;
+#endif
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
-using System.Linq;
 using Fallout.Common.Utilities;
 using static Fallout.Common.IO.PathConstruction;
+using TypeConverter = Fallout.Utilities.Converters.TypeConverter;
 
 namespace Fallout.Common.IO;
 
@@ -14,8 +17,11 @@ namespace Fallout.Common.IO;
 /// Represents an absolute path without distinction between files and directories.
 /// </summary>
 [Serializable]
+#if NET6_0_OR_GREATER
+[JsonConverter(typeof(AbsolutePathJsonConverter))]
+#endif
 [TypeConverter(typeof(TypeConverter))]
-[DebuggerDisplay("{" + nameof(_path) + "}")]
+[DebuggerDisplay("{" + nameof(path) + "}")]
 public class AbsolutePath : IAbsolutePathHolder, IFormattable
 {
     public const string DoubleQuote = "d";
@@ -24,39 +30,27 @@ public class AbsolutePath : IAbsolutePathHolder, IFormattable
     public const string SingleQuoteIfNeeded = "sn";
     public const string NoQuotes = "nq";
 
-    public class TypeConverter : System.ComponentModel.TypeConverter
-    {
-        public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
-        {
-            return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
-        }
-
-        public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
-        {
-            if (value is string stringValue)
-            {
-                return HasPathRoot(stringValue)
-                    ? (AbsolutePath) stringValue
-                    : EnvironmentInfo.WorkingDirectory / stringValue;
-            }
-
-            if (value is null)
-                return null;
-
-            return base.ConvertFrom(context, culture, value);
-        }
-    }
-
     public static AbsolutePath Create(string path)
     {
         return new AbsolutePath(path);
     }
 
-    private readonly string _path;
+    /// <summary>
+    /// Returns a unique path within the OS temp directory, optionally prefixed with <paramref name="prefix"/>.
+    /// Does not create the file or directory.
+    /// </summary>
+    public static AbsolutePath Temp(string prefix = null)
+    {
+        var suffix = Guid.NewGuid().ToString("N").Substring(0, 8);
+        var name = string.IsNullOrEmpty(prefix) ? suffix : $"{prefix}-{suffix}";
+        return Create(Path.GetTempPath()) / name;
+    }
+
+    private readonly string path;
 
     private AbsolutePath(string path)
     {
-        _path = NormalizePath(path);
+        this.path = NormalizePath(path);
     }
 
     AbsolutePath IAbsolutePathHolder.Path => this;
@@ -64,7 +58,9 @@ public class AbsolutePath : IAbsolutePathHolder, IFormattable
     public static implicit operator AbsolutePath(string path)
     {
         if (path is null)
+        {
             return null;
+        }
 
         Assert.True(HasPathRoot(path), $"Path '{path}' must be rooted");
         return new AbsolutePath(path);
@@ -78,23 +74,23 @@ public class AbsolutePath : IAbsolutePathHolder, IFormattable
     /// <summary>
     /// Returns the name of the file or directory.
     /// </summary>
-    public string Name => Path.GetFileName(_path);
+    public string Name => Path.GetFileName(path);
 
     /// <summary>
     /// Returns the name of the file without extension.
     /// </summary>
-    public string NameWithoutExtension => Path.GetFileNameWithoutExtension(_path);
+    public string NameWithoutExtension => Path.GetFileNameWithoutExtension(path);
 
     /// <summary>
     /// Returns the extension of the file with dot.
     /// </summary>
-    public string Extension => Path.GetExtension(_path);
+    public string Extension => Path.GetExtension(path);
 
     /// <summary>
     /// Returns the parent path (directory).
     /// </summary>
     public AbsolutePath Parent =>
-        !IsWinRoot(_path.TrimEnd(WinSeparator)) && !IsUncRoot(_path) && !IsUnixRoot(_path)
+        !IsWinRoot(path.TrimEnd(WinSeparator)) && !IsUncRoot(path) && !IsUnixRoot(path)
             ? this / ".."
             : null;
 
@@ -130,24 +126,33 @@ public class AbsolutePath : IAbsolutePathHolder, IFormattable
 
     protected bool Equals(AbsolutePath other)
     {
-        var stringComparison = HasWinRoot(_path) ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
-        return string.Equals(_path, other._path, stringComparison);
+        var stringComparison = HasWinRoot(path) ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+        return string.Equals(path, other.path, stringComparison);
     }
 
     public override bool Equals(object obj)
     {
         if (ReferenceEquals(objA: null, obj))
+        {
             return false;
+        }
+
         if (ReferenceEquals(this, obj))
+        {
             return true;
+        }
+
         if (obj.GetType() != GetType())
+        {
             return false;
-        return Equals((AbsolutePath) obj);
+        }
+
+        return Equals((AbsolutePath)obj);
     }
 
     public override int GetHashCode()
     {
-        return _path?.GetHashCode() ?? 0;
+        return path?.GetHashCode() ?? 0;
     }
 
     public override string ToString()
@@ -179,11 +184,11 @@ public class AbsolutePath : IAbsolutePathHolder, IFormattable
     {
         return format switch
         {
-            DoubleQuote => _path.DoubleQuote(),
-            DoubleQuoteIfNeeded => _path.DoubleQuoteIfNeeded(),
-            SingleQuote => _path.SingleQuote(),
-            SingleQuoteIfNeeded => _path.SingleQuoteIfNeeded(),
-            null or NoQuotes => _path,
+            DoubleQuote => path.DoubleQuote(),
+            DoubleQuoteIfNeeded => path.DoubleQuoteIfNeeded(),
+            SingleQuote => path.SingleQuote(),
+            SingleQuoteIfNeeded => path.SingleQuoteIfNeeded(),
+            null or NoQuotes => path,
             _ => throw new ArgumentException($"Format '{format}' is not recognized")
         };
     }

@@ -9,7 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="SharpZipLib" />
+    <PackageReference Include="SharpCompress" />
   </ItemGroup>
 
 </Project>

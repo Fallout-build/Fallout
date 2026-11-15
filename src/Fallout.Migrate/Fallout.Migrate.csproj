@@ -8,10 +8,20 @@
     <ToolCommandName>fallout-migrate</ToolCommandName>
     <Description>CLI that migrates an existing NUKE consumer repo to Fallout in one command.</Description>
     <PackageTags>build automation continuous-integration tools orchestration migration</PackageTags>
+    <AssemblyVersion>10.0.0</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="Fallout.Migrate.Tests" />
+    <InternalsVisibleTo Include="Fallout.Migrate.Specs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" />
+    <PackageReference Include="Spectre.Console.Cli" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Fallout.Utilities\Fallout.Utilities.csproj" />
   </ItemGroup>
 
 </Project>

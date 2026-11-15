@@ -28,7 +28,7 @@ public static partial class HttpRequestExtensions
 
 public class HttpResponseInspector
 {
-    private string _body;
+    private string body;
 
     public HttpResponseInspector(HttpResponseMessage response)
     {
@@ -39,7 +39,7 @@ public class HttpResponseInspector
 
     public async Task<string> GetBodyAsync()
     {
-        _body ??= await Response.Content.ReadAsStringAsync();
-        return _body;
+        body ??= await Response.Content.ReadAsStringAsync();
+        return body;
     }
 }

@@ -1,0 +1,14 @@
+workflow: GitFlow/v1
+commit-message-incrementing: Disabled
+# Major.Minor.0.0, so a patch release keeps the assembly version (as Nerdbank.GitVersioning did).
+assembly-versioning-scheme: MajorMinor
+branches:
+  release:
+    prevent-increment:
+      when-current-commit-tagged: true
+  pull-request:
+    regex: ((pull|pull\-requests|pr)[/-]|[/-](merge))
+    label: pr
+  hotfix:
+    prevent-increment:
+      when-current-commit-tagged: true

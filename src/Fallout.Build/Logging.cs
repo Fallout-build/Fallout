@@ -19,35 +19,25 @@ public static class Logging
 {
     public static readonly LoggingLevelSwitch LevelSwitch = new();
 
-    internal static bool SupportsAnsiOutput => Environment.GetEnvironmentVariable("TERM") is { } term && term.StartsWithOrdinalIgnoreCase("xterm");
+    internal static bool SupportsAnsiOutput =>
+        Environment.GetEnvironmentVariable("TERM") is { } term && term.StartsWithOrdinalIgnoreCase("xterm");
+
     internal static IHostTheme DefaultTheme { get; } = SupportsAnsiOutput
         ? AnsiConsoleHostTheme.Default256AnsiColorTheme
         : SystemConsoleHostTheme.DefaultSystemColorTheme;
 
     internal static string ErrorsAndWarningsOutputTemplate => "[{Level:u3}] {ExecutingTarget}: {Message:l}{NewLine}";
+
     internal static string StandardOutputTemplate => "[{Level:u3}] {Message:l}{NewLine}{Exception}";
+
     internal static string TimestampOutputTemplate => $"{{Timestamp:HH:mm:ss}} {StandardOutputTemplate}";
 
     private const int TargetNameLength = 20;
 
     public static LogLevel Level
     {
-        get => LevelSwitch.MinimumLevel switch
-        {
-            LogEventLevel.Verbose => LogLevel.Trace,
-            LogEventLevel.Debug => LogLevel.Normal,
-            LogEventLevel.Warning => LogLevel.Warning,
-            LogEventLevel.Error => LogLevel.Error,
-            _ => throw new ArgumentOutOfRangeException(nameof(LevelSwitch), LevelSwitch.MinimumLevel, message: null)
-        };
-        set => LevelSwitch.MinimumLevel = value switch
-        {
-            LogLevel.Trace => LogEventLevel.Verbose,
-            LogLevel.Normal => LogEventLevel.Debug,
-            LogLevel.Warning => LogEventLevel.Warning,
-            LogLevel.Error => LogEventLevel.Error,
-            _ => throw new ArgumentOutOfRangeException(nameof(value), value, message: null)
-        };
+        get => LevelSwitch.MinimumLevel.ToLogLevel();
+        set => LevelSwitch.MinimumLevel = value.ToLogEventLevel();
     }
 
     public static void Configure(IFalloutBuild build = null)
@@ -59,6 +49,7 @@ public static class Logging
                 Log.Logger = new LoggerConfiguration()
                     .WriteTo.Console(new CompactJsonFormatter())
                     .CreateLogger();
+
                 return;
             }
 
@@ -89,7 +80,9 @@ public static class Logging
     public static LoggerConfiguration ConfigureFilter(this LoggerConfiguration configuration, IFalloutBuild build)
     {
         if (build == null)
+        {
             return configuration;
+        }
 
         return configuration.Filter.ByExcluding(x => build.Host.FilterMessage(x.MessageTemplate.Text));
     }
@@ -108,7 +101,9 @@ public static class Logging
     public static LoggerConfiguration ConfigureHost(this LoggerConfiguration configuration, IFalloutBuild build)
     {
         if (build == null)
+        {
             return configuration;
+        }
 
         return configuration
             .WriteTo.Sink(new Host.LogEventSink(build.Host), restrictedToMinimumLevel: LogEventLevel.Warning);
@@ -117,7 +112,9 @@ public static class Logging
     public static LoggerConfiguration ConfigureInMemory(this LoggerConfiguration configuration, IFalloutBuild build)
     {
         if (build == null)
+        {
             return configuration;
+        }
 
         return configuration
             .WriteTo.Sink(InMemorySink.Instance, LogEventLevel.Warning);
@@ -126,22 +123,28 @@ public static class Logging
     public static LoggerConfiguration ConfigureFiles(this LoggerConfiguration configuration, IFalloutBuild build)
     {
         if (build == null || build.Host is IBuildServer)
+        {
             return configuration;
+        }
 
         var buildLogFile = build.TemporaryDirectory / "build.log";
         return configuration
             .WriteTo.File(
                 path: buildLogFile,
-                outputTemplate: $"{{Timestamp:HH:mm:ss.fff}} | {{Level:u1}} | {{ExecutingTarget,-{TargetNameLength}}} | {{Message:l}}{{NewLine}}{{Exception}}")
+                outputTemplate:
+                $"{{Timestamp:HH:mm:ss.fff}} | {{Level:u1}} | {{ExecutingTarget,-{TargetNameLength}}} | {{Message:l}}{{NewLine}}{{Exception}}")
             .WriteTo.File(
                 path: Path.ChangeExtension(buildLogFile, $".{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.log"),
-                outputTemplate: $"{{Level:u1}} | {{ExecutingTarget,-{TargetNameLength}}} | {{Message:l}}{{NewLine}}{{Exception}}");
+                outputTemplate:
+                $"{{Level:u1}} | {{ExecutingTarget,-{TargetNameLength}}} | {{Message:l}}{{NewLine}}{{Exception}}");
     }
 
     private static void DeleteOldLogFiles(IFalloutBuild build)
     {
         if (BuildServerConfigurationGeneration.IsActive)
+        {
             return;
+        }
 
         build.TemporaryDirectory.GlobFiles("build.*.log").OrderByDescending(x => x.ToString()).Skip(5)
             .ForEach(x => x.DeleteFile());
@@ -160,29 +163,53 @@ public static class Logging
         const string Reset = "\u001b[0m";
 
         for (var i = 30; i < 47; i++)
+        {
             Console.Write($"{Esc}{i}m{i}  {Reset} ");
+        }
+
         Console.WriteLine();
         for (var i = 30; i < 47; i++)
+        {
             Console.Write($"{Esc}{i};1m{i};1{Reset} ");
+        }
+
         Console.WriteLine();
         for (var i = 30; i < 47; i++)
+        {
             Console.Write($"{Esc}{i};2m{i};2{Reset} ");
+        }
+
         Console.WriteLine();
         for (var i = 30; i < 47; i++)
+        {
             Console.Write($"{Esc}{i};3m{i};2{Reset} ");
+        }
+
         Console.WriteLine();
 
         for (var i = 90; i < 107; i++)
+        {
             Console.Write($"{Esc}{i}m{i}  {Reset} ");
+        }
+
         Console.WriteLine();
         for (var i = 90; i < 107; i++)
+        {
             Console.Write($"{Esc}{i};1m{i};1{Reset} ");
+        }
+
         Console.WriteLine();
         for (var i = 90; i < 107; i++)
+        {
             Console.Write($"{Esc}{i};2m{i};2{Reset} ");
+        }
+
         Console.WriteLine();
         for (var i = 90; i < 107; i++)
+        {
             Console.Write($"{Esc}{i};3m{i};2{Reset} ");
+        }
+
         Console.WriteLine();
 
         for (var i = 0; i < 255; i++)
@@ -190,7 +217,9 @@ public static class Logging
             var code = i.ToString().PadLeft(3, '0');
             Console.Write($"{Esc}38;5;{code}m{code}{Reset} ");
             if ((i + 1) % 16 == 0)
+            {
                 Console.WriteLine();
+            }
         }
 
         Console.WriteLine();
@@ -200,7 +229,9 @@ public static class Logging
             var code = i.ToString().PadLeft(3, '0');
             Console.Write($"{Esc}38;5;{code};1m{code}{Reset} ");
             if ((i + 1) % 16 == 0)
+            {
                 Console.WriteLine();
+            }
         }
     }
 
@@ -213,39 +244,45 @@ public static class Logging
     {
         public static InMemorySink Instance { get; } = new();
 
-        private readonly List<LogEvent> _logEvents;
+        private readonly List<LogEvent> logEvents;
 
         private InMemorySink()
         {
-            _logEvents = new List<LogEvent>();
+            logEvents = new List<LogEvent>();
         }
 
-        public IReadOnlyCollection<LogEvent> LogEvents => _logEvents.AsReadOnly();
+        public IReadOnlyCollection<LogEvent> LogEvents => logEvents.AsReadOnly();
 
         public void Emit(LogEvent logEvent)
         {
             logEvent.AddOrUpdateProperty(ExecutingTargetLogEventEnricher.Current);
-            _logEvents.Add(logEvent);
+            logEvents.Add(logEvent);
+        }
+
+        /// <summary>Drops accumulated events so a subsequent build in the same process starts clean. FT-1 / #306.</summary>
+        public void Clear()
+        {
+            logEvents.Clear();
         }
 
         public void Dispose()
         {
-            _logEvents.Clear();
+            Clear();
         }
     }
 
     internal class ExecutingTargetLogEventEnricher : ILogEventEnricher
     {
-        public static LogEventProperty Current => s_property ?? s_defaultProperty;
+        public static LogEventProperty Current => property ?? defaultProperty;
 
-        private static readonly LogEventProperty s_defaultProperty = GetTargetEventProperty(string.Empty);
+        private static readonly LogEventProperty defaultProperty = GetTargetEventProperty(string.Empty);
 #pragma warning disable CS0649
-        private static LogEventProperty s_property;
+        private static LogEventProperty property;
 #pragma warning restore CS0649
 
         public static IDisposable SetTargetEventProperty(string name)
         {
-            return DelegateDisposable.SetAndRestore(() => s_property, GetTargetEventProperty(name));
+            return DelegateDisposable.SetAndRestore(() => property, GetTargetEventProperty(name));
         }
 
         private static LogEventProperty GetTargetEventProperty(string name)

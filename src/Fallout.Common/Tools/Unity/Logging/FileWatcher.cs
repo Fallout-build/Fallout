@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading;
 
@@ -8,65 +7,72 @@ namespace Fallout.Common.Tools.Unity.Logging;
 
 internal class FileWatcher
 {
-    private readonly string _file;
-    private readonly Action<string> _processLineAction;
-    private AutoResetEvent _logResetEvent;
-    private FileSystemWatcher _fileSystemWatcher;
-    private Thread _logReaderThread;
-    private CancellationTokenSource _cancellationTokenSource;
-    private readonly Encoding _encoding;
+    private readonly string file;
+    private readonly Action<string> processLineAction;
+    private AutoResetEvent logResetEvent;
+    private FileSystemWatcher fileSystemWatcher;
+    private Thread logReaderThread;
+    private CancellationTokenSource cancellationTokenSource;
+    private readonly Encoding encoding;
 
     public FileWatcher(string file, Action<string> processLineAction, Encoding encoding = null)
     {
-        _encoding = encoding ?? Encoding.UTF8;
-        _file = file;
-        _processLineAction = processLineAction;
+        this.encoding = encoding ?? Encoding.UTF8;
+        this.file = file;
+        this.processLineAction = processLineAction;
     }
 
     public void Start()
     {
-        _logResetEvent = new AutoResetEvent(initialState: false);
-        _fileSystemWatcher = new FileSystemWatcher(Path.GetPathRoot(_file).NotNull())
-                             {
-                                 Filter = Path.GetFileName(_file),
-                                 EnableRaisingEvents = true,
-                                 NotifyFilter = NotifyFilters.CreationTime | NotifyFilters.LastWrite
-                             };
+        logResetEvent = new AutoResetEvent(initialState: false);
+        fileSystemWatcher = new FileSystemWatcher(Path.GetPathRoot(file).NotNull())
+        {
+            Filter = Path.GetFileName(file),
+            EnableRaisingEvents = true,
+            NotifyFilter = NotifyFilters.CreationTime | NotifyFilters.LastWrite
+        };
 
-        _fileSystemWatcher.Changed += (_, _) => _logResetEvent.Set();
+        fileSystemWatcher.Changed += (_, _) => logResetEvent.Set();
 
-        _cancellationTokenSource = new CancellationTokenSource();
-        _logReaderThread = new Thread(ReadLogFile);
-        _logReaderThread.Start();
+        cancellationTokenSource = new CancellationTokenSource();
+        logReaderThread = new Thread(ReadLogFile);
+        logReaderThread.Start();
     }
 
     public void AssertStopped()
     {
-        _fileSystemWatcher.EnableRaisingEvents = false;
-        _fileSystemWatcher.Dispose();
-        _fileSystemWatcher = null;
-        _cancellationTokenSource.Cancel();
-        while (_logReaderThread != null)
+        fileSystemWatcher.EnableRaisingEvents = false;
+        fileSystemWatcher.Dispose();
+        fileSystemWatcher = null;
+        cancellationTokenSource.Cancel();
+        while (logReaderThread != null)
         {
-            if (!_logReaderThread.IsAlive)
-                _logReaderThread = null;
+            if (!logReaderThread.IsAlive)
+            {
+                logReaderThread = null;
+            }
             else
+            {
                 Thread.Sleep(millisecondsTimeout: 100);
+            }
         }
     }
 
     // ReSharper disable once CognitiveComplexity
     private void ReadLogFile()
     {
-        while (!File.Exists(_file))
+        while (!File.Exists(file))
         {
-            if (_cancellationTokenSource.IsCancellationRequested)
+            if (cancellationTokenSource.IsCancellationRequested)
+            {
                 return;
-            _logResetEvent.WaitOne(millisecondsTimeout: 100);
+            }
+
+            logResetEvent.WaitOne(millisecondsTimeout: 100);
         }
 
-        using var stream = new FileStream(_file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-        using var reader = new BinaryReader(stream, _encoding);
+        using var stream = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using var reader = new BinaryReader(stream, encoding);
 
         var currentLine = "";
         while (true)
@@ -77,16 +83,21 @@ internal class FileWatcher
 
                 if (currentChar == '\n')
                 {
-                    _processLineAction?.Invoke(currentLine);
+                    processLineAction?.Invoke(currentLine);
                     currentLine = "";
                 }
                 else
+                {
                     currentLine += currentChar;
+                }
             }
 
-            if (_cancellationTokenSource.IsCancellationRequested)
+            if (cancellationTokenSource.IsCancellationRequested)
+            {
                 break;
-            _logResetEvent.WaitOne(millisecondsTimeout: 100);
+            }
+
+            logResetEvent.WaitOne(millisecondsTimeout: 100);
         }
     }
 }

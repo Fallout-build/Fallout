@@ -15,15 +15,15 @@ namespace Fallout.Common.CI.AzurePipelines;
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 public class AzurePipelinesAttribute : ChainedConfigurationAttributeBase
 {
-    private readonly string _suffix;
-    private readonly AzurePipelinesImage[] _images;
+    private readonly string suffix;
+    private readonly AzurePipelinesImage[] images;
 
-    private bool? _triggerBatch;
-    private bool? _pullRequestsAutoCancel;
-    private bool? _submodules;
-    private bool? _largeFileStorage;
-    private int? _fetchDepth;
-    private bool? _clean;
+    private bool? triggerBatch;
+    private bool? pullRequestsAutoCancel;
+    private bool? submodules;
+    private bool? largeFileStorage;
+    private int? fetchDepth;
+    private bool? clean;
 
     public AzurePipelinesAttribute(
         AzurePipelinesImage image,
@@ -37,17 +37,27 @@ public class AzurePipelinesAttribute : ChainedConfigurationAttributeBase
         AzurePipelinesImage image,
         params AzurePipelinesImage[] images)
     {
-        _suffix = suffix?.Replace(oldChar: ' ', newChar: '_');
-        _images = new[] { image }.Concat(images).ToArray();
+        this.suffix = suffix?.Replace(oldChar: ' ', newChar: '_');
+        this.images = new[]
+        {
+            image
+        }.Concat(images).ToArray();
     }
 
-    public override string IdPostfix => _suffix;
+    public override string IdPostfix => suffix;
 
     public override Type HostType => typeof(AzurePipelines);
+
     public override AbsolutePath ConfigurationFile => ConfigurationDirectory / ConfigurationFileName;
-    public override IEnumerable<AbsolutePath> GeneratedFiles => new[] { ConfigurationFile };
+
+    public override IEnumerable<AbsolutePath> GeneratedFiles => new[]
+    {
+        ConfigurationFile
+    };
+
     protected virtual AbsolutePath ConfigurationDirectory => Build.RootDirectory;
-    private string ConfigurationFileName => _suffix != null ? $"azure-pipelines.{_suffix}.yml" : "azure-pipelines.yml";
+
+    private string ConfigurationFileName => suffix != null ? $"azure-pipelines.{suffix}.yml" : "azure-pipelines.yml";
 
     public override IEnumerable<string> RelevantTargetNames => InvokedTargets;
 
@@ -57,59 +67,79 @@ public class AzurePipelinesAttribute : ChainedConfigurationAttributeBase
 
     public bool Submodules
     {
-        set => _submodules = value;
+        set => submodules = value;
         get => throw new NotSupportedException();
     }
 
     public int FetchDepth
     {
-        set => _fetchDepth = value;
+        set => fetchDepth = value;
         get => throw new NotSupportedException();
     }
 
     public bool Clean
     {
-        set => _clean = value;
+        set => clean = value;
         get => throw new NotSupportedException();
     }
 
     public bool LargeFileStorage
     {
-        set => _largeFileStorage = value;
+        set => largeFileStorage = value;
         get => throw new NotSupportedException();
     }
 
     public bool TriggerBatch
     {
-        set => _triggerBatch = value;
+        set => triggerBatch = value;
         get => throw new NotSupportedException();
     }
 
     public string[] TriggerBranchesInclude { get; set; } = new string[0];
+
     public string[] TriggerBranchesExclude { get; set; } = new string[0];
+
     public string[] TriggerTagsInclude { get; set; } = new string[0];
+
     public string[] TriggerTagsExclude { get; set; } = new string[0];
+
     public string[] TriggerPathsInclude { get; set; } = new string[0];
+
     public string[] TriggerPathsExclude { get; set; } = new string[0];
 
     public bool PullRequestsDisabled { get; set; }
 
     public bool? PullRequestsAutoCancel
     {
-        set => _pullRequestsAutoCancel = value;
+        set => pullRequestsAutoCancel = value;
         get => throw new NotSupportedException();
     }
 
     public string[] PullRequestsBranchesInclude { get; set; } = new string[0];
+
     public string[] PullRequestsBranchesExclude { get; set; } = new string[0];
+
     public string[] PullRequestsPathsInclude { get; set; } = new string[0];
+
     public string[] PullRequestsPathsExclude { get; set; } = new string[0];
 
-    public string[] CacheKeyFiles { get; set; } = { "**/global.json", "**/*.csproj", "**/Directory.Packages.props" };
-    public string[] CachePaths { get; set; } = { AzurePipelinesCachePaths.Nuke, AzurePipelinesCachePaths.NuGet };
+    public string[] CacheKeyFiles { get; set; } =
+    {
+        "**/global.json",
+        "**/*.csproj",
+        "**/Directory.Packages.props"
+    };
+
+    public string[] CachePaths { get; set; } =
+    {
+        AzurePipelinesCachePaths.Nuke,
+        AzurePipelinesCachePaths.NuGet
+    };
 
     public string[] ImportVariableGroups { get; set; } = new string[0];
+
     public string[] ImportSecrets { get; set; } = new string[0];
+
     public bool EnableAccessToken { get; set; }
 
     public override CustomFileWriter CreateWriter(StreamWriter streamWriter)
@@ -120,60 +150,64 @@ public class AzurePipelinesAttribute : ChainedConfigurationAttributeBase
     public override ConfigurationEntity GetConfiguration(IReadOnlyCollection<ExecutableTarget> relevantTargets)
     {
         return new AzurePipelinesConfiguration
-               {
-                   VariableGroups = ImportVariableGroups,
-                   VcsPushTrigger = GetVcsPushTrigger(),
-                   VcsPullRequestTrigger = GetVcsPullRequestTrigger(),
-                   Stages = _images.Select(x => GetStage(x, relevantTargets)).ToArray()
-               };
+        {
+            VariableGroups = ImportVariableGroups,
+            VcsPushTrigger = GetVcsPushTrigger(),
+            VcsPullRequestTrigger = GetVcsPullRequestTrigger(),
+            Stages = images.Select(x => GetStage(x, relevantTargets)).ToArray()
+        };
     }
 
     protected AzurePipelinesVcsPushTrigger GetVcsPushTrigger()
     {
         if (!TriggerDisabled &&
-            _triggerBatch == null &&
+            triggerBatch == null &&
             TriggerBranchesInclude.Length == 0 &&
             TriggerBranchesExclude.Length == 0 &&
             TriggerTagsInclude.Length == 0 &&
             TriggerTagsExclude.Length == 0 &&
             TriggerPathsInclude.Length == 0 &&
             TriggerPathsExclude.Length == 0)
+        {
             return null;
+        }
 
         return new AzurePipelinesVcsPushTrigger
-               {
-                   Disabled = TriggerDisabled,
-                   Batch = _triggerBatch,
-                   BranchesInclude = TriggerBranchesInclude,
-                   BranchesExclude = TriggerBranchesExclude,
-                   TagsInclude = TriggerTagsInclude,
-                   TagsExclude = TriggerTagsExclude,
-                   PathsInclude = TriggerPathsInclude,
-                   PathsExclude = TriggerPathsExclude,
-               };
+        {
+            Disabled = TriggerDisabled,
+            Batch = triggerBatch,
+            BranchesInclude = TriggerBranchesInclude,
+            BranchesExclude = TriggerBranchesExclude,
+            TagsInclude = TriggerTagsInclude,
+            TagsExclude = TriggerTagsExclude,
+            PathsInclude = TriggerPathsInclude,
+            PathsExclude = TriggerPathsExclude,
+        };
     }
 
     protected AzurePipelinesVcsPushTrigger GetVcsPullRequestTrigger()
     {
         if (!PullRequestsDisabled &&
-            _pullRequestsAutoCancel == null &&
+            pullRequestsAutoCancel == null &&
             PullRequestsBranchesInclude.Length == 0 &&
             PullRequestsBranchesExclude.Length == 0 &&
             PullRequestsPathsInclude.Length == 0 &&
             PullRequestsPathsExclude.Length == 0)
+        {
             return null;
+        }
 
         return new AzurePipelinesVcsPushTrigger
-               {
-                   Disabled = PullRequestsDisabled,
-                   AutoCancel = _pullRequestsAutoCancel,
-                   BranchesInclude = PullRequestsBranchesInclude,
-                   BranchesExclude = PullRequestsBranchesExclude,
-                   TagsInclude = new string[0],
-                   TagsExclude = new string[0],
-                   PathsInclude = PullRequestsPathsInclude,
-                   PathsExclude = PullRequestsPathsExclude,
-               };
+        {
+            Disabled = PullRequestsDisabled,
+            AutoCancel = pullRequestsAutoCancel,
+            BranchesInclude = PullRequestsBranchesInclude,
+            BranchesExclude = PullRequestsBranchesExclude,
+            TagsInclude = new string[0],
+            TagsExclude = new string[0],
+            PathsInclude = PullRequestsPathsInclude,
+            PathsExclude = PullRequestsPathsExclude,
+        };
     }
 
     protected virtual AzurePipelinesStage GetStage(
@@ -187,13 +221,13 @@ public class AzurePipelinesAttribute : ChainedConfigurationAttributeBase
             .Select(x => x.Job).ToArray();
 
         return new AzurePipelinesStage
-               {
-                   Name = image.GetValue().Replace("-", "_").Replace(".", "_"),
-                   DisplayName = image.GetValue(),
-                   Image = image,
-                   Dependencies = new AzurePipelinesStage[0],
-                   Jobs = jobs
-               };
+        {
+            Name = image.GetValue().Replace("-", "_").Replace(".", "_"),
+            DisplayName = image.GetValue(),
+            Image = image,
+            Dependencies = new AzurePipelinesStage[0],
+            Jobs = jobs
+        };
     }
 
     protected virtual AzurePipelinesJob GetJob(
@@ -205,13 +239,13 @@ public class AzurePipelinesAttribute : ChainedConfigurationAttributeBase
         var totalPartitions = executableTarget.PartitionSize ?? 0;
         var dependencies = GetTargetDependencies(executableTarget).SelectMany(x => jobs[x]).ToArray();
         return new AzurePipelinesJob
-               {
-                   Name = executableTarget.Name,
-                   DisplayName = executableTarget.Name,
-                   Dependencies = dependencies,
-                   Parallel = totalPartitions,
-                   Steps = GetSteps(executableTarget, relevantTargets, image).ToArray(),
-               };
+        {
+            Name = executableTarget.Name,
+            DisplayName = executableTarget.Name,
+            Dependencies = dependencies,
+            Parallel = totalPartitions,
+            Steps = GetSteps(executableTarget, relevantTargets, image).ToArray(),
+        };
     }
 
     protected virtual IEnumerable<AzurePipelinesStep> GetSteps(
@@ -219,15 +253,15 @@ public class AzurePipelinesAttribute : ChainedConfigurationAttributeBase
         IReadOnlyCollection<ExecutableTarget> relevantTargets,
         AzurePipelinesImage image)
     {
-        if (_submodules.HasValue || _largeFileStorage.HasValue || _fetchDepth.HasValue || _clean.HasValue)
+        if (submodules.HasValue || largeFileStorage.HasValue || fetchDepth.HasValue || clean.HasValue)
         {
             yield return new AzurePipelineCheckoutStep
-                         {
-                             InclueSubmodules = _submodules,
-                             IncludeLargeFileStorage = _largeFileStorage,
-                             FetchDepth = _fetchDepth,
-                             Clean = _clean
-                         };
+            {
+                InclueSubmodules = submodules,
+                IncludeLargeFileStorage = largeFileStorage,
+                FetchDepth = fetchDepth,
+                Clean = clean
+            };
         }
 
         if (CacheKeyFiles.Any())
@@ -235,11 +269,11 @@ public class AzurePipelinesAttribute : ChainedConfigurationAttributeBase
             foreach (var cachePath in CachePaths.NotNull())
             {
                 yield return new AzurePipelinesCacheStep
-                             {
-                                 Image = image,
-                                 KeyFiles = CacheKeyFiles,
-                                 Path = cachePath
-                             };
+                {
+                    Image = image,
+                    KeyFiles = CacheKeyFiles,
+                    Path = cachePath
+                };
             }
         }
 
@@ -249,7 +283,7 @@ public class AzurePipelinesAttribute : ChainedConfigurationAttributeBase
                 : path;
 
         var publishedArtifacts = executableTarget.ArtifactProducts
-            .Select(x => (AbsolutePath) x)
+            .Select(x => (AbsolutePath)x)
             .Select(x => x.DescendantsAndSelf(y => y.Parent).FirstOrDefault(y => !y.ToString().ContainsOrdinalIgnoreCase("*")))
             .Distinct()
             .Select(GetArtifactPath).ToArray();
@@ -269,21 +303,21 @@ public class AzurePipelinesAttribute : ChainedConfigurationAttributeBase
 
         var chainLinkTargets = GetInvokedTargets(executableTarget, relevantTargets).ToArray();
         yield return new AzurePipelinesCmdStep
-                     {
-                         BuildCmdPath = BuildCmdPath,
-                         PartitionSize = executableTarget.PartitionSize,
-                         InvokedTargets = chainLinkTargets.Select(x => x.Name).ToArray(),
-                         Imports = GetImports().ToDictionary(x => x.Key, x => x.Value)
-                     };
+        {
+            BuildCmdPath = BuildCmdPath,
+            PartitionSize = executableTarget.PartitionSize,
+            InvokedTargets = chainLinkTargets.Select(x => x.Name).ToArray(),
+            Imports = GetImports().ToDictionary(x => x.Key, x => x.Value)
+        };
 
         foreach (var publishedArtifact in publishedArtifacts)
         {
             var artifactName = publishedArtifact.Split('/').Last();
             yield return new AzurePipelinesPublishStep
-                         {
-                             ArtifactName = artifactName,
-                             PathToPublish = publishedArtifact
-                         };
+            {
+                ArtifactName = artifactName,
+                PathToPublish = publishedArtifact
+            };
         }
     }
 
@@ -292,19 +326,25 @@ public class AzurePipelinesAttribute : ChainedConfigurationAttributeBase
         static string GetSecretValue(string secret) => $"$({secret})";
 
         if (EnableAccessToken)
+        {
             yield return ("SYSTEM_ACCESSTOKEN", GetSecretValue("System.AccessToken"));
+        }
 
         foreach (var secret in ImportSecrets)
+        {
             yield return (secret, GetSecretValue(secret));
+        }
     }
 
     protected virtual string GetArtifact(string artifact)
     {
         if (Build.RootDirectory.Contains(artifact))
+        {
             artifact = GetRelativePath(Build.RootDirectory, artifact);
+        }
 
         return HasPathRoot(artifact)
             ? artifact
-            : (UnixRelativePath) artifact;
+            : (UnixRelativePath)artifact;
     }
 }

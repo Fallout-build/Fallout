@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Reflection;
 using Fallout.Common.CI.AppVeyor;
 using Fallout.Common.CI.AzurePipelines;
@@ -17,10 +16,10 @@ namespace Fallout.Common.Tools.OctoVersion;
 /// </summary>
 public class OctoVersionAttribute : ValueInjectionAttributeBase
 {
-    private bool? _autoDetectBranch;
-    private int? _major;
-    private int? _minor;
-    private int? _patch;
+    private bool? autoDetectBranch;
+    private int? major;
+    private int? minor;
+    private int? patch;
 
     /// <summary>
     /// Framework to use when selecting the OctoVersion library from the package.
@@ -39,7 +38,7 @@ public class OctoVersionAttribute : ValueInjectionAttributeBase
     public bool AutoDetectBranch
     {
         get => throw new NotSupportedException();
-        set => _autoDetectBranch = value;
+        set => autoDetectBranch = value;
     }
 
     /// <summary>
@@ -76,7 +75,7 @@ public class OctoVersionAttribute : ValueInjectionAttributeBase
     public int Major
     {
         get => throw new NotSupportedException();
-        set => _major = value;
+        set => major = value;
     }
 
     /// <summary>
@@ -91,7 +90,7 @@ public class OctoVersionAttribute : ValueInjectionAttributeBase
     public int Minor
     {
         get => throw new NotSupportedException();
-        set => _minor = value;
+        set => minor = value;
     }
 
     /// <summary>
@@ -106,7 +105,7 @@ public class OctoVersionAttribute : ValueInjectionAttributeBase
     public int Patch
     {
         get => throw new NotSupportedException();
-        set => _patch = value;
+        set => patch = value;
     }
 
     /// <summary>
@@ -117,17 +116,19 @@ public class OctoVersionAttribute : ValueInjectionAttributeBase
 
     public override object GetValue(MemberInfo member, object instance)
     {
-        var autoDetectBranch = GetMemberValueOrNull<bool?>(AutoDetectBranchMember, instance) ?? _autoDetectBranch;
+        var autoDetectBranch = GetMemberValueOrNull<bool?>(AutoDetectBranchMember, instance) ?? this.autoDetectBranch;
         var branch = GetMemberValueOrNull<string>(BranchMember, instance) ?? Branch;
         var fullSemVer = GetMemberValueOrNull<string>(FullSemVerMember, instance) ?? FullSemVer;
-        var majorVersion = GetMemberValueOrNull<int?>(MajorMember, instance) ?? _major;
-        var minorVersion = GetMemberValueOrNull<int?>(MinorMember, instance) ?? _minor;
-        var patchVersion = GetMemberValueOrNull<int?>(PatchMember, instance) ?? _patch;
+        var majorVersion = GetMemberValueOrNull<int?>(MajorMember, instance) ?? major;
+        var minorVersion = GetMemberValueOrNull<int?>(MinorMember, instance) ?? minor;
+        var patchVersion = GetMemberValueOrNull<int?>(PatchMember, instance) ?? patch;
 
         Assert.False(autoDetectBranch.HasValue && autoDetectBranch.Value && !branch.IsNullOrEmpty(),
             $"Branch cannot be specified via {nameof(Branch)} or {nameof(BranchMember)} properties when {nameof(AutoDetectBranch)} is enabled");
-        Assert.True(autoDetectBranch.HasValue && autoDetectBranch.Value || !branch.IsNullOrEmpty(),
+
+        Assert.True((autoDetectBranch.HasValue && autoDetectBranch.Value) || !branch.IsNullOrEmpty(),
             $"Branch must either be provided via {nameof(Branch)} or {nameof(BranchMember)} properties, or {nameof(AutoDetectBranch)} must be enabled");
+
         branch ??= GitRepository.FromLocalDirectory(Build.RootDirectory).Branch;
 
         var outputFile = FalloutBuild.TemporaryDirectory / $"octoversion.{Guid.NewGuid()}.json";
@@ -144,6 +145,7 @@ public class OctoVersionAttribute : ValueInjectionAttributeBase
                 .SetMinor(minorVersion)
                 .SetPatch(patchVersion))
             .Result;
+
         outputFile.DeleteFile();
 
         if (UpdateBuildNumber)

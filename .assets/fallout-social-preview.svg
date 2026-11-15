@@ -1,0 +1,45 @@
+<svg width="1280" height="640" viewBox="0 0 1280 640" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="glow" cx="22%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#2a2205" />
+      <stop offset="100%" stop-color="#0d0d0f" />
+    </radialGradient>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#111113" />
+      <stop offset="100%" stop-color="#0a0a0b" />
+    </linearGradient>
+  </defs>
+
+  <!-- background -->
+  <rect width="1280" height="640" fill="url(#bg)" />
+  <rect width="1280" height="640" fill="url(#glow)" />
+
+  <!-- radioactive trefoil mark -->
+  <g transform="translate(300,320) scale(1.15)">
+    <circle cx="0" cy="0" r="175" fill="#f5c800" />
+    <circle cx="0" cy="0" r="172" fill="none" stroke="#111111" stroke-width="3" />
+    <circle cx="0" cy="0" r="155" fill="none" stroke="#111111" stroke-width="3" />
+
+    <ellipse cx="0" cy="-90" rx="52" ry="62" fill="#111111" />
+    <ellipse cx="-85" cy="48" rx="52" ry="62" transform="rotate(120 -85 48)" fill="#111111" />
+    <ellipse cx="85" cy="48" rx="52" ry="62" transform="rotate(-120 85 48)" fill="#111111" />
+
+    <circle cx="0" cy="0" r="52" fill="#f5c800" />
+    <circle cx="0" cy="0" r="32" fill="#111111" />
+    <circle cx="0" cy="0" r="18" fill="#f5c800" />
+
+    <path d="M0 -172 L-4 -130 L4 -110" fill="none" stroke="#1a1a1a" stroke-width="1.5" opacity="0.35" />
+    <path d="M165 90 L128 70 L110 80" fill="none" stroke="#1a1a1a" stroke-width="1.5" opacity="0.35" />
+    <path d="M-165 90 L-128 70 L-110 80" fill="none" stroke="#1a1a1a" stroke-width="1.5" opacity="0.35" />
+  </g>
+
+  <!-- text block -->
+  <g font-family="'Anthropic Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <text x="580" y="270" font-size="112" font-weight="700" fill="#f5c800">Fallout</text>
+    <text x="583" y="322" font-size="34" font-weight="500" fill="#eaeaea">C# CI/CD orchestration platform</text>
+    <text x="583" y="368" font-size="22" font-family="ui-monospace, 'SF Mono', 'Cascadia Code', monospace" fill="#888888" letter-spacing="0.1em">&#9762; survived the fallout</text>
+  </g>
+
+  <!-- footer -->
+  <text x="640" y="590" font-size="20" text-anchor="middle" font-family="ui-monospace, 'SF Mono', 'Cascadia Code', monospace" fill="#666666" letter-spacing="0.06em">github.com/Fallout-build/Fallout</text>
+</svg>

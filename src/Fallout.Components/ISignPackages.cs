@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -43,23 +42,32 @@ namespace Fallout.Components;
 [ParameterPrefix(SignPath)]
 public interface ISignPackages : IFalloutBuild
 {
-    public const string SignPath = nameof(SignPath);
+    const string SignPath = nameof(SignPath);
 
-    public record SignPathSettings(
+    record SignPathSettings(
         string OrganizationId,
         string ProjectSlug,
         string PolicySlug);
 
-    [Parameter] SignPathSettings Settings => TryGetValue(() => Settings);
-    [Parameter] [Secret] string ApiToken => TryGetValue(() => ApiToken);
+    [Parameter]
+    SignPathSettings Settings => TryGetValue(() => Settings);
+
+    [Parameter]
+    [Secret]
+    string ApiToken => TryGetValue(() => ApiToken);
 
     AbsolutePath SignPathTemporaryDirectory => TemporaryDirectory / "signpath";
+
     AbsolutePath SignPathRequestDirectory => SignPathTemporaryDirectory / "signing-request";
+
     AbsolutePath SignPathResponseDirectory => SignPathTemporaryDirectory / "signing-response";
+
     AbsolutePath SignPathRequestArchive => SignPathRequestDirectory.WithExtension(".zip");
+
     AbsolutePath SignPathResponseArchive => SignPathResponseDirectory.WithExtension(".zip");
 
     IEnumerable<AbsolutePath> SignPathPackages { get; }
+
     bool SignPathReplacePackages => true;
 
     private AppVeyor AppVeyor => AppVeyor.Instance;

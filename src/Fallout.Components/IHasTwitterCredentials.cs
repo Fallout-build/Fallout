@@ -1,16 +1,25 @@
-﻿using System;
-using System.Linq;
-using Fallout.Common;
+﻿using Fallout.Common;
 
 namespace Fallout.Components;
 
 [ParameterPrefix(Twitter)]
 public interface IHasTwitterCredentials : IFalloutBuild
 {
-    public const string Twitter = nameof(Twitter);
+    const string Twitter = nameof(Twitter);
 
-    [Parameter] [Secret] string ConsumerKey => TryGetValue(() => ConsumerKey);
-    [Parameter] [Secret] string ConsumerSecret => TryGetValue(() => ConsumerSecret);
-    [Parameter] [Secret] string AccessToken => TryGetValue(() => AccessToken);
-    [Parameter] [Secret] string AccessTokenSecret => TryGetValue(() => AccessTokenSecret);
+    [Parameter]
+    [Secret]
+    string ConsumerKey => TryGetValue(() => ConsumerKey);
+
+    [Parameter]
+    [Secret]
+    string ConsumerSecret => TryGetValue(() => ConsumerSecret);
+
+    [Parameter]
+    [Secret]
+    string AccessToken => TryGetValue(() => AccessToken);
+
+    [Parameter]
+    [Secret]
+    string AccessTokenSecret => TryGetValue(() => AccessTokenSecret);
 }

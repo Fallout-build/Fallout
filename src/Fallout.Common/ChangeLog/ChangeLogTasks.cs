@@ -2,24 +2,31 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using NuGet.Versioning;
 using Fallout.Common.Git;
 using Fallout.Common.IO;
 using Fallout.Common.Tools.GitHub;
 using Fallout.Common.Utilities;
+using NuGet.Versioning;
 using Serilog;
 
 // ReSharper disable ArgumentsStyleLiteral
 namespace Fallout.Common.ChangeLog;
 
+/// <summary>
+/// Provides a set of tasks and utility methods for working with changelogs in a software repository.
+/// This class includes methods for reading, extracting, and finalizing changelog entries, as well as
+/// preparing release notes for publishing on platforms such as NuGet.
+/// </summary>
 public static class ChangelogTasks
 {
     public static string GetNuGetReleaseNotes(string changelogFile, GitRepository repository = null)
     {
+        AbsolutePath changelogPath = changelogFile;
+
         // URL-encode characters MSBuild treats as command-line/property metacharacters.
         // Without this, MSBuild's property parser splits on ; (turning a long release note
         // into multiple bogus arguments) and chokes on stray " in the value.
-        var changelogSectionNotes = ExtractChangelogSectionNotes(changelogFile)
+        var changelogSectionNotes = ExtractChangelogSectionNotes(changelogPath)
             .Select(x => x.Replace("- ", "\u2022 ")
                 .Replace("* ", "\u2022 ")
                 .Replace("+ ", "\u2022 ")
@@ -27,10 +34,11 @@ public static class ChangelogTasks
                 .Replace(",", "%2C")
                 .Replace(";", "%3B")).ToList();
 
-        if (repository.IsGitHubRepository())
+        if (repository.IsGitHubRepository() && changelogPath.FileExists())
         {
             changelogSectionNotes.Add(string.Empty);
-            changelogSectionNotes.Add($"Full changelog at {repository.GetGitHubBrowseUrl(changelogFile)}");
+            changelogSectionNotes.Add(
+                $"Full changelog at {repository.GetGitHubBrowseUrl(changelogPath, itemType: GitHubItemType.File)}");
         }
 
         return changelogSectionNotes.JoinNewLine();
@@ -93,7 +101,8 @@ public static class ChangelogTasks
     /// <seealso cref="FinalizeChangelog(ChangeLog,NuGetVersion,GitRepository)"/>
     public static void FinalizeChangelog(ChangeLog changelogFile, NuGetVersion tag, GitRepository repository = null)
     {
-        Log.Information("Finalizing {File} for {Tag} ...", PathConstruction.GetRelativePath(FalloutBuild.RootDirectory, changelogFile.Path), tag);
+        Log.Information("Finalizing {File} for {Tag} ...",
+            PathConstruction.GetRelativePath(FalloutBuild.RootDirectory, changelogFile.Path), tag);
 
         var unreleasedNotes = changelogFile.Unreleased;
         var releaseNotes = changelogFile.ReleaseNotes;
@@ -126,7 +135,8 @@ public static class ChangelogTasks
     /// <seealso cref="FinalizeChangelog(ChangeLog,NuGetVersion,GitRepository)"/>
     public static void FinalizeChangelog(AbsolutePath changelogFile, string tag, GitRepository repository = null)
     {
-        Log.Information("Finalizing {File} for {Tag} ...", PathConstruction.GetRelativePath(FalloutBuild.RootDirectory, changelogFile), tag);
+        Log.Information("Finalizing {File} for {Tag} ...",
+            PathConstruction.GetRelativePath(FalloutBuild.RootDirectory, changelogFile), tag);
 
         var content = changelogFile.ReadAllLines().ToList();
         var sections = GetReleaseSections(content).ToList();
@@ -135,7 +145,9 @@ public static class ChangelogTasks
 
         Assert.True(firstSection.Caption.All(char.IsLetter), "Cannot find a draft section");
         Assert.True(sections.All(x => !x.Caption.EqualsOrdinalIgnoreCase(tag)), $"Tag '{tag}' already exists");
-        Assert.True(firstSection.EndIndex > firstSection.StartIndex, $"Draft section '{firstSection.Caption}' does not contain any information");
+        Assert.True(firstSection.EndIndex > firstSection.StartIndex,
+            $"Draft section '{firstSection.Caption}' does not contain any information");
+
         Assert.True(secondSection == null || NuGetVersion.Parse(tag).CompareTo(NuGetVersion.Parse(secondSection.Caption)) > 0,
             $"Tag '{tag}' is not greater compared to last tag '{secondSection?.Caption}'");
 
@@ -150,18 +162,47 @@ public static class ChangelogTasks
     }
 
     /// <summary>
-    /// Extracts the notes of the specified changelog section.
+    /// Extracts the notes from a specific section of the given changelog file, optionally filtered by a section tag.
     /// </summary>
     /// <param name="changelogFile">The path to the changelog file.</param>
-    /// <param name="tag">The tag which release notes should get extracted.</param>
-    /// <returns>A collection of the release notes.</returns>
+    /// <param name="tag">The optional tag to identify the specific section to extract notes from. If null, the first valid section is used.</param>
+    /// <returns>An enumerable collection of strings representing the notes in the specified section. If the file does not exist or the section is not found, an empty collection is returned.</returns>
     public static IEnumerable<string> ExtractChangelogSectionNotes(AbsolutePath changelogFile, string tag = null)
     {
-        var content = changelogFile.ReadAllLines().Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
-        var sections = GetReleaseSections(content);
-        var section = tag == null
-            ? sections.First(x => x.StartIndex < x.EndIndex)
-            : sections.FirstOrDefault(x => x.Caption.EqualsOrdinalIgnoreCase(tag)).NotNull($"Could not find release section for '{tag}'.");
+        if (!changelogFile.FileExists())
+        {
+            // We treat a non-existing changelog file as empty.
+            Log.Information("Changelog file {File} does not exist, so skipping section extraction", changelogFile);
+            return Array.Empty<string>();
+        }
+
+        List<string> content = changelogFile.ReadAllLines().Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+        List<ReleaseSection> sections = GetReleaseSections(content).ToList();
+        if (!sections.Any())
+        {
+            // We treat an empty changelog as if the section does not exist.
+            Log.Information("Changelog file {File} doesn't contain any sections, so skipping section extraction", changelogFile);
+
+            return Array.Empty<string>();
+        }
+
+        ReleaseSection section;
+        if (tag == null)
+        {
+            section = sections.FirstOrDefault(x => x.StartIndex < x.EndIndex);
+            if (section == null)
+            {
+                return Array.Empty<string>();
+            }
+        }
+        else
+        {
+            section = sections.FirstOrDefault(x => x.Caption.EqualsOrdinalIgnoreCase(tag));
+            if (section == null)
+            {
+                throw new Exception($"Could not find release section for '{tag}'.");
+            }
+        }
 
         return content
             .Skip(section.StartIndex + 1)
@@ -188,7 +229,9 @@ public static class ChangelogTasks
 
         var index = content.FindIndex(IsReleaseHead);
         if (index < 0)
+        {
             yield break;
+        }
 
         while (index < content.Count)
         {
@@ -200,7 +243,7 @@ public static class ChangelogTasks
             }
 
             var caption = GetCaption(line);
-            var nextReleaseHeadIndex = content.FindIndex(index + 1,  x => IsReleaseHead(x) || !IsReleaseContent(x));
+            var nextReleaseHeadIndex = content.FindIndex(index + 1, x => IsReleaseHead(x) || !IsReleaseContent(x));
 
             var releaseData =
                 new ReleaseSection
@@ -232,7 +275,11 @@ public static class ChangelogTasks
             content.Add(string.Empty);
             content.Add($"[{firstSection.Caption}]: {repository.GetGitHubCompareTagToHeadUrl(tag)}");
             for (var i = 1; i + 1 < sections.Count; i++)
-                content.Add($"[{sections[i].Caption}]: {repository.GetGitHubCompareTagsUrl(sections[i].Caption, sections[i + 1].Caption)}");
+            {
+                content.Add(
+                    $"[{sections[i].Caption}]: {repository.GetGitHubCompareTagsUrl(sections[i].Caption, sections[i + 1].Caption)}");
+            }
+
             content.Add($"[{lastSection.Caption}]: {repository.GetGitHubBrowseUrl(branch: lastSection.Caption)}");
         }
     }

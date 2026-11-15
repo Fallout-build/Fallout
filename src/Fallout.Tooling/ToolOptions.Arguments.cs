@@ -12,34 +12,44 @@ namespace Fallout.Common.Tooling;
 public class CommandAttribute : Attribute
 {
     public Type Type { get; set; }
+
     public string Command { get; set; }
+
     public string Arguments { get; set; }
 }
 
 public class ArgumentEscapeAttribute : Attribute
 {
     public Type Type { get; set; }
+
     public string Method { get; set; }
 }
 
 public class ArgumentAttribute : Attribute
 {
     public int Position { get; set; }
+
     public string Format { get; set; }
+
     public string AlternativeFormat { get; set; }
+
     public bool Secret { get; set; }
 
     public Type FormatterType { get; set; }
+
     public string FormatterMethod { get; set; }
 
     public string Separator { get; set; }
+
     public string InnerSeparator { get; set; }
+
     public bool QuoteMultiple { get; set; }
 }
 
 public class BuilderAttribute : Attribute
 {
     public Type Type { get; set; }
+
     public string Property { get; set; }
 }
 
@@ -52,11 +62,13 @@ partial class ToolOptions
     {
         var commandAttribute = GetType().GetCustomAttribute<CommandAttribute>();
         if (commandAttribute?.Arguments != null)
+        {
             yield return commandAttribute.Arguments;
+        }
 
         var escapeMethod = CreateEscape();
         var arguments = InternalOptions
-            .Select(kv => (Node: kv.Value, Property: _allProperties[kv.Key]))
+            .Select(kv => (Node: kv.Value, Property: allProperties[kv.Key]))
             .Select(x => (x.Node, x.Property, Attribute: x.Property.GetCustomAttribute<ArgumentAttribute>()))
             .Where(x => x.Attribute != null)
             .OrderByDescending(x => x.Attribute.Position.CompareTo(0))
@@ -66,14 +78,18 @@ partial class ToolOptions
             .Concat(ProcessAdditionalArguments ?? []);
 
         foreach (var argument in arguments)
+        {
             yield return argument;
+        }
 
         Func<string, PropertyInfo, string> CreateEscape()
         {
             var toolType = commandAttribute?.Type;
             var escapeAttribute = toolType?.GetCustomAttribute<ArgumentEscapeAttribute>();
             if (escapeAttribute == null)
+            {
                 return (x, _) => x.DoubleQuoteIfNeeded();
+            }
 
             var escapeType = escapeAttribute.Type ?? GetType();
             var formatterMethod = escapeType.GetMethod(escapeAttribute.Method, ReflectionUtility.All);
@@ -91,16 +107,24 @@ partial class ToolOptions
         var formatParts = format.SplitSpace();
 
         if (!property.PropertyType.IsGenericType || property.PropertyType.IsNullableType())
+        {
             return GetScalarArguments();
+        }
 
         if (property.PropertyType.GetGenericTypeDefinition() == typeof(IReadOnlyList<>))
+        {
             return GetListArguments();
+        }
 
         if (property.PropertyType.GetGenericTypeDefinition() == typeof(IReadOnlyDictionary<,>))
+        {
             return GetDictionaryArguments();
+        }
 
         if (property.PropertyType.GetGenericTypeDefinition() == typeof(ILookup<,>))
+        {
             return GetLookupArguments();
+        }
 
         return [];
 
@@ -112,14 +136,31 @@ partial class ToolOptions
                 var formatterType = attribute.FormatterType ?? GetType();
                 var formatterMethod = formatterType.GetMethod(attribute.FormatterMethod, ReflectionUtility.All);
                 var objValue = type != typeof(object) ? DeserializeWithCoercion(token, type) : NodeToString(token);
-                value = formatterMethod.GetValue<string>(obj: this, args: [objValue, property]);
+                // The PropertyInfo is an optional second argument: formatters that don't need it
+                // can declare just the value parameter. Pass args matching the method's arity so
+                // both `Format(value)` and `Format(value, PropertyInfo)` shapes are supported.
+                object[] formatterArgs = formatterMethod.GetParameters().Length == 1
+                    ? [objValue]
+                    : [objValue, property];
+
+                value = formatterMethod.GetValue<string>(obj: this, args: formatterArgs);
             }
             else
             {
                 value = NodeToString(token);
-                if (new[] { typeof(bool), typeof(bool?) }.Contains(type) ||
-                    (type == typeof(object) && new[] { bool.TrueString, bool.FalseString }.Contains(value)))
+                if (new[]
+                    {
+                        typeof(bool),
+                        typeof(bool?)
+                    }.Contains(type) ||
+                    (type == typeof(object) && new[]
+                    {
+                        bool.TrueString,
+                        bool.FalseString
+                    }.Contains(value)))
+                {
                     value = value?.ToLowerInvariant();
+                }
             }
 
             return escape.Invoke(value, property);
@@ -130,14 +171,20 @@ partial class ToolOptions
             if (property.PropertyType == typeof(bool?) &&
                 !format.ContainsOrdinalIgnoreCase(ValuePlaceholder) &&
                 !node.GetValue<bool>())
+            {
                 yield break;
+            }
 
             var value = Parse(node, property.PropertyType);
             if (value.IsNullOrWhiteSpace())
+            {
                 yield break;
+            }
 
             foreach (var part in formatParts)
+            {
                 yield return part.Replace(ValuePlaceholder, value);
+            }
         }
 
         IEnumerable<string> GetListArguments()
@@ -151,22 +198,28 @@ partial class ToolOptions
             {
                 Assert.False(attribute.QuoteMultiple);
                 return from value in values
-                       from part in formatParts
-                       select part.Replace(ValuePlaceholder, value);
+                    from part in formatParts
+                    select part.Replace(ValuePlaceholder, value);
             }
 
             return formatParts.SelectMany(part =>
             {
                 var valueStart = part.IndexOf(ValuePlaceholder, StringComparison.OrdinalIgnoreCase);
                 if (valueStart == -1)
+                {
                     return [part];
+                }
 
                 if (attribute.Separator.IsNullOrWhiteSpace() && !attribute.QuoteMultiple)
+                {
                     return values.Select(x => part.Replace(ValuePlaceholder, x));
+                }
 
                 var joinedValues = values.Join(attribute.Separator);
                 if (attribute.QuoteMultiple)
+                {
                     joinedValues = joinedValues.DoubleQuote();
+                }
 
                 return [part.Replace(ValuePlaceholder, joinedValues)];
             });
@@ -175,26 +228,31 @@ partial class ToolOptions
         IEnumerable<string> GetDictionaryArguments()
         {
             var valueType = property.PropertyType.GetGenericArguments().Last();
-            var pairs = node.AsObject().Select(kv => (Key: kv.Key, Value: Parse(kv.Value, valueType)))
+            var pairs = node.AsObject().Select(kv => (kv.Key, Value: Parse(kv.Value, valueType)))
                 .Where(x => !x.Value.IsNullOrWhiteSpace());
 
             if (attribute.Separator == null)
             {
                 return from pair in pairs
-                       from part in formatParts
-                       select part.Replace(KeyPlaceholder, pair.Key).Replace(ValuePlaceholder, pair.Value);
+                    from part in formatParts
+                    select part.Replace(KeyPlaceholder, pair.Key).Replace(ValuePlaceholder, pair.Value);
             }
 
             return formatParts.SelectMany(part =>
             {
                 var pairStart = part.IndexOf(KeyPlaceholder, StringComparison.OrdinalIgnoreCase);
-                var pairLength = part.IndexOf(ValuePlaceholder, StringComparison.OrdinalIgnoreCase) - pairStart + ValuePlaceholder.Length;
+                var pairLength = part.IndexOf(ValuePlaceholder, StringComparison.OrdinalIgnoreCase) - pairStart +
+                                 ValuePlaceholder.Length;
 
                 if (pairStart == -1)
+                {
                     return [part];
+                }
 
                 if (attribute.Separator.IsNullOrWhiteSpace())
+                {
                     return pairs.Select(x => part.Replace(KeyPlaceholder, x.Key).Replace(ValuePlaceholder, x.Value));
+                }
 
                 var pairPart = part.Substring(pairStart, pairLength);
                 var replacedPairs = pairs.Select(x => pairPart.Replace(KeyPlaceholder, x.Key).Replace(ValuePlaceholder, x.Value));
@@ -206,40 +264,51 @@ partial class ToolOptions
         {
             var valueType = property.PropertyType.GetGenericArguments().Last();
             var pairs = node.AsObject()
-                .Select(kv => (Key: kv.Key, Values: kv.Value.AsArray().Select(x => Parse(x, valueType))));
+                .Select(kv => (kv.Key, Values: kv.Value.AsArray().Select(x => Parse(x, valueType))));
 
             if (attribute.Separator == null)
             {
                 if (attribute.InnerSeparator == null)
                 {
                     return from pair in pairs
-                           from value in pair.Values
-                           from part in formatParts
-                           select part.Replace(KeyPlaceholder, pair.Key).Replace(ValuePlaceholder, value);
+                        from value in pair.Values
+                        from part in formatParts
+                        select part.Replace(KeyPlaceholder, pair.Key).Replace(ValuePlaceholder, value);
                 }
                 else
                 {
                     return from pair in pairs
-                           from part in formatParts
-                           select part.Replace(KeyPlaceholder, pair.Key).Replace(ValuePlaceholder, pair.Values.Join(attribute.InnerSeparator));
+                        from part in formatParts
+                        select part.Replace(KeyPlaceholder, pair.Key)
+                            .Replace(ValuePlaceholder, pair.Values.Join(attribute.InnerSeparator));
                 }
             }
 
-            Assert.NotNull(attribute.InnerSeparator);
+            attribute.InnerSeparator.NotNull();
 
             return formatParts.SelectMany(part =>
             {
                 var pairStart = part.IndexOf(KeyPlaceholder, StringComparison.OrdinalIgnoreCase);
-                var pairLength = part.IndexOf(ValuePlaceholder, StringComparison.OrdinalIgnoreCase) - pairStart + ValuePlaceholder.Length;
+                var pairLength = part.IndexOf(ValuePlaceholder, StringComparison.OrdinalIgnoreCase) - pairStart +
+                                 ValuePlaceholder.Length;
 
                 if (pairStart == -1)
+                {
                     return [part];
+                }
 
                 if (attribute.Separator.IsNullOrWhiteSpace())
-                    return pairs.Select(x => part.Replace(KeyPlaceholder, x.Key).Replace(ValuePlaceholder, x.Values.Join(attribute.InnerSeparator))).ToArray();
+                {
+                    return pairs.Select(x =>
+                            part.Replace(KeyPlaceholder, x.Key)
+                                .Replace(ValuePlaceholder, x.Values.Join(attribute.InnerSeparator)))
+                        .ToArray();
+                }
 
                 var pairPart = part.Substring(pairStart, pairLength);
-                var replacedPairs = pairs.Select(x => pairPart.Replace(KeyPlaceholder, x.Key).Replace(ValuePlaceholder, x.Values.Join(attribute.InnerSeparator)));
+                var replacedPairs = pairs.Select(x =>
+                    pairPart.Replace(KeyPlaceholder, x.Key).Replace(ValuePlaceholder, x.Values.Join(attribute.InnerSeparator)));
+
                 return [part.Substring(startIndex: 0, length: pairStart) + replacedPairs.Join(attribute.Separator)];
             });
         }
@@ -249,7 +318,11 @@ partial class ToolOptions
     // string regardless of underlying kind. STJ's GetValue<string>() throws on non-string nodes.
     private static string NodeToString(JsonNode node)
     {
-        if (node is null) return null;
+        if (node is null)
+        {
+            return null;
+        }
+
         return node.GetValueKind() switch
         {
             JsonValueKind.String => node.GetValue<string>(),
@@ -270,8 +343,11 @@ partial class ToolOptions
         {
             var target = Nullable.GetUnderlyingType(type) ?? type;
             if (target == typeof(bool) && bool.TryParse(jv.GetValue<string>(), out var coerced))
+            {
                 return coerced;
+            }
         }
-        return token.Deserialize(type, Options.SerializerOptions);
+
+        return token.Deserialize(type, SerializerOptions);
     }
 }

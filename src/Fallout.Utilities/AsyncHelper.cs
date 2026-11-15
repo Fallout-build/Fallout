@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -7,7 +6,7 @@ namespace Fallout.Common;
 
 internal static class AsyncHelper
 {
-    private static readonly TaskFactory s_taskFactory = new(
+    private static readonly TaskFactory taskFactory = new(
         CancellationToken.None,
         TaskCreationOptions.None,
         TaskContinuationOptions.None,
@@ -15,7 +14,7 @@ internal static class AsyncHelper
 
     public static TResult RunSync<TResult>(Func<Task<TResult>> func)
     {
-        return s_taskFactory
+        return taskFactory
             .StartNew(func)
             .Unwrap()
             .GetAwaiter()
@@ -24,7 +23,7 @@ internal static class AsyncHelper
 
     public static void RunSync(Func<Task> func)
     {
-        s_taskFactory
+        taskFactory
             .StartNew(func)
             .Unwrap()
             .GetAwaiter()

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Fallout.Common.Utilities;
 using static Fallout.Common.Constants;
 
@@ -22,7 +21,9 @@ internal class UpdateNotificationAttribute : BuildExtensionAttributeBase, IOnBui
     public void OnBuildFinished()
     {
         if (Build.IsServerBuild && ShouldNotify)
+        {
             Notify();
+        }
     }
 
     private bool ShouldNotify => !Directory.Exists(GetFalloutDirectory(Build.RootDirectory)) &&
@@ -33,9 +34,9 @@ internal class UpdateNotificationAttribute : BuildExtensionAttributeBase, IOnBui
         Host.Warning(
             new[]
             {
-                "--- UPDATE RECOMMENDED FROM 5.1.0 ---",
+                "--- UPDATE RECOMMENDED ---",
                 "1. Update your global tool",
-                "   dotnet tool update Fallout.GlobalTools -g",
+                "   dotnet tool update Fallout.GlobalTool -g",
                 "2. Update your build",
                 "   fallout :update",
                 "3. Confirm on update for configuration file and build scripts",

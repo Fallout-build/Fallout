@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using Fallout.Common.IO;
 
@@ -22,16 +21,16 @@ namespace Fallout.Common.Tooling;
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
 public class LocalPathAttribute : ToolInjectionAttributeBase
 {
-    private readonly string _absoluteOrRelativePath;
+    private readonly string absoluteOrRelativePath;
 
     public LocalPathAttribute(string absoluteOrRelativePath)
     {
-        _absoluteOrRelativePath = absoluteOrRelativePath;
+        this.absoluteOrRelativePath = absoluteOrRelativePath;
     }
 
     public LocalPathAttribute(string windowsPath, string unixPath)
     {
-        _absoluteOrRelativePath = EnvironmentInfo.IsWin ? windowsPath : unixPath;
+        absoluteOrRelativePath = EnvironmentInfo.IsWin ? windowsPath : unixPath;
     }
 
     public override ToolRequirement GetRequirement(MemberInfo member)
@@ -41,9 +40,10 @@ public class LocalPathAttribute : ToolInjectionAttributeBase
 
     public override object GetValue(MemberInfo member, object instance)
     {
-        var toolPath = PathConstruction.HasPathRoot(_absoluteOrRelativePath)
-            ? _absoluteOrRelativePath
-            : Path.Combine(Build.RootDirectory, _absoluteOrRelativePath);
+        var toolPath = PathConstruction.HasPathRoot(absoluteOrRelativePath)
+            ? absoluteOrRelativePath
+            : Path.Combine(Build.RootDirectory, absoluteOrRelativePath);
+
         return ToolResolver.GetTool(toolPath);
     }
 }

@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using Fallout.Common.Tooling;
 using Fallout.Common.Utilities;
 using Fallout.Common.Utilities.Collections;
@@ -9,12 +7,21 @@ namespace Fallout.Common.CI.GitHubActions.Configuration;
 public class GitHubActionsJob : ConfigurationEntity
 {
     public string Name { get; set; }
+
     public GitHubActionsImage Image { get; set; }
+
+    public string[] RunsOnLabels { get; set; } = new string[0];
+
     public int TimeoutMinutes { get; set; }
+
     public string ConcurrencyGroup { get; set; }
+
     public string EnvironmentName { get; set; }
+
     public string EnvironmentUrl { get; set; }
+
     public bool ConcurrencyCancelInProgress { get; set; }
+
     public GitHubActionsStep[] Steps { get; set; }
 
     public override void Write(CustomFileWriter writer)
@@ -24,7 +31,14 @@ public class GitHubActionsJob : ConfigurationEntity
         using (writer.Indent())
         {
             writer.WriteLine($"name: {Name}");
-            writer.WriteLine($"runs-on: {Image.GetValue()}");
+            if (RunsOnLabels.Length > 0)
+            {
+                writer.WriteLine($"runs-on: [{RunsOnLabels.JoinCommaSpace()}]");
+            }
+            else
+            {
+                writer.WriteLine($"runs-on: {Image.GetValue()}");
+            }
 
             if (TimeoutMinutes > 0)
             {
@@ -41,7 +55,8 @@ public class GitHubActionsJob : ConfigurationEntity
                     {
                         // create a default value that only cancels in-progress runs of the same workflow
                         // we don't fall back to github.ref which would disable multiple runs in main/master which is usually what is wanted
-                        group = "${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.run_id }}";
+                        group =
+                            "${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.run_id }}";
                     }
 
                     writer.WriteLine($"group: {group}");

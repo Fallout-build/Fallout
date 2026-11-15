@@ -5,29 +5,29 @@ namespace Fallout.Core.Planning;
 
 internal class StronglyConnectedComponent<T> : IEnumerable<Vertex<T>>
 {
-    private readonly LinkedList<Vertex<T>> _list;
+    private readonly LinkedList<Vertex<T>> list;
 
     public StronglyConnectedComponent()
     {
-        _list = new LinkedList<Vertex<T>>();
+        list = new LinkedList<Vertex<T>>();
     }
 
     public void Add(Vertex<T> vertex)
     {
-        _list.AddLast(vertex);
+        list.AddLast(vertex);
     }
 
-    public int Count => _list.Count;
+    public int Count => list.Count;
 
-    public bool IsCycle => _list.Count > 1;
+    public bool IsCycle => list.Count > 1;
 
     public IEnumerator<Vertex<T>> GetEnumerator()
     {
-        return _list.GetEnumerator();
+        return list.GetEnumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
     {
-        return _list.GetEnumerator();
+        return list.GetEnumerator();
     }
 }

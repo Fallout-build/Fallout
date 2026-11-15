@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/ChrisonSimtian/Fallout/main/src/Fallout.Tooling.Generator/schema.json",
+  "$schema": "https://raw.githubusercontent.com/Fallout-build/Fallout/main/src/Fallout.Tooling.Generator/schema.json",
   "references": [
     "https://raw.githubusercontent.com/dotnet/docs/main/docs/core/tools/dotnet-test.md",
     "https://raw.githubusercontent.com/dotnet/docs/main/docs/core/tools/dotnet-run.md",
@@ -347,6 +347,12 @@
             "type": "DotNetVerbosity",
             "format": "--verbosity {value}",
             "help": "Sets the verbosity level of the command. Allowed values are <c>q[uiet]</c>, <c>m[inimal]</c>, <c>n[ormal]</c>, <c>d[etailed]</c>, and <c>diag[nostic]</c>."
+          },
+          {
+            "name": "ArtifactsPath",
+            "type": "string",
+            "format": "--artifacts-path {value}",
+            "help": "All build output files from the executed command will go in subfolders under the specified path, separated by project. For more information see <a href=\"https://learn.microsoft.com/en-us/dotnet/core/sdk/artifacts-output\">Artifacts Output Layout</a>. Available since .NET 8 SDK."
           }
         ]
       }
@@ -434,6 +440,12 @@
             "type": "string",
             "format": "--artifacts-path {value}",
             "help": "All build output files from the executed command will go in subfolders under the specified path, separated by project. For more information see <a href=\"https://learn.microsoft.com/en-us/dotnet/core/sdk/artifacts-output\">Artifacts Output Layout</a>. Available since .NET 8 SDK."
+          },
+          {
+            "name": "BinaryLog",
+            "type": "string",
+            "format": "-bl:{value}",
+            "help": "Generate MSBuild <a href=\"https://github.com/dotnet/msbuild/blob/main/documentation/wiki/Binary-Log.md\">binary log</a>."
           }
         ]
       }
@@ -531,7 +543,7 @@
             "name": "BinaryLog",
             "type": "string",
             "format": "-bl:{value}",
-            "help": "Generare MSBuild <a href=\"https://github.com/dotnet/msbuild/blob/main/documentation/wiki/Binary-Log.md\">binary log</a>."
+            "help": "Generate MSBuild <a href=\"https://github.com/dotnet/msbuild/blob/main/documentation/wiki/Binary-Log.md\">binary log</a>."
           },
           {
             "name": "ArtifactsPath",

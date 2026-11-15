@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Fallout.Common.Utilities;
 using Serilog.Sinks.SystemConsole.Themes;
 
 namespace Fallout.Common.Execution.Theming;
 
-public class AnsiConsoleHostTheme : AnsiConsoleTheme, IHostTheme
+public class AnsiConsoleHostTheme(
+    string successCode,
+    IReadOnlyDictionary<ConsoleThemeStyle, string> styles)
+    : AnsiConsoleTheme(styles), IHostTheme
 {
     public static IHostTheme Default256AnsiColorTheme => new AnsiConsoleHostTheme(
         "\u001B[32;1m",
@@ -30,77 +32,67 @@ public class AnsiConsoleHostTheme : AnsiConsoleTheme, IHostTheme
             [ConsoleThemeStyle.LevelFatal] = "\u001B[38;5;231;1m\u001B[48;5;196m"
         });
 
-    private readonly string _successCode;
-    private readonly IReadOnlyDictionary<ConsoleThemeStyle, string> _styles;
+    private readonly IReadOnlyDictionary<ConsoleThemeStyle, string> styles = styles;
     private const string AnsiStyleReset = "\u001B[0m";
-
-    public AnsiConsoleHostTheme(
-        string successCode,
-        IReadOnlyDictionary<ConsoleThemeStyle, string> styles)
-        : base(styles)
-    {
-        _successCode = successCode;
-        _styles = styles;
-    }
 
     public void WriteSuccess(string text)
     {
-        Write(text, _successCode);
+        Write(text, successCode);
     }
 
     public void WriteVerbose(string text = null)
     {
-        Write(text, _styles[ConsoleThemeStyle.LevelVerbose]);
+        Write(text, styles[ConsoleThemeStyle.LevelVerbose]);
     }
 
     public void WriteDebug(string text)
     {
-        Write(text, _styles[ConsoleThemeStyle.LevelDebug]);
+        Write(text, styles[ConsoleThemeStyle.LevelDebug]);
     }
 
     public void WriteInformation(string text)
     {
-        Write(text, _styles[ConsoleThemeStyle.LevelInformation]);
+        Write(text, styles[ConsoleThemeStyle.LevelInformation]);
     }
 
     public void WriteWarning(string text)
     {
-        Write(text, _styles[ConsoleThemeStyle.LevelWarning]);
+        Write(text, styles[ConsoleThemeStyle.LevelWarning]);
     }
 
     public void WriteError(string text)
     {
-        Write(text, _styles[ConsoleThemeStyle.LevelError]);
+        Write(text, styles[ConsoleThemeStyle.LevelError]);
     }
 
     string IHostTheme.FormatSuccess(string text)
     {
-        return Format(text, _successCode);
+        return Format(text, successCode);
     }
 
     string IHostTheme.FormatVerbose(string text)
     {
-        return Format(text, _styles[ConsoleThemeStyle.LevelVerbose]);
+        return Format(text, styles[ConsoleThemeStyle.LevelVerbose]);
     }
 
     string IHostTheme.FormatDebug(string text)
     {
-        return Format(text, _styles[ConsoleThemeStyle.LevelDebug]);
+        return Format(text, styles[ConsoleThemeStyle.LevelDebug]);
     }
 
     string IHostTheme.FormatInformation(string text)
     {
-        return Format(text, _styles[ConsoleThemeStyle.LevelInformation]);
+        return Format(text, styles[ConsoleThemeStyle.LevelInformation]);
     }
 
     string IHostTheme.FormatWarning(string text)
     {
-        return Format(text, _styles[ConsoleThemeStyle.LevelWarning]);
+        return Format(text, styles[ConsoleThemeStyle.LevelWarning]);
     }
 
     string IHostTheme.FormatError(string text)
     {
-        return Format(text, _styles[ConsoleThemeStyle.LevelError]);
+        return Format(text, styles[ConsoleThemeStyle.LevelError]);
     }
 
     private void Write(string text, string code)
@@ -110,10 +102,9 @@ public class AnsiConsoleHostTheme : AnsiConsoleTheme, IHostTheme
 
     private string Format(string text, string code)
     {
-        // TODO: replace multi-spaces
         // TODO: settings for bold/non-bold ?
         return !text.IsNullOrWhiteSpace()
             ? $"{code}{text}{AnsiStyleReset}"
-            : "​";
+            : string.Empty;
     }
 }

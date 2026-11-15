@@ -6,28 +6,28 @@ namespace Fallout.Core.Planning;
 
 internal class StronglyConnectedComponentList<T> : IEnumerable<StronglyConnectedComponent<T>>
 {
-    private readonly LinkedList<StronglyConnectedComponent<T>> _collection;
+    private readonly LinkedList<StronglyConnectedComponent<T>> collection;
 
     public StronglyConnectedComponentList()
     {
-        _collection = new LinkedList<StronglyConnectedComponent<T>>();
+        collection = new LinkedList<StronglyConnectedComponent<T>>();
     }
 
     public void Add(StronglyConnectedComponent<T> scc)
     {
-        _collection.AddLast(scc);
+        collection.AddLast(scc);
     }
 
-    public int Count => _collection.Count;
+    public int Count => collection.Count;
 
     public IEnumerator<StronglyConnectedComponent<T>> GetEnumerator()
     {
-        return _collection.GetEnumerator();
+        return collection.GetEnumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator()
     {
-        return _collection.GetEnumerator();
+        return collection.GetEnumerator();
     }
 
     public IEnumerable<StronglyConnectedComponent<T>> IndependentComponents()

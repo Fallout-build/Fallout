@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using Fallout.Common.Execution;
 
 namespace Fallout.Common.IO;
@@ -10,15 +8,15 @@ namespace Fallout.Common.IO;
 /// </summary>
 public class GlobbingOptionsAttribute : BuildExtensionAttributeBase, IOnBuildCreated
 {
-    private readonly GlobbingCaseSensitivity _caseSensitivity;
+    private readonly GlobbingCaseSensitivity caseSensitivity;
 
     public GlobbingOptionsAttribute(GlobbingCaseSensitivity caseSensitivity)
     {
-        _caseSensitivity = caseSensitivity;
+        this.caseSensitivity = caseSensitivity;
     }
 
     public void OnBuildCreated(IReadOnlyCollection<ExecutableTarget> executableTargets)
     {
-        Globbing.GlobbingCaseSensitivity = _caseSensitivity;
+        Globbing.GlobbingCaseSensitivity = caseSensitivity;
     }
 }

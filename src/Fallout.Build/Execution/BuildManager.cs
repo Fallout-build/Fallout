@@ -1,14 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Microsoft.Extensions.DependencyModel;
+using Fallout.Build.Execution;
 using Fallout.Common.Tooling;
 using Fallout.Common.Utilities;
 using Fallout.Common.Utilities.Collections;
+using Microsoft.Extensions.DependencyModel;
 using Serilog;
+
 #pragma warning disable CA2255
 
 namespace Fallout.Common.Execution;
@@ -17,12 +18,12 @@ internal static class BuildManager
 {
     private const int ErrorExitCode = -1;
 
-    private static readonly LinkedList<Action> s_cancellationHandlers = new();
-
+    // Facade over the active BuildContext (FT-2): callers register/unregister during a run; the
+    // context owns the handler list and discards it on dispose.
     public static event Action CancellationHandler
     {
-        add => s_cancellationHandlers.AddFirst(value);
-        remove => s_cancellationHandlers.Remove(value);
+        add => BuildContext.Current?.RegisterCancellationHandler(value);
+        remove => BuildContext.Current?.UnregisterCancellationHandler(value);
     }
 
     [ModuleInitializer]
@@ -38,9 +39,10 @@ internal static class BuildManager
     {
         Console.OutputEncoding = Encoding.UTF8;
         Console.InputEncoding = Encoding.UTF8;
-        Console.CancelKeyPress += (_, _) => s_cancellationHandlers.ForEach(x => x());
-        ToolOptions.Created += (options, _) => VerbosityMapping.Apply((ToolOptions)options);
 
+        // The per-run scope owns the global subscriptions + teardown (FT-2 / #307). Disposed at
+        // method exit, so re-invocation in the same process starts clean even if `new T()` throws.
+        using var context = BuildContext.Activate();
         var build = new T();
 
         try
@@ -56,7 +58,9 @@ internal static class BuildManager
             NpmToolPathResolver.NpmPackageJsonFile = build.NpmPackageJsonFile;
 
             if (!build.NoLogo)
+            {
                 build.WriteLogo();
+            }
 
             // TODO: move InvokedTargets to ExecutableTargetFactory
             build.ExecutionPlan = ExecutionPlanner.GetExecutionPlan(
@@ -88,12 +92,16 @@ internal static class BuildManager
         {
             Finish();
             Log.CloseAndFlush();
+            // Per-run teardown (handler unsubscription + state reset) is owned by the BuildContext,
+            // run when `context` is disposed at method exit.
         }
 
         void Finish()
         {
             if (build.ExecutionPlan == null)
+            {
                 return;
+            }
 
             foreach (var target in build.ExecutionPlan)
             {

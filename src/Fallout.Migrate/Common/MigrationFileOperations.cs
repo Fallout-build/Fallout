@@ -1,0 +1,142 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using Fallout.Common.IO;
+
+namespace Fallout.Migrate.Common;
+
+/// <summary>
+/// Shared file-walking and rewrite-application helpers used by multiple <see cref="IMigrationStep"/>
+/// implementations. Kept as static, dependency-free functions so steps stay small and independent.
+/// </summary>
+internal static class MigrationFileOperations
+{
+    /// <summary>
+    /// Recursively enumerates files under <paramref name="rootDirectory"/> matching
+    /// <paramref name="pattern"/>, skipping <c>bin/</c>, <c>obj/</c>, and <c>.git/</c>.
+    /// </summary>
+    /// <param name="rootDirectory">The directory to search from.</param>
+    /// <param name="pattern">A file-name glob pattern, e.g. <c>*.csproj</c>.</param>
+    /// <returns>The matching, non-ignored files.</returns>
+    public static IEnumerable<AbsolutePath> EnumerateFiles(AbsolutePath rootDirectory, string pattern)
+    {
+        foreach (var file in rootDirectory.GetFiles(pattern, depth: int.MaxValue))
+        {
+            if (IsIgnoredFolder(rootDirectory, file))
+            {
+                continue;
+            }
+
+            yield return file;
+        }
+    }
+
+    /// <summary>
+    /// Reads <paramref name="path"/>, applies <paramref name="rewriter"/>, logs and records the edit,
+    /// and writes the result back unless <see cref="MigrationContext.DryRun"/> is set.
+    /// </summary>
+    /// <param name="context">The current migration context.</param>
+    /// <param name="path">The file to rewrite.</param>
+    /// <param name="rewriter">The rewrite function to apply to the file's content.</param>
+    /// <param name="summary">The summary to update with the outcome.</param>
+    public static void ApplyRewrite(
+        MigrationContext context,
+        AbsolutePath path,
+        Func<string, RewriteResult> rewriter,
+        Summary summary)
+    {
+        if (TryRead(context, path, summary, out string original))
+        {
+            ApplyRewrite(context, path, original, rewriter, summary);
+        }
+    }
+
+    /// <summary>
+    /// Reads a file and reports an unreadable file as a warning.
+    /// </summary>
+    /// <remarks>
+    /// Only file access failures are handled here: an <see cref="IOException"/>, such as a missing file,
+    /// and an <see cref="UnauthorizedAccessException"/>, such as a directory or a denied permission.
+    /// Exceptions from rewriting or writing a file propagate to the caller.
+    /// A failed read must be skipped, not classified as an empty file.
+    /// </remarks>
+    public static bool TryRead(MigrationContext context, AbsolutePath path, Summary summary, out string content)
+    {
+        try
+        {
+            // Not AbsolutePath.ReadAllText: it throws an ArgumentException for a missing file before reading.
+            content = File.ReadAllText(path, Encoding.UTF8);
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            summary.Warnings.Add($"could not read {RelativePath(context.RootDirectory, path)}: {ex.Message}");
+            content = string.Empty;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Rewrites previously read content, records the edits, and writes them unless this is a dry run.
+    /// </summary>
+    /// <remarks>
+    /// Use this overload when classification and rewriting must use the same file contents.
+    /// </remarks>
+    public static void ApplyRewrite(
+        MigrationContext context,
+        AbsolutePath path,
+        string original,
+        Func<string, RewriteResult> rewriter,
+        Summary summary)
+    {
+        RewriteResult result = rewriter(original);
+        if (result.EditCount == 0)
+        {
+            return;
+        }
+
+        context.Log.WriteLine(
+            $"edit    {RelativePath(context.RootDirectory, path)}  ({result.EditCount} change{(result.EditCount == 1 ? "" : "s")})");
+
+        summary.FilesChanged++;
+        summary.EditCount += result.EditCount;
+
+        if (!context.DryRun)
+        {
+            // eofLineBreak: false preserves today's exact byte-for-byte write behavior;
+            // AbsolutePath.WriteAllText's default normalizes trailing line endings, which
+            // would otherwise sneak unrelated diff noise into migrated consumer repos.
+            path.WriteAllText(result.Content, eofLineBreak: false);
+        }
+    }
+
+    /// <summary>
+    /// Formats <paramref name="absolute"/> as a path relative to <paramref name="rootDirectory"/>,
+    /// using forward slashes, for log output.
+    /// </summary>
+    /// <param name="rootDirectory">The directory to make the path relative to.</param>
+    /// <param name="absolute">The path to format.</param>
+    public static string RelativePath(AbsolutePath rootDirectory, AbsolutePath absolute) =>
+        rootDirectory.GetUnixRelativePathTo(absolute);
+
+    /// <summary>
+    /// Returns <c>true</c> if <paramref name="path"/> sits under a <c>bin/</c>, <c>obj/</c>, or
+    /// <c>.git/</c> directory below <paramref name="rootDirectory"/> and should be skipped by
+    /// <see cref="EnumerateFiles"/>. Only the path below the root counts, so a repository cloned
+    /// under a folder named <c>bin</c> or <c>obj</c> is still migrated.
+    /// </summary>
+    private static bool IsIgnoredFolder(AbsolutePath rootDirectory, AbsolutePath path)
+    {
+        string[] segments = RelativePath(rootDirectory, path).Split('/');
+        for (int i = 0; i < segments.Length - 1; i++)
+        {
+            if (segments[i] is "bin" or "obj" or ".git")
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}

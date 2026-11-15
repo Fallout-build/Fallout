@@ -1,16 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Fallout.Common.Tooling;
 
 internal class ToolExecutor
 {
-    private readonly string _toolPath;
+    private readonly string toolPath;
 
     public ToolExecutor(string toolPath)
     {
-        _toolPath = toolPath;
+        this.toolPath = toolPath;
     }
 
 #if NET6_0_OR_GREATER
@@ -25,7 +24,7 @@ internal class ToolExecutor
         Action<IProcess> exitHandler = null)
     {
         var process = ProcessTasks.StartProcess(
-            _toolPath,
+            toolPath,
             arguments,
             workingDirectory,
             environmentVariables,
@@ -46,7 +45,7 @@ internal class ToolExecutor
         Func<string, string> outputFilter = null)
     {
         var process = ProcessTasks.StartProcess(
-            _toolPath,
+            toolPath,
             arguments,
             workingDirectory,
             environmentVariables,

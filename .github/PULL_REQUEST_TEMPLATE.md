@@ -1,18 +1,6 @@
-<!-- Thanks for your contribution! -->
-<!-- Please describe what you did below this line -->
+<!-- Keep it terse: one-line summary, then short "what changed" bullets. -->
+<!-- Link the issue and summarize it — don't recite it. See .agents/skills/plain-english/SKILL.md. -->
+<!-- Or let Copilot draft one, then trim it. -->
 
-
-
-<!-- Make sure to tick all the boxes if possible -->
-
-I confirm that the pull-request:
-
-- [ ] Follows the contribution guidelines
-- [ ] Is based on my own work
-- [ ] Is in compliance with my employer
-
-<!-- Optional: merge preference. Squash is the default; pick rebase only if you've -->
-<!-- curated your commits into a logical sequence and interactive-rebased away any -->
-<!-- review-fixup noise. See CONTRIBUTING.md → Merging. -->
-
-**Merge preference:** ( ) squash (default)  ( ) rebase
+<!-- This repo merges via rebase only (linear history). Curate your commits into a -->
+<!-- clean sequence before final approval — see CONTRIBUTING.md → Merging. -->

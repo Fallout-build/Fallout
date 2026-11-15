@@ -2,28 +2,45 @@ using System;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using Fallout.Build.Utilities;
 
 namespace Fallout.Common.Utilities;
 
 public class ConsoleUtility
 {
-    private static int BufferWidth => EnvironmentInfo.IsWin ? Console.BufferWidth - 1 : Console.BufferWidth;
+    public static IConsole ConsoleWrapper { get; set; } = new SystemConsole();
+
+    private static int BufferWidth => ConsoleWrapper.BufferWidth;
 
     private static string Default => "[default: {0}]";
-    private static string Confirmed => "¬";
+
+    // Single-cell check mark: the prompt writers pad to BufferWidth on raw character count, so a
+    // wider glyph would push the line past the buffer. Glyph vocabulary at large is #557.
+    private static string Confirmed => "✓";
+
     private static string Selected => "»";
+
     private static string Unselected => " ";
 
     private const ConsoleKey ConfirmationKey = ConsoleKey.Enter;
     private const ConsoleKey InterruptKey = ConsoleKey.F8;
 
-    private static bool s_interrupted;
+    internal static bool IsInterrupted;
+    private static readonly char[] AllowedSpecialCharacters = ['.', '/', '\\', '_', '-'];
+
+    internal static bool IsValidInputKey(ConsoleKeyInfo key) =>
+        key.Key is >= ConsoleKey.A and <= ConsoleKey.Z
+        || key.Key is >= ConsoleKey.D0 and <= ConsoleKey.D9
+        || AllowedSpecialCharacters.Any(x => x == key.KeyChar)
+        || char.IsLetterOrDigit(key.KeyChar);
 
     // ReSharper disable once CognitiveComplexity
     public static string PromptForInput(string question, string defaultValue)
     {
-        if (s_interrupted)
+        if (IsInterrupted)
+        {
             return defaultValue;
+        }
 
         Host.Information(question);
 
@@ -31,43 +48,50 @@ public class ConsoleUtility
         var input = new StringBuilder();
         do
         {
-            Console.CursorLeft = 0;
-            Console.WriteLine(Selected.PadRight(BufferWidth), Color.DeepSkyBlue);
-            Console.CursorTop--;
-            Console.CursorLeft = 3;
+            ConsoleWrapper.CursorLeft = 0;
+            ConsoleWrapper.WriteLine(Selected.PadRight(BufferWidth), Color.DeepSkyBlue);
+            ConsoleWrapper.CursorTop--;
+            ConsoleWrapper.CursorLeft = 3;
 
             if (input.Length > 0)
             {
-                Console.Write(input.ToString());
+                ConsoleWrapper.Write(input.ToString());
             }
             else if (defaultValue != null)
             {
-                Console.Write($"               {string.Format(Default, defaultValue)}", Color.DarkGray);
-                Console.CursorLeft = 3;
+                ConsoleWrapper.Write($"               {string.Format(Default, defaultValue)}", Color.DarkGray);
+                ConsoleWrapper.CursorLeft = 3;
             }
 
-            key = Console.ReadKey(intercept: true);
-            if (ConsoleKey.A <= key.Key && key.Key <= ConsoleKey.Z
-                || ConsoleKey.D0 <= key.Key && key.Key <= ConsoleKey.D9
-                || new[] { '.', '/', '\\', '_', '-' }.Any(x => x == key.KeyChar))
+            key = ConsoleWrapper.ReadKey(intercept: true);
+            if (IsValidInputKey(key))
+            {
                 input.Append(key.KeyChar);
+            }
             else if (key.Key == ConsoleKey.Backspace && input.Length > 0)
+            {
                 input.Remove(input.Length - 1, length: 1);
+            }
             else if (key.Key == InterruptKey)
-                s_interrupted = true;
-        } while (!(key.Key == ConfirmationKey || key.Key == InterruptKey));
+            {
+                IsInterrupted = true;
+            }
+        }
+        while (key.Key is not (ConfirmationKey or InterruptKey));
 
         var result = input.Length > 0 ? input.ToString() : defaultValue;
-        Console.CursorLeft = 0;
-        Console.WriteLine($"{Confirmed}  {result ?? "<null>"}".PadRight(BufferWidth), Color.Lime);
+        ConsoleWrapper.CursorLeft = 0;
+        ConsoleWrapper.WriteLine($"{Confirmed}  {result ?? "<null>"}".PadRight(BufferWidth), Color.Lime);
         return result;
     }
 
     // ReSharper disable once CognitiveComplexity
     public static T PromptForChoice<T>(string question, params (T Value, string Description)[] options)
     {
-        if (s_interrupted)
+        if (IsInterrupted)
+        {
             return options.First().Value;
+        }
 
         var selection = 0;
         ConsoleKey key;
@@ -81,25 +105,36 @@ public class ConsoleUtility
                 var selected = i == selection;
                 var prefix = selected ? Selected : Unselected;
                 var color = selected ? Color.DeepSkyBlue : Color.DarkGray;
-                Console.WriteLine($"{prefix}  {option.Description}", color);
+                ConsoleWrapper.WriteLine($"{prefix}  {option.Description}", color);
             }
 
-            key = Console.ReadKey(intercept: true).Key;
+            key = ConsoleWrapper.ReadKey(intercept: true).Key;
             if (key == ConsoleKey.UpArrow)
+            {
                 selection--;
+            }
             else if (key == ConsoleKey.DownArrow)
+            {
                 selection++;
+            }
             else if (key == InterruptKey)
-                s_interrupted = true;
+            {
+                IsInterrupted = true;
+            }
+
             selection = Math.Max(val1: 0, Math.Min(options.Length - 1, selection));
 
-            Console.CursorTop -= options.Length;
-            foreach (var option in options)
-                Console.WriteLine(' '.Repeat(BufferWidth));
-            Console.CursorTop -= options.Length;
-        } while (!(key == ConfirmationKey || key == InterruptKey));
+            ConsoleWrapper.CursorTop -= options.Length;
+            foreach (var unused in options)
+            {
+                ConsoleWrapper.WriteLine(' '.Repeat(BufferWidth));
+            }
 
-        Console.WriteLine($"{Confirmed}  {options[selection].Description}", Color.Lime);
+            ConsoleWrapper.CursorTop -= options.Length;
+        }
+        while (key is not (ConfirmationKey or InterruptKey));
+
+        ConsoleWrapper.WriteLine($"{Confirmed}  {options[selection].Description}", Color.Lime);
 
         return options[selection].Value;
     }
@@ -111,32 +146,34 @@ public class ConsoleUtility
 
         do
         {
-            var key = Console.ReadKey(intercept: true);
+            var key = ConsoleWrapper.ReadKey(intercept: true);
             if (key.Key == ConsoleKey.Backspace)
             {
                 if (secret.Length > 0)
                 {
                     var charsToRemove =
-                        (key.Modifiers & ConsoleModifiers.Control) != 0 && !EnvironmentInfo.IsOsx ||
-                        (key.Modifiers & ConsoleModifiers.Alt) != 0 && EnvironmentInfo.IsOsx
+                        ((key.Modifiers & ConsoleModifiers.Control) != 0 && !EnvironmentInfo.IsOsx) ||
+                        ((key.Modifiers & ConsoleModifiers.Alt) != 0 && EnvironmentInfo.IsOsx)
                             ? secret.Length
                             : 1;
+
                     var length = secret.Length - charsToRemove;
                     secret = secret[..length];
-                    Console.Write(string.Concat(Enumerable.Repeat("\b \b", charsToRemove)));
+                    ConsoleWrapper.Write(string.Concat(Enumerable.Repeat("\b \b", charsToRemove)));
                 }
             }
             else if (key.Key == ConsoleKey.Enter)
             {
-                Console.WriteLine();
+                ConsoleWrapper.WriteLine();
                 break;
             }
             else if (!char.IsControl(key.KeyChar))
             {
                 secret += key.KeyChar;
-                Console.Write("*");
+                ConsoleWrapper.Write("*");
             }
-        } while (true);
+        }
+        while (true);
 
         return secret;
     }

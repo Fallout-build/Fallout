@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Reflection;
 
 namespace Fallout.Common.Tooling;
@@ -25,22 +24,22 @@ namespace Fallout.Common.Tooling;
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
 public class PathVariableAttribute : ToolInjectionAttributeBase
 {
-    private readonly string _pathExecutable;
+    private readonly string pathExecutable;
 
     public PathVariableAttribute(string pathExecutable = null)
     {
-        _pathExecutable = pathExecutable;
+        this.pathExecutable = pathExecutable;
     }
 
     public override ToolRequirement GetRequirement(MemberInfo member)
     {
-        var name = _pathExecutable ?? member.Name.ToLowerInvariant();
+        var name = pathExecutable ?? member.Name.ToLowerInvariant();
         return new PathToolRequirement(name);
     }
 
     public override object GetValue(MemberInfo member, object instance)
     {
-        var name = _pathExecutable ?? member.Name.ToLowerInvariant();
+        var name = pathExecutable ?? member.Name.ToLowerInvariant();
         return ToolResolver.TryGetEnvironmentTool(name) ??
                ToolResolver.GetPathTool(name);
     }

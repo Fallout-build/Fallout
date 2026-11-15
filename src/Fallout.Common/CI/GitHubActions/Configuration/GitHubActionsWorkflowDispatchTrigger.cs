@@ -1,5 +1,6 @@
-﻿using System;
-using System.Linq;
+using System;
+using System.Collections.Generic;
+using Fallout.Common.Tooling;
 using Fallout.Common.Utilities;
 using Fallout.Common.Utilities.Collections;
 
@@ -7,8 +8,17 @@ namespace Fallout.Common.CI.GitHubActions.Configuration;
 
 public class GitHubActionsWorkflowDispatchTrigger : GitHubActionsDetailedTrigger
 {
-    public string[] OptionalInputs { get; set; }
-    public string[] RequiredInputs { get; set; }
+    [Obsolete($"Set {nameof(Inputs)} instead. Removed in 2027.x.x.",
+        DiagnosticId = "FALLOUTOBS001",
+        UrlFormat = "https://github.com/Fallout-build/Fallout/blob/main/docs/obsolete_apis.md")]
+    public string[] OptionalInputs { get; set; } = new string[0];
+
+    [Obsolete($"Set {nameof(Inputs)} instead. Removed in 2027.x.x.",
+        DiagnosticId = "FALLOUTOBS001",
+        UrlFormat = "https://github.com/Fallout-build/Fallout/blob/main/docs/obsolete_apis.md")]
+    public string[] RequiredInputs { get; set; } = new string[0];
+
+    public GitHubActionsWorkflowDispatchInput[] Inputs { get; set; } = new GitHubActionsWorkflowDispatchInput[0];
 
     public override void Write(CustomFileWriter writer)
     {
@@ -18,19 +28,67 @@ public class GitHubActionsWorkflowDispatchTrigger : GitHubActionsDetailedTrigger
             writer.WriteLine("inputs:");
             using (writer.Indent())
             {
-                void WriteInput(string input, bool required)
+                GetInputs().ForEach(WriteInput);
+            }
+        }
+
+        void WriteInput(GitHubActionsWorkflowDispatchInput input)
+        {
+            writer.WriteLine($"{input.Name}:");
+            using (writer.Indent())
+            {
+                var description = input.Description ?? input.Name.SplitCamelHumpsWithKnownWords().JoinSpace();
+                writer.WriteLine($"description: {description.DoubleQuote()}");
+                writer.WriteLine($"required: {input.Required.ToString().ToLowerInvariant()}");
+                if (input.Type != GitHubActionsInputType.String)
                 {
-                    writer.WriteLine($"{input}:");
-                    using (writer.Indent())
-                    {
-                        writer.WriteLine($"description: {input.SplitCamelHumpsWithKnownWords().JoinSpace().DoubleQuote()}");
-                        writer.WriteLine($"required: {required.ToString().ToLowerInvariant()}");
-                    }
+                    writer.WriteLine($"type: {input.Type.GetValue()}");
                 }
 
-                OptionalInputs.ForEach(x => WriteInput(x, required: false));
-                RequiredInputs.ForEach(x => WriteInput(x, required: true));
+                if (input.Default != null)
+                {
+                    writer.WriteLine($"default: {input.Default}");
+                }
+
+                if (input.Type == GitHubActionsInputType.Choice)
+                {
+                    writer.WriteLine("options:");
+                    using (writer.Indent())
+                    {
+                        input.Options.ForEach(x => writer.WriteLine($"- {x.DoubleQuote()}"));
+                    }
+                }
             }
+        }
+    }
+
+    // The obsolete arrays stay functional for direct consumers: legacy entries emit first (untyped,
+    // preserving prior output), then typed Inputs.
+    private IEnumerable<GitHubActionsWorkflowDispatchInput> GetInputs()
+    {
+#pragma warning disable FALLOUTOBS001 // deliberate bridge for the obsolete legacy arrays
+        foreach (var input in OptionalInputs)
+        {
+            yield return new GitHubActionsWorkflowDispatchInput
+            {
+                Name = input,
+                Required = false
+            };
+        }
+
+        foreach (var input in RequiredInputs)
+        {
+            yield return new GitHubActionsWorkflowDispatchInput
+            {
+                Name = input,
+                Required = true
+            };
+        }
+#pragma warning restore FALLOUTOBS001
+
+        foreach (var input in Inputs)
+        {
+            yield return input;
         }
     }
 }

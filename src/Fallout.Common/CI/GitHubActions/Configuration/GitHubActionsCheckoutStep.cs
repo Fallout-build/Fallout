@@ -1,15 +1,29 @@
-﻿using System;
-using System.Linq;
-using Fallout.Common.Utilities;
+﻿using Fallout.Common.Utilities;
 
 namespace Fallout.Common.CI.GitHubActions.Configuration;
 
 public class GitHubActionsCheckoutStep : GitHubActionsStep
 {
+    /// <summary>
+    /// The checkout action to reference. Accepts a complete <c>owner/repo@ref</c> or a bare ref that gets
+    /// appended to <c>actions/checkout</c>. Defaults to the version the generator pins; setting null or
+    /// whitespace restores it.
+    /// </summary>
+    public string Uses
+    {
+        get;
+        set => field = GitHubActionsActionReference.Resolve(
+            GitHubActionsDefaults.CheckoutAction, value, $"{nameof(GitHubActionsCheckoutStep)}.{nameof(Uses)}");
+    } = GitHubActionsDefaults.CheckoutAction;
+
     public GitHubActionsSubmodules? Submodules { get; set; }
+
     public bool? Lfs { get; set; }
+
     public uint? FetchDepth { get; set; }
+
     public bool? Progress { get; set; }
+
     public string Filter { get; set; }
 
     /// <summary>
@@ -24,12 +38,14 @@ public class GitHubActionsCheckoutStep : GitHubActionsStep
     /// </summary>
     public string Ref { get; set; }
 
+    public string[] CheckoutWith { get; set; } = new string[0];
+
     public override void Write(CustomFileWriter writer)
     {
-        writer.WriteLine("- uses: actions/checkout@v6");
+        writer.WriteLine($"- uses: {Uses}");
 
         if (Submodules.HasValue || Lfs.HasValue || FetchDepth.HasValue || Progress.HasValue ||
-            !Filter.IsNullOrWhiteSpace() || !Ref.IsNullOrWhiteSpace())
+            !Filter.IsNullOrWhiteSpace() || !Ref.IsNullOrWhiteSpace() || CheckoutWith.Length > 0)
         {
             using (writer.Indent())
             {
@@ -37,15 +53,30 @@ public class GitHubActionsCheckoutStep : GitHubActionsStep
                 using (writer.Indent())
                 {
                     if (Submodules.HasValue)
+                    {
                         writer.WriteLine($"submodules: {Submodules.ToString().ToLowerInvariant()}");
-                    if(Lfs.HasValue)
+                    }
+
+                    if (Lfs.HasValue)
+                    {
                         writer.WriteLine($"lfs: {Lfs.ToString().ToLowerInvariant()}");
+                    }
+
                     if (FetchDepth.HasValue)
+                    {
                         writer.WriteLine($"fetch-depth: {FetchDepth}");
+                    }
+
                     if (Progress.HasValue)
+                    {
                         writer.WriteLine($"progress: {Progress.ToString().ToLowerInvariant()}");
+                    }
+
                     if (!Filter.IsNullOrWhiteSpace())
+                    {
                         writer.WriteLine($"filter: {Filter}");
+                    }
+
                     if (!Ref.IsNullOrWhiteSpace())
                     {
                         // Pin checkout to the source repo of the PR head (or the current repo on
@@ -56,6 +87,11 @@ public class GitHubActionsCheckoutStep : GitHubActionsStep
                         // pull_request context.
                         writer.WriteLine("repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}");
                         writer.WriteLine($"ref: {Ref}");
+                    }
+
+                    foreach (var line in CheckoutWith)
+                    {
+                        writer.WriteLine(line);
                     }
                 }
             }

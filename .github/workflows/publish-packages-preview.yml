@@ -1,0 +1,79 @@
+# Hand-written. The "preview" channels — `develop` and `release/*` (ADR-0011,
+# superseding ADR-0009's versioning).
+#
+# Shape:
+#   - Trigger: push to `develop` or a `release/*` branch. GitVersion (GitVersion.yml)
+#     computes the version from the branch: `10.5.0-alpha.<n>` on `develop`,
+#     `10.5.0-beta.<n>` on `release/v10.5`. Neither looks like a stable release.
+#     `-rc` and GA versions only come from tags (publish-packages-release.yml).
+#   - Builds + packs, then pushes every *.nupkg to GitHub Packages ONLY.
+#   - Deliberately does NOT touch nuget.org and does NOT create a GitHub Release.
+#     GitHub Packages is the test/preview channel and is opt-in for consumers
+#     (they add the feed), so it causes none of the nuget.org Dependabot
+#     fan-out that ADR-0001 / ADR-0002 were avoiding.
+#
+# `develop` and `release/*` are the continuous prerelease lanes. Stable and
+# legacy releases are deliberate and tag-triggered —
+# see publish-packages-release.yml. Cross-platform validation (macOS/Windows)
+# only runs on release intent (build-cross-platform.yml), not on `develop`
+# pushes — `develop` relies on the ubuntu-latest gate (build.yml) instead.
+# This workflow's job is publishing, not gating.
+
+name: publish-packages-preview
+
+on:
+  push:
+    branches:
+      - develop
+      - 'release/**'
+    paths-ignore:
+      - 'docs/**'
+      - '.assets/**'
+      - '**/*.md'
+
+# Cancel a superseded preview build when a newer commit lands (#322). Never on publish-packages-release.yml.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    name: preview → GitHub Packages
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    environment:
+      name: github-packages
+      url: https://github.com/Fallout-build/Fallout/packages
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0           # GitVersion needs full history
+      - name: 'Cache: .fallout/temp, ~/.nuget/packages'
+        uses: actions/cache@v6
+        with:
+          path: |
+            .fallout/temp
+            ~/.nuget/packages
+          key: ${{ runner.os }}-preview-${{ hashFiles('**/global.json', '**/*.csproj', '**/Directory.Packages.props') }}
+          restore-keys: |
+            ${{ runner.os }}-preview-
+      - name: 'Setup: .NET SDK'
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - name: 'Restore: dotnet tools'
+        run: dotnet tool restore
+      # Test + Pack + push preview → GitHub Packages, all through our own framework (#333) —
+      # dogfooding `dotnet fallout Publish` instead of a hand-rolled `dotnet nuget push`.
+      # `Publish` depends on Test + Pack, so NUKE runs Restore → Compile → Test → Pack →
+      # Publish as discrete internal stages and fails at the breaking stage; if Test fails
+      # the job stops before any push. Which packages go where (Fallout.* + Nuke.* → GitHub
+      # Packages) is decided by Build.cs IPublish.PublishTargets, not here.
+      - name: 'Publish: preview → GitHub Packages'
+        run: dotnet fallout Publish --publish-to github-packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

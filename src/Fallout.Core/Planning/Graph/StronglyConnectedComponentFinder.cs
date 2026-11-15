@@ -5,9 +5,9 @@ namespace Fallout.Core.Planning;
 
 internal class StronglyConnectedComponentFinder<T>
 {
-    private StronglyConnectedComponentList<T> _stronglyConnectedComponents;
-    private Stack<Vertex<T>> _stack;
-    private int _index;
+    private StronglyConnectedComponentList<T> stronglyConnectedComponents;
+    private Stack<Vertex<T>> stack;
+    private int index;
 
     /// <summary>
     /// Calculates the sets of strongly connected vertices.
@@ -16,24 +16,26 @@ internal class StronglyConnectedComponentFinder<T>
     /// <returns>Set of strongly connected components (sets of vertices)</returns>
     public StronglyConnectedComponentList<T> DetectCycle(IEnumerable<Vertex<T>> graph)
     {
-        _stronglyConnectedComponents = new StronglyConnectedComponentList<T>();
-        _index = 0;
-        _stack = new Stack<Vertex<T>>();
+        stronglyConnectedComponents = new StronglyConnectedComponentList<T>();
+        index = 0;
+        stack = new Stack<Vertex<T>>();
         foreach (var v in graph)
         {
             if (v.Index < 0)
+            {
                 StrongConnect(v);
+            }
         }
 
-        return _stronglyConnectedComponents;
+        return stronglyConnectedComponents;
     }
 
     private void StrongConnect(Vertex<T> v)
     {
-        v.Index = _index;
-        v.LowLink = _index;
-        _index++;
-        _stack.Push(v);
+        v.Index = index;
+        v.LowLink = index;
+        index++;
+        stack.Push(v);
 
         foreach (var w1 in v.Dependencies)
         {
@@ -42,23 +44,26 @@ internal class StronglyConnectedComponentFinder<T>
                 StrongConnect(w1);
                 v.LowLink = Math.Min(v.LowLink, w1.LowLink);
             }
-            else if (_stack.Contains(w1))
+            else if (stack.Contains(w1))
             {
                 v.LowLink = Math.Min(v.LowLink, w1.Index);
             }
         }
 
         if (v.LowLink != v.Index)
+        {
             return;
+        }
 
         var scc = new StronglyConnectedComponent<T>();
         Vertex<T> w2;
         do
         {
-            w2 = _stack.Pop();
+            w2 = stack.Pop();
             scc.Add(w2);
-        } while (v != w2);
+        }
+        while (v != w2);
 
-        _stronglyConnectedComponents.Add(scc);
+        stronglyConnectedComponents.Add(scc);
     }
 }

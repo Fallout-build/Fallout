@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 
 namespace Fallout.Common.Utilities;
@@ -19,13 +18,19 @@ public static partial class StringExtensions
     public static string DoubleQuoteIfNeeded(this string str, params char?[] disallowed)
     {
         if (string.IsNullOrWhiteSpace(str))
+        {
             return string.Empty;
+        }
 
         if (str.IsDoubleQuoted())
+        {
             return str;
+        }
 
         if (!str.Contains(disallowed))
+        {
             return str;
+        }
 
         return str.DoubleQuote();
     }
@@ -52,13 +57,19 @@ public static partial class StringExtensions
     public static string SingleQuoteIfNeeded(this string str, params char?[] disallowed)
     {
         if (string.IsNullOrWhiteSpace(str))
+        {
             return string.Empty;
+        }
 
         if (str.IsSingleQuoted())
+        {
             return str;
+        }
 
         if (!str.Contains(disallowed))
+        {
             return str;
+        }
 
         return str.SingleQuote();
     }
@@ -69,6 +80,16 @@ public static partial class StringExtensions
     public static string SingleQuote(this string str)
     {
         return $"'{str?.Replace("'", "\\'")}'";
+    }
+
+    /// <summary>
+    /// Single-quotes a given string as a YAML flow scalar, escaping an embedded single quote by doubling it
+    /// (<c>''</c>) per the YAML spec. Prefer this over <see cref="SingleQuote"/> when emitting YAML: the latter
+    /// backslash-escapes, which is fine for shell/log output but invalid inside a YAML single-quoted scalar.
+    /// </summary>
+    public static string SingleQuoteYaml(this string str)
+    {
+        return $"'{str?.Replace("'", "''")}'";
     }
 
     /// <summary>

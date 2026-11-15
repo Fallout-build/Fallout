@@ -30,10 +30,12 @@
         "CreateGitHubRelease",
         "DeletePackages",
         "DownloadLicenses",
+        "GenerateLlmsTxt",
         "GeneratePublicApi",
         "GenerateTools",
         "Install",
         "Pack",
+        "PackageGuard",
         "Publish",
         "References",
         "ReportCoverage",
@@ -41,7 +43,9 @@
         "RunTargetInDockerImageTest",
         "Test",
         "UpdateContributors",
-        "UpdateStargazers"
+        "UpdateStargazers",
+        "VerifyGeneratedTools",
+        "VerifyLlmsTxt"
       ]
     },
     "Verbosity": {
@@ -51,7 +55,8 @@
         "Verbose",
         "Normal",
         "Minimal",
-        "Quiet"
+        "Quiet",
+        "Information"
       ]
     },
     "FalloutBuild": {
@@ -70,7 +75,7 @@
         },
         "NoLogo": {
           "type": "boolean",
-          "description": "Disables displaying the NUKE logo"
+          "description": "Disables displaying the Fallout logo"
         },
         "Partition": {
           "type": "string",
@@ -124,7 +129,7 @@
       "properties": {
         "CodecovToken": {
           "type": "string",
-          "default": "Secrets must be entered via 'nuke :secrets [profile]'"
+          "default": "Secrets must be entered via 'fallout :secrets [profile]'"
         },
         "Configuration": {
           "type": "string",
@@ -135,7 +140,7 @@
         },
         "GitHubReleaseGitHubToken": {
           "type": "string",
-          "default": "Secrets must be entered via 'nuke :secrets [profile]'"
+          "default": "Secrets must be entered via 'fallout :secrets [profile]'"
         },
         "IgnoreFailedSources": {
           "type": "boolean",
@@ -146,7 +151,20 @@
         },
         "NuGetApiKey": {
           "type": "string",
-          "default": "Secrets must be entered via 'nuke :secrets [profile]'"
+          "default": "Secrets must be entered via 'fallout :secrets [profile]'"
+        },
+        "NuGetSource": {
+          "type": "string"
+        },
+        "PublishTo": {
+          "type": "array",
+          "description": "Publish only to these named targets (default: all configured PublishTargets)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ReleaseTag": {
+          "type": "string"
         },
         "Solution": {
           "type": "string",

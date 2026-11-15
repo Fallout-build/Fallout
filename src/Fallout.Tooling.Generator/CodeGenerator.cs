@@ -38,7 +38,7 @@ public static class CodeGenerator
         tool.SpecificationFile = specificationFile;
         tool.SourceFile = sourceFileProvider?.Invoke(tool);
         tool.Namespace = namespaceProvider?.Invoke(tool);
-        ApplyRuntimeInformation(tool, specificationFile, sourceFileProvider, namespaceProvider);
+        ApplyRuntimeInformation(tool);
 
         GenerateCode(tool, outputFileProvider?.Invoke(tool) ?? tool.DefaultOutputFile);
     }
@@ -53,15 +53,13 @@ public static class CodeGenerator
             ToolGenerator.Run(tool, streamWriter);
         }
 
-        Log.Information("Generated code for {ToolName} from {File}", tool.Name, Path.GetFileName(tool.SpecificationFile) ?? "<in-memory>");
+        Log.Information("Generated code for {ToolName} from {File}", tool.Name,
+            Path.GetFileName(tool.SpecificationFile) ?? "<in-memory>");
     }
 
     // ReSharper disable once CognitiveComplexity
     private static void ApplyRuntimeInformation(
-        Tool tool,
-        string specificationFile,
-        Func<Tool, string> sourceFileProvider,
-        Func<Tool, string> namespaceProvider)
+        Tool tool)
     {
         foreach (var task in tool.Tasks)
         {
@@ -73,7 +71,11 @@ public static class CodeGenerator
             {
                 var nonExistent = task.SettingsClass.Properties.All(x => x.Name != property.Name);
                 if (!nonExistent)
-                    Log.Warning("Property {PropertyName} for task {TaskName} already exists", property.Name, task.GetTaskMethodName());
+                {
+                    Log.Warning("Property {PropertyName} for task {TaskName} already exists", property.Name,
+                        task.GetTaskMethodName());
+                }
+
                 return nonExistent;
             }
 
@@ -81,17 +83,22 @@ public static class CodeGenerator
             {
                 Assert.True(tool.CommonTaskPropertySets.TryGetValue(commonPropertySet, out var properties),
                     $"No common property set {commonPropertySet}");
+
                 properties.Where(NotExistent).ForEach(x => task.SettingsClass.Properties.Add(x.Clone()));
             }
 
             if (!task.OmitCommonProperties)
+            {
                 tool.CommonTaskProperties.Where(NotExistent).ForEach(x => task.SettingsClass.Properties.Add(x.Clone()));
+            }
 
             foreach (var property in task.SettingsClass.Properties)
             {
                 property.DataClass = task.SettingsClass;
                 foreach (var delegateProperty in property.Delegates)
+                {
                     delegateProperty.DataClass = task.SettingsClass;
+                }
             }
 
             task.SettingsClass.Properties = task.SettingsClass.Properties.OrderBy(x => x.IsTailArgument).ToList();
@@ -104,11 +111,15 @@ public static class CodeGenerator
             {
                 property.DataClass = dataClass;
                 foreach (var delegateProperty in property.Delegates)
+                {
                     delegateProperty.DataClass = dataClass;
+                }
             }
         }
 
         foreach (var enumeration in tool.Enumerations)
+        {
             enumeration.Tool = tool;
+        }
     }
 }

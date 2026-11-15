@@ -1,15 +1,14 @@
-using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
-using Humanizer;
 using Fallout.Common;
+using Humanizer;
 
 namespace Fallout.CodeGeneration.Generators;
 
 public static class StringExtensions
 {
-    private static readonly string[] s_reservedWords =
+    private static readonly string[] reservedWords =
     {
         "abstract",
         "as",
@@ -99,17 +98,17 @@ public static class StringExtensions
 
     public static string EscapeParameter(this string parameterName)
     {
-        return s_reservedWords.Contains(parameterName) ? "@" + parameterName : parameterName;
+        return reservedWords.Contains(parameterName) ? "@" + parameterName : parameterName;
     }
 
     public static string EscapeProperty(this string propertyName)
     {
-        return s_reservedWords.Contains(propertyName) ? propertyName + "_" : propertyName;
+        return reservedWords.Contains(propertyName) ? propertyName + "_" : propertyName;
     }
 
     public static string Paragraph(this string text)
     {
-        return text == null || text.StartsWith("<p>") && text.EndsWith("</p>")
+        return text == null || (text.StartsWith("<p>") && text.EndsWith("</p>"))
             ? text
             : $"<p>{text}</p>";
     }

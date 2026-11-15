@@ -9,36 +9,49 @@ public static partial class EnumerableExtensions
     /// <summary>
     /// Filters a collection to distinct/unique elements.
     /// </summary>
-    public static IEnumerable<TSource> Distinct<TSource, TValue>(this IEnumerable<TSource> enumerable, Func<TSource, TValue> selector)
+    public static IEnumerable<TSource> Distinct<TSource, TValue>(this IEnumerable<TSource> enumerable,
+        Func<TSource, TValue> selector)
     {
         return enumerable.Distinct(new DelegateEqualityComparer<TSource, TValue>(selector));
     }
 
     private class DelegateEqualityComparer<TSource, TValue> : IEqualityComparer<TSource>
     {
-        private readonly Func<TSource, TValue> _selector;
+        private readonly Func<TSource, TValue> selector;
 
         public DelegateEqualityComparer(Func<TSource, TValue> selector)
         {
-            _selector = selector;
+            this.selector = selector;
         }
 
         public bool Equals(TSource x, TSource y)
         {
             if (ReferenceEquals(x, y))
+            {
                 return true;
+            }
+
             if (ReferenceEquals(x, objB: null))
+            {
                 return false;
+            }
+
             if (ReferenceEquals(y, objB: null))
+            {
                 return false;
+            }
+
             if (x.GetType() != y.GetType())
+            {
                 return false;
-            return Equals(_selector(x), _selector(y));
+            }
+
+            return Equals(selector(x), selector(y));
         }
 
         public int GetHashCode(TSource obj)
         {
-            return _selector(obj).GetHashCode();
+            return selector(obj).GetHashCode();
         }
     }
 }

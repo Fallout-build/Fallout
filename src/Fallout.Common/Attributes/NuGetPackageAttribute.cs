@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Reflection;
 
 namespace Fallout.Common.Tooling;
@@ -27,8 +26,8 @@ namespace Fallout.Common.Tooling;
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
 public class NuGetPackageAttribute : ToolInjectionAttributeBase
 {
-    private readonly string _packageId;
-    private readonly string _packageExecutable;
+    private readonly string packageId;
+    private readonly string packageExecutable;
 
     public string Framework { get; set; }
 
@@ -41,18 +40,18 @@ public class NuGetPackageAttribute : ToolInjectionAttributeBase
 
     public NuGetPackageAttribute(string packageId, string packageExecutable32, string packageExecutable64)
     {
-        _packageId = packageId;
-        _packageExecutable = EnvironmentInfo.Is32Bit ? packageExecutable32 : packageExecutable64;
+        this.packageId = packageId;
+        packageExecutable = EnvironmentInfo.Is32Bit ? packageExecutable32 : packageExecutable64;
     }
 
     public override ToolRequirement GetRequirement(MemberInfo member)
     {
-        return new NuGetPackageRequirement(_packageId, Version);
+        return new NuGetPackageRequirement(packageId, Version);
     }
 
     public override object GetValue(MemberInfo member, object instance)
     {
         return ToolResolver.TryGetEnvironmentTool(member.Name) ??
-               ToolResolver.GetNuGetTool(_packageId, _packageExecutable, Version, Framework);
+               ToolResolver.GetNuGetTool(packageId, packageExecutable, Version, Framework);
     }
 }

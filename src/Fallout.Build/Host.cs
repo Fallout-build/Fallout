@@ -27,46 +27,56 @@ public partial class Host
 
     internal virtual string OutputTemplate => Logging.TimestampOutputTemplate;
 
+    // True-color ANSI for Fallout yellow (#F5C800). Modern terminals
+    // (Windows Terminal, VS Code, macOS Terminal.app, GitHub Actions logs)
+    // render this directly; older sinks ignore the escape bytes.
+
+    protected virtual string LogoYellow { get => "[38;2;245;200;0m"; }
+
+    protected virtual string LogoDimmed { get => "[2m"; }
+
+    protected virtual string LogoReset { get => "[0m"; }
+
     protected internal void WriteLogo()
     {
         Debug();
-        // True-color ANSI for Fallout yellow (#F5C800). Modern terminals
-        // (Windows Terminal, VS Code, macOS Terminal.app, GitHub Actions logs)
-        // render this directly; older sinks ignore the escape bytes.
-        const string Y = "[38;2;245;200;0m";
-        const string D = "[2m";
-        const string R = "[0m";
 
         new[]
         {
-            $"{Y}███████╗ █████╗ ██╗     ██╗      ██████╗ ██╗   ██╗████████╗{R}",
-            $"{Y}██╔════╝██╔══██╗██║     ██║     ██╔═══██╗██║   ██║╚══██╔══╝{R}",
-            $"{Y}█████╗  ███████║██║     ██║     ██║   ██║██║   ██║   ██║   {R}",
-            $"{Y}██╔══╝  ██╔══██║██║     ██║     ██║   ██║██║   ██║   ██║   {R}",
-            $"{Y}██║     ██║  ██║███████╗███████╗╚██████╔╝╚██████╔╝   ██║   {R}",
-            $"{Y}╚═╝     ╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝  ╚═════╝    ╚═╝   {R}",
+            $"{LogoYellow}███████╗ █████╗ ██╗     ██╗      ██████╗ ██╗   ██╗████████╗{LogoReset}",
+            $"{LogoYellow}██╔════╝██╔══██╗██║     ██║     ██╔═══██╗██║   ██║╚══██╔══╝{LogoReset}",
+            $"{LogoYellow}█████╗  ███████║██║     ██║     ██║   ██║██║   ██║   ██║   {LogoReset}",
+            $"{LogoYellow}██╔══╝  ██╔══██║██║     ██║     ██║   ██║██║   ██║   ██║   {LogoReset}",
+            $"{LogoYellow}██║     ██║  ██║███████╗███████╗╚██████╔╝╚██████╔╝   ██║   {LogoReset}",
+            $"{LogoYellow}╚═╝     ╚═╝  ╚═╝╚══════╝╚══════╝ ╚═════╝  ╚═════╝    ╚═╝   {LogoReset}",
             string.Empty,
-            $"                       {D}.NET build system{R}",
-            $"                     {Y}☢{R} {D}survived the fallout{R}"
-        }.ForEach(x => Debug(x.Replace(" ", " ")));
+            $"                       {LogoDimmed}.NET build system{LogoReset}",
+            $"                     {LogoYellow}☢{LogoReset} {LogoDimmed}survived the NUKE{LogoReset}"
+        }.ForEach(Debug);
+
         Debug();
     }
 
     protected internal virtual IDisposable WriteBlock(string text)
     {
-        return DelegateDisposable.CreateBracket(
-            () =>
-            {
-                var formattedBlockText = text
-                    .Split(new[] { EnvironmentInfo.NewLine }, StringSplitOptions.None)
-                    .Select(Theme.FormatInformation);
+        return DelegateDisposable.CreateBracket(() =>
+        {
+            var blockTextLines = text
+                .Split(new[]
+                {
+                    EnvironmentInfo.NewLine
+                }, StringSplitOptions.None);
 
-                Debug();
-                Debug("╬" + '═'.Repeat(text.Length + 5));
-                formattedBlockText.ForEach(x => Debug($"║ {x}"));
-                Debug("╬" + '═'.Repeat(Math.Max(text.Length - 4, 2)));
-                Debug();
-            });
+            // The rule spans the widest content line plus the "║ " prefix. Measure the raw lines,
+            // not the themed ones — theming adds escape sequences that occupy no console cells.
+            var rule = "╬" + '═'.Repeat(blockTextLines.Max(x => x.Length) + 1);
+
+            Debug();
+            Debug(rule);
+            blockTextLines.Select(Theme.FormatInformation).ForEach(x => Debug($"║ {x}"));
+            Debug(rule);
+            Debug();
+        });
     }
 
     protected internal virtual void ReportWarning(string text, string details = null)
@@ -85,7 +95,9 @@ public partial class Host
     protected internal virtual void WriteErrorsAndWarnings()
     {
         if (Logging.InMemorySink.Instance.LogEvents.Count == 0)
+        {
             return;
+        }
 
         // TODO: move to Logging
         using (WriteBlock("Errors & Warnings"))
@@ -101,6 +113,15 @@ public partial class Host
             nonEmptyLogEvents.ForEach(Log.Write);
         }
     }
+
+    /// <summary>
+    /// Renders a target duration for the summary table's duration column: <c>&lt; 1sec</c> below one
+    /// second, otherwise <c>m:ss</c> with minutes accumulating past the hour.
+    /// </summary>
+    internal static string FormatDuration(TimeSpan duration)
+        => duration < TimeSpan.FromSeconds(1)
+            ? "< 1sec"
+            : $"{(int)duration.TotalMinutes}:{duration.Seconds:00}";
 
     protected internal virtual void WriteTargetOutcome(IFalloutBuild build)
     {
@@ -120,11 +141,8 @@ public partial class Host
             => target.Status == ExecutionStatus.Succeeded ||
                target.Status == ExecutionStatus.Failed ||
                target.Status == ExecutionStatus.Aborted
-                ? GetDuration(target.Duration)
+                ? FormatDuration(target.Duration)
                 : string.Empty;
-
-        static string GetDuration(TimeSpan duration)
-            => $"{(int)duration.TotalMinutes}:{duration:ss}".Replace("0:00", "< 1sec");
 
         static string GetInformation(ExecutableTarget target)
             => target.SummaryInformation.Any()
@@ -144,25 +162,30 @@ public partial class Host
                 case ExecutionStatus.Skipped:
                     Debug(line);
                     break;
+
                 case ExecutionStatus.Succeeded:
                     Success(line);
                     break;
+
                 case ExecutionStatus.Aborted:
                 case ExecutionStatus.NotRun:
                     Warning(line);
                     break;
+
                 case ExecutionStatus.Failed:
                     Error(line);
                     break;
+
                 case ExecutionStatus.Collective:
                     break;
+
                 default:
                     throw new NotSupportedException(target.Status.ToString());
             }
         }
 
         Debug('─'.Repeat(allColumns));
-        Information(CreateLine("Total", string.Empty, GetDuration(totalDuration)));
+        Information(CreateLine("Total", string.Empty, FormatDuration(totalDuration)));
         Debug('═'.Repeat(allColumns));
     }
 
@@ -170,26 +193,34 @@ public partial class Host
     {
         Debug();
         if (build.IsSucceeding)
+        {
             Success($"Build succeeded on {DateTime.Now.ToString(CultureInfo.CurrentCulture)}. ＼（＾ᴗ＾）／");
+        }
         else
+        {
             Error($"Build failed on {DateTime.Now.ToString(CultureInfo.CurrentCulture)}. (╯°□°）╯︵ ┻━┻");
+        }
     }
 
     internal class LogEventSink : ILogEventSink
     {
-        private readonly Host _host;
+        private readonly Host host;
 
         public LogEventSink(Host host)
         {
-            _host = host;
+            this.host = host;
         }
 
         public void Emit(LogEvent logEvent)
         {
             if (logEvent.Level is LogEventLevel.Warning)
-                _host.ReportWarning(logEvent.RenderMessage(), logEvent.Exception?.ToString());
+            {
+                host.ReportWarning(logEvent.RenderMessage(), logEvent.Exception?.ToString());
+            }
             else if (logEvent.Level is LogEventLevel.Error or LogEventLevel.Fatal)
-                _host.ReportError(logEvent.RenderMessage(), logEvent.Exception?.ToString());
+            {
+                host.ReportError(logEvent.RenderMessage(), logEvent.Exception?.ToString());
+            }
         }
     }
 }

@@ -1,0 +1,4 @@
+﻿- job: Compile
+  displayName: 'Bob''s Job'
+  dependsOn: [  ]
+  steps:

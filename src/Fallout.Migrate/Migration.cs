@@ -1,156 +1,58 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
+using System.Threading.Tasks;
+using Fallout.Common.IO;
+using Fallout.Migrate.Common;
+using Fallout.Migrate.Steps;
 
 namespace Fallout.Migrate;
 
-public sealed class Migration
+/// <summary>
+/// Orchestrates a migration run: builds a <see cref="MigrationContext"/> and executes the fixed,
+/// ordered list of <see cref="IMigrationStep"/>s against it. Add a new step by implementing
+/// <see cref="IMigrationStep"/> and appending it to <see cref="steps"/>.
+/// </summary>
+/// <param name="rootDirectory">The repository root to migrate.</param>
+/// <param name="dryRun">When <c>true</c>, reports intended changes without writing them.</param>
+/// <param name="log">The writer steps use to report progress.</param>
+internal sealed class Migration(AbsolutePath rootDirectory, bool dryRun, TextWriter log)
 {
-    private readonly string _rootDirectory;
-    private readonly bool _dryRun;
-    private readonly TextWriter _log;
+    /// <summary>
+    /// The steps executed by <see cref="RunAsync"/>, in order. <see cref="ResolveFalloutVersionStep"/> must
+    /// run first, since later steps read <see cref="MigrationContext.FalloutVersion"/> from it.
+    /// </summary>
+    private static readonly IReadOnlyList<IMigrationStep> steps =
+    [
+        new ResolveFalloutVersionStep(),
+        new VerifyBuildTargetFrameworkStep(),
+        new ConfirmMigrationStep(),
+        new RewriteCsprojsStep(),
+        new BumpDotNetVersionStep(),
+        new RewriteCsFilesStep(),
+        new RewriteBootstrapScriptsStep(),
+        new CleanupBootstrapScriptsStep(),
+        new RenameNukeDirectoryStep()
+    ];
 
-    public Migration(string rootDirectory, bool dryRun, TextWriter log)
-    {
-        _rootDirectory = rootDirectory ?? throw new ArgumentNullException(nameof(rootDirectory));
-        _dryRun = dryRun;
-        _log = log ?? throw new ArgumentNullException(nameof(log));
-    }
-
-    public Summary Run()
+    /// <summary>
+    /// Runs every step in <see cref="steps"/> against a fresh <see cref="MigrationContext"/>, stopping
+    /// early if <see cref="ConfirmMigrationStep"/> (or any later step) sets <see cref="Summary.Cancelled"/>.
+    /// </summary>
+    /// <returns>A <see cref="Summary"/> of the files changed, edits made, and any warnings.</returns>
+    public async Task<Summary> RunAsync()
     {
         var summary = new Summary();
+        var context = new MigrationContext(rootDirectory, dryRun, log);
 
-        RewriteCsprojs(summary);
-        RewriteCsFiles(summary);
-        RewriteBootstrapScripts(summary);
-        RenameNukeDirectory(summary);
+        foreach (var step in steps)
+        {
+            await step.ExecuteAsync(context, summary);
+            if (summary.Cancelled)
+            {
+                break;
+            }
+        }
 
         return summary;
     }
-
-    private void RewriteCsprojs(Summary summary)
-    {
-        var falloutVersion = ResolveFalloutVersion();
-        foreach (var path in EnumerateFiles("*.csproj"))
-            ApplyRewrite(path, content => CsprojRewriter.Rewrite(content, falloutVersion), summary);
-    }
-
-    // Pinned into migrated `<PackageReference Include="Fallout.X" Version="..." />` lines.
-    // Uses the running migrate tool's own SemVer (Nerdbank.GitVersioning, set on
-    // AssemblyInformationalVersion) so the migration output aligns with the tool the user
-    // just installed. For dev/local builds without a `+` in InformationalVersion (i.e. no
-    // build-metadata suffix), falls back to a known-published floor so we never emit a
-    // bogus pin like Version="LOCAL". Inlined to keep Fallout.Migrate dependency-free.
-    private static string ResolveFalloutVersion()
-    {
-        const string Fallback = "11.0.0";
-
-        var informational = typeof(Migration).Assembly
-            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
-            ?.InformationalVersion;
-        if (string.IsNullOrEmpty(informational))
-            return Fallback;
-
-        var plusIndex = informational.IndexOf('+');
-        if (plusIndex == -1)
-            return Fallback;
-
-        return informational[..plusIndex];
-    }
-
-    private void RewriteCsFiles(Summary summary)
-    {
-        foreach (var path in EnumerateFiles("*.cs"))
-            ApplyRewrite(path, CodeRewriter.Rewrite, summary);
-    }
-
-    private void RewriteBootstrapScripts(Summary summary)
-    {
-        foreach (var name in new[] { "build.cmd", "build.ps1", "build.sh" })
-        {
-            var path = Path.Combine(_rootDirectory, name);
-            if (File.Exists(path))
-                ApplyRewrite(path, ScriptRewriter.Rewrite, summary);
-        }
-    }
-
-    private void RenameNukeDirectory(Summary summary)
-    {
-        var legacy = Path.Combine(_rootDirectory, ".nuke");
-        var canonical = Path.Combine(_rootDirectory, ".fallout");
-
-        if (!Directory.Exists(legacy))
-            return;
-
-        if (Directory.Exists(canonical))
-        {
-            summary.Warnings.Add(
-                "Both .nuke/ and .fallout/ exist. Skipped rename; merge their contents manually.");
-            return;
-        }
-
-        Log($"rename  {RelativePath(legacy)} -> {RelativePath(canonical)}");
-        if (!_dryRun)
-            Directory.Move(legacy, canonical);
-        summary.DirectoriesRenamed++;
-    }
-
-    private IEnumerable<string> EnumerateFiles(string pattern)
-    {
-        foreach (var file in Directory.EnumerateFiles(_rootDirectory, pattern, SearchOption.AllDirectories))
-        {
-            if (IsIgnored(file))
-                continue;
-            yield return file;
-        }
-    }
-
-    private static bool IsIgnored(string path)
-    {
-        return path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
-            || path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
-            || path.Contains($"{Path.DirectorySeparatorChar}.git{Path.DirectorySeparatorChar}", StringComparison.Ordinal);
-    }
-
-    private void ApplyRewrite(string path, Func<string, RewriteResult> rewriter, Summary summary)
-    {
-        string original;
-        try
-        {
-            original = File.ReadAllText(path);
-        }
-        catch (IOException ex)
-        {
-            summary.Warnings.Add($"could not read {RelativePath(path)}: {ex.Message}");
-            return;
-        }
-
-        var result = rewriter(original);
-        if (result.EditCount == 0)
-            return;
-
-        Log($"edit    {RelativePath(path)}  ({result.EditCount} change{(result.EditCount == 1 ? "" : "s")})");
-        summary.FilesChanged++;
-        summary.EditCount += result.EditCount;
-
-        if (!_dryRun)
-            File.WriteAllText(path, result.Content);
-    }
-
-    private string RelativePath(string absolute) =>
-        Path.GetRelativePath(_rootDirectory, absolute).Replace('\\', '/');
-
-    private void Log(string line) => _log.WriteLine(line);
-
-    public sealed class Summary
-    {
-        public int FilesChanged { get; set; }
-        public int EditCount { get; set; }
-        public int DirectoriesRenamed { get; set; }
-        public List<string> Warnings { get; } = new();
-    }
 }
-
-public readonly record struct RewriteResult(string Content, int EditCount);

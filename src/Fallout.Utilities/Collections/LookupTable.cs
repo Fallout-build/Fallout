@@ -8,7 +8,7 @@ namespace Fallout.Common.Utilities.Collections;
 [Serializable]
 public class LookupTable<TKey, TValue>(Dictionary<TKey, List<TValue>> dictionary) : ILookup<TKey, TValue>
 {
-    private readonly Dictionary<TKey, List<TValue>> _dictionary = dictionary;
+    private readonly Dictionary<TKey, List<TValue>> lookupDictionary = dictionary;
 
     public LookupTable()
         : this(new Dictionary<TKey, List<TValue>>())
@@ -26,7 +26,7 @@ public class LookupTable<TKey, TValue>(Dictionary<TKey, List<TValue>> dictionary
     }
 
     private ILookup<TKey, TValue> Lookup =>
-        _dictionary.SelectMany(x => x.Value.Select(y => new KeyValuePair<TKey, TValue>(x.Key, y)))
+        lookupDictionary.SelectMany(x => x.Value.Select(y => new KeyValuePair<TKey, TValue>(x.Key, y)))
             .ToLookup(x => x.Key, x => x.Value);
 
     public int Count => Lookup.Count;
@@ -34,35 +34,37 @@ public class LookupTable<TKey, TValue>(Dictionary<TKey, List<TValue>> dictionary
     public IEnumerable<TValue> this[TKey key]
     {
         get => Lookup[key];
-        set => _dictionary[key] = value.ToList();
+        set => lookupDictionary[key] = value.ToList();
     }
 
     public void Add(TKey key, TValue value)
     {
-        var list = (_dictionary[key] = _dictionary.GetValueOrDefault(key, new List<TValue>())).NotNull();
+        var list = (lookupDictionary[key] = lookupDictionary.GetValueOrDefault(key, new List<TValue>())).NotNull();
         list.Add(value);
     }
 
     public void AddRange(TKey key, IEnumerable<TValue> values)
     {
-        var list = (_dictionary[key] = _dictionary.GetValueOrDefault(key, new List<TValue>())).NotNull();
+        var list = (lookupDictionary[key] = lookupDictionary.GetValueOrDefault(key, new List<TValue>())).NotNull();
         foreach (var value in values)
+        {
             list.Add(value);
+        }
     }
 
     public void Remove(TKey key)
     {
-        _dictionary.Remove(key);
+        lookupDictionary.Remove(key);
     }
 
     public void Remove(TKey key, TValue value)
     {
-        _dictionary.GetValueOrDefault(key)?.Remove(value);
+        lookupDictionary.GetValueOrDefault(key)?.Remove(value);
     }
 
     public void Clear()
     {
-        _dictionary.Clear();
+        lookupDictionary.Clear();
     }
 
     public IEnumerator<IGrouping<TKey, TValue>> GetEnumerator()
@@ -77,7 +79,7 @@ public class LookupTable<TKey, TValue>(Dictionary<TKey, List<TValue>> dictionary
 
     public bool Contains(TKey key)
     {
-        return _dictionary.ContainsKey(key);
+        return lookupDictionary.ContainsKey(key);
     }
 
     public ILookup<TKey, TValue> AsReadOnly()

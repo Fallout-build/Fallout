@@ -1,13 +1,15 @@
 name: 💡 Feature Idea
 description: "Suggest new features for the project."
-labels: ["enhancement", "triage"]
+labels: ["enhancement", "needs-triage"]
 body:
   - type: markdown
     attributes:
       value: |
         _Hi there :wave: and thanks for taking the time to send a feature idea!_
         
-        _Before you continue, please check the [contribution guidelines](https://github.com/ChrisonSimtian/Fallout/blob/main/CONTRIBUTING.md)._
+        _Before you continue, please check the [contribution guidelines](https://github.com/Fallout-build/Fallout/blob/main/CONTRIBUTING.md)._
+
+        _Proposing a new public API (a new type or member)? It goes through an extra review — see [Proposing new public API](https://github.com/Fallout-build/Fallout/blob/main/CONTRIBUTING.md#proposing-new-public-api)._
 
   - type: textarea
     attributes:
@@ -30,7 +32,7 @@ body:
     id: pull-request
     attributes:
       label: Could you help with a pull-request?
-      description: See the [contribution guidelines](https://github.com/ChrisonSimtian/Fallout/blob/main/CONTRIBUTING.md).
+      description: See the [contribution guidelines](https://github.com/Fallout-build/Fallout/blob/main/CONTRIBUTING.md).
       options:
         - "No"
         - "Yes"

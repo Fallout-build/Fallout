@@ -11,7 +11,7 @@ partial class ToolOptions
     {
         return (ProcessRedactedSecrets ?? [])
             .Concat(InternalOptions
-                .Select(kv => (Node: kv.Value, Property: _allProperties[kv.Key]))
+                .Select(kv => (Node: kv.Value, Property: allProperties[kv.Key]))
                 .Select(x => (x.Node, x.Property, Attribute: x.Property.GetCustomAttribute<ArgumentAttribute>()))
                 .Where(x => x.Attribute?.Secret ?? false)
                 .Select(x =>

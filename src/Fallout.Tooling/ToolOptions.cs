@@ -11,11 +11,11 @@ public abstract partial class ToolOptions : Options
 {
     internal static event EventHandler Created;
 
-    private readonly Dictionary<string, PropertyInfo> _allProperties;
+    private readonly Dictionary<string, PropertyInfo> allProperties;
 
     protected ToolOptions()
     {
-        _allProperties = GetType().GetAllMembers(x => x is PropertyInfo, ReflectionUtility.Instance, allowAmbiguity: true)
+        allProperties = GetType().GetAllMembers(x => x is PropertyInfo, ReflectionUtility.Instance, allowAmbiguity: true)
             .Cast<PropertyInfo>().ToDictionary(x => x.Name, x => x);
 
         Set(() => ProcessEnvironmentVariables, EnvironmentInfo.Variables);

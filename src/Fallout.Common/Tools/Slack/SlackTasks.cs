@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -14,7 +13,7 @@ namespace Fallout.Common.Tools.Slack;
 
 public static class SlackTasks
 {
-    private static HttpClient s_client = new();
+    private static readonly HttpClient client = new();
 
     public static void SendSlackMessage(Configure<SlackMessage> configurator, string webhook)
     {
@@ -26,8 +25,11 @@ public static class SlackTasks
         var message = configurator(new SlackMessage());
         var payload = JsonSerializer.Serialize(message);
 
-        var response = await s_client.CreateRequest(HttpMethod.Post, webhook)
-            .WithFormUrlEncodedContent(new Dictionary<string, string> { ["payload"] = payload })
+        var response = await client.CreateRequest(HttpMethod.Post, webhook)
+            .WithFormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["payload"] = payload
+            })
             .GetResponseAsync();
 
         var responseText = await response.GetBodyAsync();
@@ -38,7 +40,7 @@ public static class SlackTasks
     {
         var message = configurator(new SlackMessage());
 
-        var response = await s_client.CreateRequest(
+        var response = await client.CreateRequest(
                 HttpMethod.Post,
                 message.Timestamp == null
                     ? "https://slack.com/api/chat.postMessage"
