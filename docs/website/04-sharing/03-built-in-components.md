@@ -179,7 +179,7 @@ Runs `dotnet test` for each project in `TestProjects`.
 | Target | `Test`, depends on `Compile` |
 | Inherits | `ICompile`, `IHasArtifacts` |
 | You must implement | `TestProjects` |
-| Customize | `TestSettings` (all projects), `TestProjectSettings` (per project), `TestResultDirectory` (default `artifacts/test-results`), `TestDegreeOfParallelism` (default `1`) |
+| Customize | `TestSettings` (all projects), `TestProjectSettings` (per project), `TestResultDirectory` (default `artifacts/test-results`), `TestDegreeOfParallelism` (default `1`), `UseTestingPlatform` (default `false`) |
 | Produces | `*.trx` and `*.xml` files in `TestResultDirectory` |
 
 `TestProjects` decides which projects are tests. A common choice is a naming convention:
@@ -212,6 +212,35 @@ To read `TestDegreeOfParallelism` from the command line, implement it as a [para
 [Parameter]
 public int TestDegreeOfParallelism { get; } = 1;
 ```
+
+#### Microsoft.Testing.Platform
+
+By default, `Test` runs the tests with VSTest. Some test frameworks, such as xunit v3, no longer support VSTest with the .NET 10 SDK. For those, set `UseTestingPlatform` to `true`. The target then runs `dotnet test --project` on [Microsoft.Testing.Platform](https://learn.microsoft.com/dotnet/core/testing/microsoft-testing-platform-intro):
+
+```csharp
+bool ITest.UseTestingPlatform => true;
+```
+
+This needs some setup:
+
+- Opt in to the platform in the `global.json` of your repository:
+
+  ```json title="global.json"
+  {
+    "test": { "runner": "Microsoft.Testing.Platform" }
+  }
+  ```
+
+- Add the `Microsoft.Testing.Extensions.TrxReport` package to each test project, so it can write TRX files.
+- For code coverage, add the `coverlet.MTP` package to each test project.
+
+In this mode, the target works differently:
+
+- It runs the projects one by one. `TestDegreeOfParallelism`, `TestSettings` and `TestProjectSettings` are not used.
+- It doesn't add the GitHub Actions or TeamCity loggers.
+- Coverage files are named `coverage.cobertura.*.xml`. The target deletes the ones from earlier runs before it starts.
+
+It still writes `<Project>.trx`, runs all projects even when one fails, skips the build when `Compile` ran, publishes the results to Azure Pipelines, and adds the counts to the build summary.
 
 ### `IPack`
 
