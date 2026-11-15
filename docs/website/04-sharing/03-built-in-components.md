@@ -228,25 +228,62 @@ It skips the build (`--no-build`) when `Compile` ran successfully, and adds the 
 
 ### `IPublish`
 
-Pushes the packages to a NuGet feed with `dotnet nuget push`.
+Pushes the packages to one or more NuGet feeds with `dotnet nuget push`.
 
 | | |
 |---|---|
 | Target | `Publish`, depends on `Test` and `Pack` |
 | Inherits | `IPack`, `ITest` |
-| Parameters | `NuGetSource` (default `https://api.nuget.org/v3/index.json`), `NuGetApiKey` (secret, required) |
-| Customize | `PushSettings` (all packages), `PackagePushSettings`, `PushPackageFiles` (default: all `*.nupkg` in `PackagesDirectory`), `PushDegreeOfParallelism` (default `5`), `PushCompleteOnFailure` (default `true`) |
+| Parameters | `NuGetSource` (default `https://api.nuget.org/v3/index.json`), `NuGetApiKey` (secret), `PublishTo` (experimental, see below) |
+| Customize | `PushSettings`, `PackagePushSettings`, `PushPackageFiles` (default: all `*.nupkg` in `PackagesDirectory`), `PushDegreeOfParallelism` (default `5`), `PushCompleteOnFailure` (default `true`), `PublishTargets` (experimental, see below) |
 
-For example, to skip packages that already exist on the feed, and to leave out some packages:
+By default, `Publish` pushes all packages to `NuGetSource` with `NuGetApiKey`. It passes `--skip-duplicate`, so you can run it again when a version is already on the feed. The target fails before it pushes anything when the API key is missing or when there are no packages.
+
+To leave out some packages:
 
 ```csharp
-Configure<DotNetNuGetPushSettings> IPublish.PushSettings => _ => _
-    .EnableSkipDuplicate();
-
 IEnumerable<AbsolutePath> IPublish.PushPackageFiles =>
     From<IPack>().PackagesDirectory.GlobFiles("*.nupkg")
         .Where(x => !x.NameWithoutExtension.EndsWith(".Internal"));
 ```
+
+#### Publishing to more than one feed
+
+:::caution
+`PublishTargets` and `PublishTo` are [experimental](https://github.com/Fallout-build/Fallout/blob/main/docs/experimental-apis.md) (`FALLOUT001`). They can change in a later version. To use them, suppress the `FALLOUT001` warning.
+:::
+
+Implement `PublishTargets` to push the same packages to several feeds. Each `PublishTarget` has a name, a feed URL and an API key. `IncludePackages` and `ExcludePackages` decide which packages go to that feed. They accept `*` and `?` wildcards, are matched against the file name without `.nupkg`, and are not case-sensitive. When a package matches both, it is excluded. `SkipDuplicate` is `true` by default.
+
+```csharp
+#pragma warning disable FALLOUT001
+IEnumerable<PublishTarget> IPublish.PublishTargets => new[]
+{
+    new PublishTarget
+    {
+        Name = "github-packages",
+        Source = "https://nuget.pkg.github.com/my-org/index.json",
+        ApiKey = GitHubToken,
+    },
+    new PublishTarget
+    {
+        Name = "nuget.org",
+        Source = "https://api.nuget.org/v3/index.json",
+        ApiKey = NuGetApiKey,
+        IncludePackages = new[] { "MyCompany.*" },
+        ExcludePackages = new[] { "*.Internal.*" },
+    },
+};
+#pragma warning restore FALLOUT001
+```
+
+By default, `Publish` pushes to all targets. Use the `PublishTo` parameter to choose some of them:
+
+```bash
+dotnet fallout Publish --publish-to nuget.org
+```
+
+When you implement `PublishTargets`, `NuGetSource` and `NuGetApiKey` are not used, unless you use them in your own targets.
 
 ### `IReportCoverage`
 
@@ -331,7 +368,7 @@ Solution IHasSolution.Solution => Solution;
 
 ## Full example
 
-The Fallout repository builds itself with these components. Here is a shortened version of its [`Build.cs`](https://github.com/ChrisonSimtian/Fallout/blob/main/build/Build.cs):
+The Fallout repository builds itself with these components. Here is a shortened version of its [`Build.cs`](https://github.com/Fallout-build/Fallout/blob/main/build/Build.cs):
 
 ```csharp title="Build.cs"
 class Build : FalloutBuild,
@@ -350,8 +387,5 @@ class Build : FalloutBuild,
 
     [Parameter] [Secret] readonly string NuGetApiKey;
     string IPublish.NuGetApiKey => NuGetApiKey;
-
-    Configure<DotNetNuGetPushSettings> IPublish.PushSettings => _ => _
-        .EnableSkipDuplicate();
 }
 ```
