@@ -46,14 +46,7 @@ public interface ITest : ICompile, IHasArtifacts
                 }
                 else
                 {
-                    DotNetTest(_ => _
-                            .Apply(TestSettingsBase)
-                            .Apply(TestSettings)
-                            .CombineWith(TestProjects, (_, v) => _
-                                .Apply(TestProjectSettingsBase, v)
-                                .Apply(TestProjectSettings, v)),
-                        completeOnFailure: true,
-                        degreeOfParallelism: TestDegreeOfParallelism);
+                    RunVsTest();
                 }
             }
             finally
@@ -63,21 +56,30 @@ public interface ITest : ICompile, IHasArtifacts
             }
         });
 
-    private bool CollectCoverage =>
-        InvokedTargets.Contains((this as IReportCoverage)?.ReportCoverage) || IsServerBuild;
+    private void RunVsTest()
+    {
+        DotNetTest(_ => _
+                .Apply(TestSettingsBase)
+                .Apply(TestSettings)
+                .CombineWith(TestProjects, (_, v) => _
+                    .Apply(TestProjectSettingsBase, v)
+                    .Apply(TestProjectSettings, v)),
+            completeOnFailure: true,
+            degreeOfParallelism: TestDegreeOfParallelism);
+    }
 
     private void RunTestingPlatform()
     {
         // coverlet.MTP writes timestamped files, so remove the ones from earlier runs.
         TestResultDirectory.GlobFiles("coverage.cobertura.*.xml").DeleteFiles();
 
-        var failedProjects = new List<string>();
-        var noBuild = SucceededTargets.Contains(Compile) ? " --no-build" : string.Empty;
-        var coverage = CollectCoverage
+        List<string> failedProjects = new();
+        string noBuild = SucceededTargets.Contains(Compile) ? " --no-build" : string.Empty;
+        string coverage = CollectCoverage
             ? " --coverlet --coverlet-output-format cobertura --coverlet-exclude-by-file **/*.Generated.cs"
             : string.Empty;
 
-        foreach (var project in TestProjects)
+        foreach (Project project in TestProjects)
         {
             try
             {
@@ -93,6 +95,9 @@ public interface ITest : ICompile, IHasArtifacts
 
         Assert.True(failedProjects.Count == 0, $"Tests failed in: {string.Join(", ", failedProjects)}");
     }
+
+    private bool CollectCoverage =>
+        InvokedTargets.Contains((this as IReportCoverage)?.ReportCoverage) || IsServerBuild;
 
     void ReportTestResults()
     {
