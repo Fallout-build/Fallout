@@ -98,7 +98,7 @@ public partial class CMakeGenerateSettings : ToolOptions
 public partial class CMakeBuildSettings : ToolOptions
 {
     /// <summary>Specify the project binary directory to build.</summary>
-    [Argument(Format = "{value}")] public string OutputDirectory => Get<string>(() => OutputDirectory);
+    [Argument(Format = "{value}", Position = 1)] public string OutputDirectory => Get<string>(() => OutputDirectory);
     /// <summary>Specify the build configuration for multi-config generators.</summary>
     [Argument(Format = "--config {value}")] public CMakeConfiguration Configuration => Get<CMakeConfiguration>(() => Configuration);
     /// <summary>Specify the targets to build instead of the default target.</summary>
@@ -120,7 +120,7 @@ public partial class CMakeBuildSettings : ToolOptions
 public partial class CMakeInstallSettings : ToolOptions
 {
     /// <summary>Specify the root directory of the cmake install script.</summary>
-    [Argument(Format = "{value}")] public string RootDirectory => Get<string>(() => RootDirectory);
+    [Argument(Format = "{value}", Position = 1)] public string RootDirectory => Get<string>(() => RootDirectory);
     /// <summary>Specify the root directory of the 'CMakeLists.txt' file.</summary>
     [Argument(Format = "--config {value}")] public CMakeConfiguration Configuration => Get<CMakeConfiguration>(() => Configuration);
     /// <summary>Specify the output directory of the install script.</summary>

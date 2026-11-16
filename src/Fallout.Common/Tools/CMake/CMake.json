@@ -139,6 +139,7 @@
             "type": "string",
             "format": "{value}",
             "default": "\"./out\"",
+            "position": 1,
             "help": "Specify the project binary directory to build."
           },
           {
@@ -194,6 +195,7 @@
             "type": "string",
             "format": "{value}",
             "default": "\".\"",
+            "position": 1,
             "help": "Specify the root directory of the cmake install script."
           },
           {
