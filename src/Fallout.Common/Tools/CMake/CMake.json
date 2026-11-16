@@ -247,6 +247,33 @@
           }
         ]
       }
+    },
+    {
+      "help": "Runs the <c>cmake --workflow</c> command, which runs the steps of a workflow preset in order.",
+      "postfix": "Workflow",
+      "definiteArgument": "--workflow",
+      "settingsClass": {
+        "properties": [
+          {
+            "name": "Preset",
+            "type": "string",
+            "format": "--preset {value}",
+            "help": "Specify the workflow preset to run. CMake reads it from <c>CMakePresets.json</c> and <c>CMakeUserPresets.json</c> in the working directory."
+          },
+          {
+            "name": "PresetsFile",
+            "type": "string",
+            "format": "--presets-file {value}",
+            "help": "Read presets from the given file instead of <c>CMakePresets.json</c> and <c>CMakeUserPresets.json</c>. Requires CMake 4.4 or later."
+          },
+          {
+            "name": "Fresh",
+            "type": "bool",
+            "format": "--fresh",
+            "help": "Configure a fresh build tree, removing any existing cache file."
+          }
+        ]
+      }
     }
   ],
   "enumerations": [

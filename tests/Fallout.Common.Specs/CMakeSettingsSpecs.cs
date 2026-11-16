@@ -79,4 +79,19 @@ public class CMakeSettingsSpecs
         // Assert
         arguments.Should().Be("--install out --config Release");
     }
+
+    [Fact]
+    public void Workflow_passes_the_preset_and_the_fresh_flag()
+    {
+        // Arrange
+        var settings = new CMakeWorkflowSettings()
+            .SetPreset("ci")
+            .EnableFresh();
+
+        // Act
+        var arguments = settings.GetArguments().JoinSpace();
+
+        // Assert
+        arguments.Should().Be("--workflow --preset ci --fresh");
+    }
 }

@@ -46,6 +46,13 @@ public partial class CMakeTasks : ToolTasks, IRequirePathTool
     public static IReadOnlyCollection<Output> CMakeInstall(Configure<CMakeInstallSettings> configurator) => new CMakeTasks().Run<CMakeInstallSettings>(configurator.Invoke(new CMakeInstallSettings()));
     /// <inheritdoc cref="CMakeTasks.CMakeInstall(Fallout.Common.Tools.CMake.CMakeInstallSettings)"/>
     public static IEnumerable<(CMakeInstallSettings Settings, IReadOnlyCollection<Output> Output)> CMakeInstall(CombinatorialConfigure<CMakeInstallSettings> configurator, int degreeOfParallelism = 1, bool completeOnFailure = false) => configurator.Invoke(CMakeInstall, degreeOfParallelism, completeOnFailure);
+    /// <summary><p>Runs the <c>cmake --workflow</c> command, which runs the steps of a workflow preset in order.</p><p>For more details, visit the <a href="https://cmake.org/cmake/help/latest/manual/cmake.1.html">official website</a>.</p></summary>
+    /// <remarks><p>This is a <a href="https://github.com/Fallout-build/Fallout">CLI wrapper with fluent API</a> that allows to modify the following arguments:</p><ul><li><c>--fresh</c> via <see cref="CMakeWorkflowSettings.Fresh"/></li><li><c>--preset</c> via <see cref="CMakeWorkflowSettings.Preset"/></li><li><c>--presets-file</c> via <see cref="CMakeWorkflowSettings.PresetsFile"/></li></ul></remarks>
+    public static IReadOnlyCollection<Output> CMakeWorkflow(CMakeWorkflowSettings options = null) => new CMakeTasks().Run<CMakeWorkflowSettings>(options);
+    /// <inheritdoc cref="CMakeTasks.CMakeWorkflow(Fallout.Common.Tools.CMake.CMakeWorkflowSettings)"/>
+    public static IReadOnlyCollection<Output> CMakeWorkflow(Configure<CMakeWorkflowSettings> configurator) => new CMakeTasks().Run<CMakeWorkflowSettings>(configurator.Invoke(new CMakeWorkflowSettings()));
+    /// <inheritdoc cref="CMakeTasks.CMakeWorkflow(Fallout.Common.Tools.CMake.CMakeWorkflowSettings)"/>
+    public static IEnumerable<(CMakeWorkflowSettings Settings, IReadOnlyCollection<Output> Output)> CMakeWorkflow(CombinatorialConfigure<CMakeWorkflowSettings> configurator, int degreeOfParallelism = 1, bool completeOnFailure = false) => configurator.Invoke(CMakeWorkflow, degreeOfParallelism, completeOnFailure);
 }
 #region CMakeGenerateSettings
 /// <inheritdoc cref="CMakeTasks.CMakeGenerate(Fallout.Common.Tools.CMake.CMakeGenerateSettings)"/>
@@ -139,6 +146,20 @@ public partial class CMakeInstallSettings : ToolOptions
     [Argument(Format = "--strip")] public bool? Strip => Get<bool?>(() => Strip);
     /// <summary>Enable verbose output.</summary>
     [Argument(Format = "--verbose")] public bool? Verbose => Get<bool?>(() => Verbose);
+}
+#endregion
+#region CMakeWorkflowSettings
+/// <inheritdoc cref="CMakeTasks.CMakeWorkflow(Fallout.Common.Tools.CMake.CMakeWorkflowSettings)"/>
+[ExcludeFromCodeCoverage]
+[Command(Type = typeof(CMakeTasks), Command = nameof(CMakeTasks.CMakeWorkflow), Arguments = "--workflow")]
+public partial class CMakeWorkflowSettings : ToolOptions
+{
+    /// <summary>Specify the workflow preset to run. CMake reads it from <c>CMakePresets.json</c> and <c>CMakeUserPresets.json</c> in the working directory.</summary>
+    [Argument(Format = "--preset {value}")] public string Preset => Get<string>(() => Preset);
+    /// <summary>Read presets from the given file instead of <c>CMakePresets.json</c> and <c>CMakeUserPresets.json</c>. Requires CMake 4.4 or later.</summary>
+    [Argument(Format = "--presets-file {value}")] public string PresetsFile => Get<string>(() => PresetsFile);
+    /// <summary>Configure a fresh build tree, removing any existing cache file.</summary>
+    [Argument(Format = "--fresh")] public bool? Fresh => Get<bool?>(() => Fresh);
 }
 #endregion
 #region CMakeGenerateSettingsExtensions
@@ -607,6 +628,46 @@ public static partial class CMakeInstallSettingsExtensions
     /// <inheritdoc cref="CMakeInstallSettings.Verbose"/>
     [Builder(Type = typeof(CMakeInstallSettings), Property = nameof(CMakeInstallSettings.Verbose))]
     public static T ToggleVerbose<T>(this T o) where T : CMakeInstallSettings => o.Modify(b => b.Set(() => o.Verbose, !o.Verbose));
+    #endregion
+}
+#endregion
+#region CMakeWorkflowSettingsExtensions
+/// <inheritdoc cref="CMakeTasks.CMakeWorkflow(Fallout.Common.Tools.CMake.CMakeWorkflowSettings)"/>
+[ExcludeFromCodeCoverage]
+public static partial class CMakeWorkflowSettingsExtensions
+{
+    #region Preset
+    /// <inheritdoc cref="CMakeWorkflowSettings.Preset"/>
+    [Builder(Type = typeof(CMakeWorkflowSettings), Property = nameof(CMakeWorkflowSettings.Preset))]
+    public static T SetPreset<T>(this T o, string v) where T : CMakeWorkflowSettings => o.Modify(b => b.Set(() => o.Preset, v));
+    /// <inheritdoc cref="CMakeWorkflowSettings.Preset"/>
+    [Builder(Type = typeof(CMakeWorkflowSettings), Property = nameof(CMakeWorkflowSettings.Preset))]
+    public static T ResetPreset<T>(this T o) where T : CMakeWorkflowSettings => o.Modify(b => b.Remove(() => o.Preset));
+    #endregion
+    #region PresetsFile
+    /// <inheritdoc cref="CMakeWorkflowSettings.PresetsFile"/>
+    [Builder(Type = typeof(CMakeWorkflowSettings), Property = nameof(CMakeWorkflowSettings.PresetsFile))]
+    public static T SetPresetsFile<T>(this T o, string v) where T : CMakeWorkflowSettings => o.Modify(b => b.Set(() => o.PresetsFile, v));
+    /// <inheritdoc cref="CMakeWorkflowSettings.PresetsFile"/>
+    [Builder(Type = typeof(CMakeWorkflowSettings), Property = nameof(CMakeWorkflowSettings.PresetsFile))]
+    public static T ResetPresetsFile<T>(this T o) where T : CMakeWorkflowSettings => o.Modify(b => b.Remove(() => o.PresetsFile));
+    #endregion
+    #region Fresh
+    /// <inheritdoc cref="CMakeWorkflowSettings.Fresh"/>
+    [Builder(Type = typeof(CMakeWorkflowSettings), Property = nameof(CMakeWorkflowSettings.Fresh))]
+    public static T SetFresh<T>(this T o, bool? v) where T : CMakeWorkflowSettings => o.Modify(b => b.Set(() => o.Fresh, v));
+    /// <inheritdoc cref="CMakeWorkflowSettings.Fresh"/>
+    [Builder(Type = typeof(CMakeWorkflowSettings), Property = nameof(CMakeWorkflowSettings.Fresh))]
+    public static T ResetFresh<T>(this T o) where T : CMakeWorkflowSettings => o.Modify(b => b.Remove(() => o.Fresh));
+    /// <inheritdoc cref="CMakeWorkflowSettings.Fresh"/>
+    [Builder(Type = typeof(CMakeWorkflowSettings), Property = nameof(CMakeWorkflowSettings.Fresh))]
+    public static T EnableFresh<T>(this T o) where T : CMakeWorkflowSettings => o.Modify(b => b.Set(() => o.Fresh, true));
+    /// <inheritdoc cref="CMakeWorkflowSettings.Fresh"/>
+    [Builder(Type = typeof(CMakeWorkflowSettings), Property = nameof(CMakeWorkflowSettings.Fresh))]
+    public static T DisableFresh<T>(this T o) where T : CMakeWorkflowSettings => o.Modify(b => b.Set(() => o.Fresh, false));
+    /// <inheritdoc cref="CMakeWorkflowSettings.Fresh"/>
+    [Builder(Type = typeof(CMakeWorkflowSettings), Property = nameof(CMakeWorkflowSettings.Fresh))]
+    public static T ToggleFresh<T>(this T o) where T : CMakeWorkflowSettings => o.Modify(b => b.Set(() => o.Fresh, !o.Fresh));
     #endregion
 }
 #endregion
