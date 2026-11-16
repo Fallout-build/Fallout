@@ -582,6 +582,10 @@ public partial class CMakeGenerator : Enumeration
     public static CMakeGenerator Visual_Studio_17_2022 = (CMakeGenerator) "Visual Studio 17 2022";
     public static CMakeGenerator Visual_Studio_18_2026 = (CMakeGenerator) "Visual Studio 18 2026";
     public static CMakeGenerator Ninja = (CMakeGenerator) "Ninja";
+    public static CMakeGenerator Ninja_Multi_Config = (CMakeGenerator) "Ninja Multi-Config";
+    public static CMakeGenerator Unix_Makefiles = (CMakeGenerator) "Unix Makefiles";
+    public static CMakeGenerator NMake_Makefiles = (CMakeGenerator) "NMake Makefiles";
+    public static CMakeGenerator MinGW_Makefiles = (CMakeGenerator) "MinGW Makefiles";
     public static CMakeGenerator Xcode = (CMakeGenerator) "Xcode";
     public static implicit operator CMakeGenerator(string value)
     {

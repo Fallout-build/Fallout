@@ -234,6 +234,10 @@
         "Visual Studio 17 2022",
         "Visual Studio 18 2026",
         "Ninja",
+        "Ninja Multi-Config",
+        "Unix Makefiles",
+        "NMake Makefiles",
+        "MinGW Makefiles",
         "Xcode"
       ]
     },
