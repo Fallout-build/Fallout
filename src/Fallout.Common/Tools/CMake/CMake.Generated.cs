@@ -53,13 +53,13 @@ public partial class CMakeTasks : ToolTasks, IRequirePathTool
 [Command(Type = typeof(CMakeTasks), Command = nameof(CMakeTasks.CMakeGenerate))]
 public partial class CMakeGenerateSettings : ToolOptions
 {
-    /// <summary>Specify the build system to generate.</summary>
+    /// <summary>Specify the build system to generate. When not set, CMake uses the generator of the preset, the <c>CMAKE_GENERATOR</c> environment variable, or the default generator of the platform.</summary>
     [Argument(Format = "-G {value}")] public CMakeGenerator Generator => Get<CMakeGenerator>(() => Generator);
-    /// <summary>Specify the platform to build for.</summary>
+    /// <summary>Specify the platform to build for, if supported by the generator.</summary>
     [Argument(Format = "-A {value}")] public CMakePlatform Platform => Get<CMakePlatform>(() => Platform);
-    /// <summary>Specify the root directory of the 'CMakeLists.txt' file.</summary>
+    /// <summary>Specify the source directory, which contains the top-level <c>CMakeLists.txt</c> file.</summary>
     [Argument(Format = "-S {value}")] public string RootDirectory => Get<string>(() => RootDirectory);
-    /// <summary>Specify the configuration to use when running the install script.</summary>
+    /// <summary>Specify the project binary directory.</summary>
     [Argument(Format = "-B {value}")] public string OutputDirectory => Get<string>(() => OutputDirectory);
     /// <summary>Specify the path to a toolchain file to use.</summary>
     [Argument(Format = "-DCMAKE_TOOLCHAIN_FILE:FILEPATH={value}")] public string ToolChain => Get<string>(() => ToolChain);
@@ -67,7 +67,7 @@ public partial class CMakeGenerateSettings : ToolOptions
     [Argument(Format = "-T {value}")] public string ToolsetSpec => Get<string>(() => ToolsetSpec);
     /// <summary>Specify the installation prefix to be used in the generated project.</summary>
     [Argument(Format = "--install-prefix {value}")] public string InstallPrefix => Get<string>(() => InstallPrefix);
-    /// <summary>Create or update a CMake cache entry, in the form <var>[:<type>]=<value>.</summary>
+    /// <summary>Create or update a CMake cache entry, in the form <c>&lt;var&gt;[:&lt;type&gt;]=&lt;value&gt;</c>.</summary>
     [Argument(Format = "-D {value}")] public IReadOnlyList<string> Define => Get<List<string>>(() => Define);
     /// <summary>Remove matching entries from the CMake cache, given a globbing expression.</summary>
     [Argument(Format = "-U {value}")] public IReadOnlyList<string> Undefine => Get<List<string>>(() => Undefine);
@@ -119,9 +119,9 @@ public partial class CMakeBuildSettings : ToolOptions
 [Command(Type = typeof(CMakeTasks), Command = nameof(CMakeTasks.CMakeInstall), Arguments = "--install")]
 public partial class CMakeInstallSettings : ToolOptions
 {
-    /// <summary>Specify the root directory of the cmake install script.</summary>
+    /// <summary>Specify the project binary directory to install from.</summary>
     [Argument(Format = "{value}", Position = 1)] public string RootDirectory => Get<string>(() => RootDirectory);
-    /// <summary>Specify the root directory of the 'CMakeLists.txt' file.</summary>
+    /// <summary>Specify the build configuration to install, for multi-config generators.</summary>
     [Argument(Format = "--config {value}")] public CMakeConfiguration Configuration => Get<CMakeConfiguration>(() => Configuration);
     /// <summary>Specify the output directory of the install script.</summary>
     [Argument(Format = "--prefix {value}")] public string OutputDirectory => Get<string>(() => OutputDirectory);
