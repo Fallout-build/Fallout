@@ -14,6 +14,18 @@
       "settingsClass": {
         "properties": [
           {
+            "name": "Preset",
+            "type": "string",
+            "format": "--preset {value}",
+            "help": "Specify a configure preset. CMake reads it from <c>CMakePresets.json</c> and <c>CMakeUserPresets.json</c> in the source directory. Values set on the command line, such as the generator, the binary directory or cache entries, override the values from the preset."
+          },
+          {
+            "name": "PresetsFile",
+            "type": "string",
+            "format": "--presets-file {value}",
+            "help": "Read presets from the given file instead of <c>CMakePresets.json</c> and <c>CMakeUserPresets.json</c>. Requires CMake 4.4 or later."
+          },
+          {
             "name": "Generator",
             "type": "CMakeGenerator",
             "format": "-G {value}",
@@ -135,7 +147,19 @@
             "type": "string",
             "format": "{value}",
             "position": 1,
-            "help": "Specify the project binary directory to build."
+            "help": "Specify the project binary directory to build. Do not combine it with <c>Preset</c>."
+          },
+          {
+            "name": "Preset",
+            "type": "string",
+            "format": "--preset {value}",
+            "help": "Specify a build preset. CMake reads it from <c>CMakePresets.json</c> and <c>CMakeUserPresets.json</c> in the working directory, and takes the binary directory from the configure preset of the build preset. Do not combine it with <c>OutputDirectory</c>. Values set on the command line, such as the configuration or the targets, override the values from the preset."
+          },
+          {
+            "name": "PresetsFile",
+            "type": "string",
+            "format": "--presets-file {value}",
+            "help": "Read presets from the given file instead of <c>CMakePresets.json</c> and <c>CMakeUserPresets.json</c>. Requires CMake 4.4 or later."
           },
           {
             "name": "Configuration",
