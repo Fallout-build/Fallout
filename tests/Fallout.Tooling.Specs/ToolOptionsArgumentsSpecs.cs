@@ -395,6 +395,49 @@ public class ToolOptionsArgumentsSpecs
         public string String => Get<string>(() => String);
     }
 
+    [Fact]
+    public void Forwarded_arguments_come_last_after_one_separator() => Assert<ForwardedToolOptions>(
+        new
+        {
+            ForwardedString = "forwarded",
+            String = "own",
+            ForwardedFlag = true
+        },
+        arguments: ["--string", "own", "--", "--forwarded", "forwarded", "--flag"]);
+
+    [Fact]
+    public void Without_forwarded_arguments_there_is_no_separator() => Assert<ForwardedToolOptions>(
+        new
+        {
+            String = "own",
+            ForwardedFlag = false
+        },
+        arguments: ["--string", "own"]);
+
+    [Fact]
+    public void Additional_arguments_stay_in_front_of_the_separator() => Assert<ForwardedToolOptions>(
+        new
+        {
+            ForwardedFlag = true,
+            ProcessAdditionalArguments = new[]
+            {
+                "-bl"
+            }
+        },
+        arguments: ["-bl", "--", "--flag"]);
+
+    private class ForwardedToolOptions : ToolOptions
+    {
+        [Argument(Format = "--string {value}")]
+        public string String => Get<string>(() => String);
+
+        [Argument(Format = "--forwarded {value}", Forwarded = true)]
+        public string ForwardedString => Get<string>(() => ForwardedString);
+
+        [Argument(Format = "--flag", Forwarded = true)]
+        public bool? ForwardedFlag => Get<bool>(() => ForwardedFlag);
+    }
+
     private void Assert<T>(object obj, IEnumerable<string> arguments)
         where T : ToolOptions, new()
     {

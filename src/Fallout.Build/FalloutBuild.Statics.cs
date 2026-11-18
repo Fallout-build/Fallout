@@ -107,21 +107,19 @@ public abstract partial class FalloutBuild
 
     private static AbsolutePath GetBuildAssemblyFile()
     {
-        var entryAssembly = Assembly.GetEntryAssembly();
+        return GetBuildAssemblyFile(Assembly.GetEntryAssembly(), Environment.GetCommandLineArgs().First());
+    }
+
+    // An entry assembly without a build class is a test host, so there is no build assembly. Test hosts
+    // include testhost, ReSharperTestRunner and a Microsoft.Testing.Platform test project, which is its own entry assembly.
+    internal static AbsolutePath GetBuildAssemblyFile(Assembly entryAssembly, string invokedLocation)
+    {
         if (entryAssembly == null || entryAssembly.GetTypes().All(x => !x.IsSubclassOf(typeof(FalloutBuild))))
         {
-            var assemblyName = entryAssembly?.GetName().Name;
-            Assert.True(assemblyName == null ||
-                        assemblyName.StartsWith("ReSharperTestRunner") ||
-                        assemblyName == "testhost",
-                $"Assembly name was {assemblyName.SingleQuote()}");
-
             return null;
         }
 
         var assemblyLocation = entryAssembly.Location;
-        var invokedLocation = Environment.GetCommandLineArgs().First();
-
         return assemblyLocation != string.Empty ? assemblyLocation : invokedLocation;
     }
 
