@@ -179,7 +179,7 @@ Runs `dotnet test` for each project in `TestProjects`.
 | Target | `Test`, depends on `Compile` |
 | Inherits | `ICompile`, `IHasArtifacts` |
 | You must implement | `TestProjects` |
-| Customize | `TestSettings` (all projects), `TestProjectSettings` (per project), `TestResultDirectory` (default `artifacts/test-results`), `TestDegreeOfParallelism` (default `1`), `UseTestingPlatform` (default `false`) |
+| Customize | `TestSettings` (all projects), `TestProjectSettings` (per project), `TestResultDirectory` (default `artifacts/test-results`), `TestDegreeOfParallelism` (default `1`), `UseTestingPlatform` (default: what `global.json` selects), `TestMtpSettings` and `TestMtpProjectSettings` (for Microsoft.Testing.Platform) |
 | Produces | `*.trx` and `*.xml` files in `TestResultDirectory` |
 
 `TestProjects` decides which projects are tests. A common choice is a naming convention:
@@ -215,32 +215,43 @@ public int TestDegreeOfParallelism { get; } = 1;
 
 #### Microsoft.Testing.Platform
 
-By default, `Test` runs the tests with VSTest. Some test frameworks, such as xunit v3, no longer support VSTest with the .NET 10 SDK. For those, set `UseTestingPlatform` to `true`. The target then runs `dotnet test --project` on [Microsoft.Testing.Platform](https://learn.microsoft.com/dotnet/core/testing/microsoft-testing-platform-intro):
+Some test frameworks, such as xunit v3, no longer support VSTest with the .NET 10 SDK. They run on [Microsoft.Testing.Platform](https://learn.microsoft.com/dotnet/core/testing/microsoft-testing-platform-intro) (MTP), which has a different `dotnet test` command line. Select it in the `global.json` of your repository:
+
+```json title="global.json"
+{
+  "test": { "runner": "Microsoft.Testing.Platform" }
+}
+```
+
+`Test` reads the same setting, so it runs `DotNetTestMtp` instead of `DotNetTest`. With the .NET 11 SDK, the `DOTNET_TEST_RUNNER` environment variable overrides `global.json`, for `dotnet test` and for `Test`. To choose yourself, implement `UseTestingPlatform`:
 
 ```csharp
 bool ITest.UseTestingPlatform => true;
 ```
 
-This needs some setup:
+A test application fails when it gets an option that none of its extensions knows. So the target passes an option only when the project has the extension for it. It finds the extensions through the project's MSBuild evaluation, including the ones that come with a test SDK or another package.
 
-- Opt in to the platform in the `global.json` of your repository:
+| Feature | Extension | Without it |
+|---|---|---|
+| `<Project>.trx` | `Microsoft.Testing.Extensions.TrxReport`, or xunit.v3 itself | A warning, and the project's tests are not counted |
+| Coverage as `<Project>.coverage.cobertura.<timestamp>.xml` | `coverlet.MTP`, which also excludes `.Generated.cs` files and writes the TeamCity format on TeamCity. The target deletes the files of earlier runs | — |
+| Coverage as `<Project>.cobertura.xml` | `Microsoft.Testing.Extensions.CodeCoverage` | A warning when coverage is collected |
+| GitHub Actions annotations and summary | `Microsoft.Testing.Extensions.GitHubActionsReport` or [GitHubActionsTestLogger](https://github.com/Tyrrrz/GitHubActionsTestLogger) | — |
+| Azure Pipelines annotations | `Microsoft.Testing.Extensions.AzureDevOpsReport` | — |
 
-  ```json title="global.json"
-  {
-    "test": { "runner": "Microsoft.Testing.Platform" }
-  }
-  ```
+On TeamCity, which has no reporter for the platform yet, the target imports the TRX files. Everything else works as with VSTest: `TestDegreeOfParallelism`, `--no-build` after `Compile`, all projects run even when one fails, the Azure Pipelines upload and the counts in the build summary.
 
-- Add the `Microsoft.Testing.Extensions.TrxReport` package to each test project, so it can write TRX files.
-- For code coverage, add the `coverlet.MTP` package to each test project.
+Customize the run with `TestMtpSettings` and `TestMtpProjectSettings`. `TestSettings` and `TestProjectSettings` only apply to VSTest. Options of the test applications go after a `--` on the command line, and `DotNetTestMtpSettings` puts them there:
 
-In this mode, the target works differently:
+```csharp
+Configure<DotNetTestMtpSettings, Project> ITest.TestMtpProjectSettings => (_, project) => _
+    .When(project.Name.EndsWith("IntegrationTests"), _ => _
+        .EnableHangDump()
+        .SetHangDumpTimeout("10m")
+        .AddTestApplicationArguments("--filter-not-trait", "Category=Slow"));
+```
 
-- It runs the projects one by one. `TestDegreeOfParallelism`, `TestSettings` and `TestProjectSettings` are not used.
-- It doesn't add the GitHub Actions or TeamCity loggers.
-- Coverage files are named `coverage.cobertura.*.xml`. The target deletes the ones from earlier runs before it starts.
-
-It still writes `<Project>.trx`, runs all projects even when one fails, skips the build when `Compile` ran, publishes the results to Azure Pipelines, and adds the counts to the build summary.
+`HangDump` needs the `Microsoft.Testing.Extensions.HangDump` package in that project. `--filter-not-trait` is an option of xunit.v3.
 
 ### `IPack`
 

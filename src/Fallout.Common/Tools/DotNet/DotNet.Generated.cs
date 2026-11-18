@@ -25,13 +25,20 @@ public partial class DotNetTasks : ToolTasks, IRequirePathTool
     public const string PathExecutable = "dotnet";
     /// <summary><p>For more details, visit the <a href="https://docs.microsoft.com/en-us/dotnet/core/tools/">official website</a>.</p></summary>
     public static IReadOnlyCollection<Output> DotNet(ArgumentStringHandler arguments, string workingDirectory = null, IReadOnlyDictionary<string, string> environmentVariables = null, int? timeout = null, bool? logOutput = null, bool? logInvocation = null, Action<OutputType, string> logger = null, Func<IProcess, object> exitHandler = null) => new DotNetTasks().Run(arguments, workingDirectory, environmentVariables, timeout, logOutput, logInvocation, logger, exitHandler);
-    /// <summary><p>The <c>dotnet test</c> command is used to execute unit tests in a given project. Unit tests are console application projects that have dependencies on the unit test framework (for example, MSTest, NUnit, or xUnit) and the dotnet test runner for the unit testing framework. These are packaged as NuGet packages and are restored as ordinary dependencies for the project.</p><p>For more details, visit the <a href="https://docs.microsoft.com/en-us/dotnet/core/tools/">official website</a>.</p></summary>
+    /// <summary><p>The <c>dotnet test</c> command is used to execute unit tests in a given project. Unit tests are console application projects that have dependencies on the unit test framework (for example, MSTest, NUnit, or xUnit) and the dotnet test runner for the unit testing framework. These are packaged as NuGet packages and are restored as ordinary dependencies for the project.<para/>These are the options of the VSTest runner. When <c>global.json</c> selects Microsoft.Testing.Platform, use <c>DotNetTestMtp</c> instead.</p><p>For more details, visit the <a href="https://docs.microsoft.com/en-us/dotnet/core/tools/">official website</a>.</p></summary>
     /// <remarks><p>This is a <a href="https://github.com/Fallout-build/Fallout">CLI wrapper with fluent API</a> that allows to modify the following arguments:</p><ul><li><c>&lt;projectFile&gt;</c> via <see cref="DotNetTestSettings.ProjectFile"/></li><li><c>--</c> via <see cref="DotNetTestSettings.RunSettings"/></li><li><c>--artifacts-path</c> via <see cref="DotNetTestSettings.ArtifactsPath"/></li><li><c>--blame</c> via <see cref="DotNetTestSettings.BlameMode"/></li><li><c>--blame-crash</c> via <see cref="DotNetTestSettings.BlameCrash"/></li><li><c>--blame-crash-collect-always</c> via <see cref="DotNetTestSettings.BlameCrashCollectAlways"/></li><li><c>--blame-crash-dump-type</c> via <see cref="DotNetTestSettings.BlameCrashDumpType"/></li><li><c>--blame-hang</c> via <see cref="DotNetTestSettings.BlameHang"/></li><li><c>--blame-hang-dump-type</c> via <see cref="DotNetTestSettings.BlameHangDumpType"/></li><li><c>--blame-hang-timeout</c> via <see cref="DotNetTestSettings.BlameHangTimeout"/></li><li><c>--collect</c> via <see cref="DotNetTestSettings.DataCollector"/></li><li><c>--configuration</c> via <see cref="DotNetTestSettings.Configuration"/></li><li><c>--diag</c> via <see cref="DotNetTestSettings.DiagnosticsFile"/></li><li><c>--disable-parallel</c> via <see cref="DotNetTestSettings.DisableParallel"/></li><li><c>--filter</c> via <see cref="DotNetTestSettings.Filter"/></li><li><c>--force</c> via <see cref="DotNetTestSettings.Force"/></li><li><c>--force-evaluate</c> via <see cref="DotNetTestSettings.ForceEvaluate"/></li><li><c>--framework</c> via <see cref="DotNetTestSettings.Framework"/></li><li><c>--ignore-failed-sources</c> via <see cref="DotNetTestSettings.IgnoreFailedSources"/></li><li><c>--list-tests</c> via <see cref="DotNetTestSettings.ListTests"/></li><li><c>--lock-file-path</c> via <see cref="DotNetTestSettings.LockFilePath"/></li><li><c>--locked-mode</c> via <see cref="DotNetTestSettings.LockedMode"/></li><li><c>--logger</c> via <see cref="DotNetTestSettings.Loggers"/></li><li><c>--no-build</c> via <see cref="DotNetTestSettings.NoBuild"/></li><li><c>--no-cache</c> via <see cref="DotNetTestSettings.NoCache"/></li><li><c>--no-dependencies</c> via <see cref="DotNetTestSettings.NoDependencies"/></li><li><c>--no-restore</c> via <see cref="DotNetTestSettings.NoRestore"/></li><li><c>--nologo</c> via <see cref="DotNetTestSettings.NoLogo"/></li><li><c>--output</c> via <see cref="DotNetTestSettings.Output"/></li><li><c>--packages</c> via <see cref="DotNetTestSettings.PackageDirectory"/></li><li><c>--results-directory</c> via <see cref="DotNetTestSettings.ResultsDirectory"/></li><li><c>--runtime</c> via <see cref="DotNetTestSettings.Runtime"/></li><li><c>--settings</c> via <see cref="DotNetTestSettings.SettingsFile"/></li><li><c>--source</c> via <see cref="DotNetTestSettings.Sources"/></li><li><c>--test-adapter-path</c> via <see cref="DotNetTestSettings.TestAdapterPath"/></li><li><c>--use-lock-file</c> via <see cref="DotNetTestSettings.UseLockFile"/></li><li><c>--verbosity</c> via <see cref="DotNetTestSettings.Verbosity"/></li><li><c>/property</c> via <see cref="DotNetTestSettings.Properties"/></li></ul></remarks>
     public static IReadOnlyCollection<Output> DotNetTest(DotNetTestSettings options = null) => new DotNetTasks().Run<DotNetTestSettings>(options);
     /// <inheritdoc cref="DotNetTasks.DotNetTest(Fallout.Common.Tools.DotNet.DotNetTestSettings)"/>
     public static IReadOnlyCollection<Output> DotNetTest(Configure<DotNetTestSettings> configurator) => new DotNetTasks().Run<DotNetTestSettings>(configurator.Invoke(new DotNetTestSettings()));
     /// <inheritdoc cref="DotNetTasks.DotNetTest(Fallout.Common.Tools.DotNet.DotNetTestSettings)"/>
     public static IEnumerable<(DotNetTestSettings Settings, IReadOnlyCollection<Output> Output)> DotNetTest(CombinatorialConfigure<DotNetTestSettings> configurator, int degreeOfParallelism = 1, bool completeOnFailure = false) => configurator.Invoke(DotNetTest, degreeOfParallelism, completeOnFailure);
+    /// <summary><p>Runs tests with <a href="https://learn.microsoft.com/dotnet/core/testing/microsoft-testing-platform-intro">Microsoft.Testing.Platform</a> (MTP). This is the <c>dotnet test</c> of the .NET 10 SDK and later when <c>global.json</c> selects the platform: <c>"test": { "runner": "Microsoft.Testing.Platform" }</c>. Its options differ from the VSTest options of <c>DotNetTest</c>.<para/>Options for <c>dotnet test</c> itself come first. Options for the test applications come after a single <c>--</c>. An option of an extension works only when every test application references the extension's package. Otherwise the run fails with exit code 5. For more details, visit the <a href="https://learn.microsoft.com/dotnet/core/tools/dotnet-test-mtp">official website</a>.</p><p>For more details, visit the <a href="https://docs.microsoft.com/en-us/dotnet/core/tools/">official website</a>.</p></summary>
+    /// <remarks><p>This is a <a href="https://github.com/Fallout-build/Fallout">CLI wrapper with fluent API</a> that allows to modify the following arguments:</p><ul><li><c>&lt;testApplicationArguments&gt;</c> via <see cref="DotNetTestMtpSettings.TestApplicationArguments"/></li><li><c>--arch</c> via <see cref="DotNetTestMtpSettings.Architecture"/></li><li><c>--artifacts-path</c> via <see cref="DotNetTestMtpSettings.ArtifactsPath"/></li><li><c>--config-file</c> via <see cref="DotNetTestMtpSettings.ConfigFile"/></li><li><c>--configuration</c> via <see cref="DotNetTestMtpSettings.Configuration"/></li><li><c>--coverage</c> via <see cref="DotNetTestMtpSettings.Coverage"/></li><li><c>--coverage-output</c> via <see cref="DotNetTestMtpSettings.CoverageOutput"/></li><li><c>--coverage-output-format</c> via <see cref="DotNetTestMtpSettings.CoverageOutputFormat"/></li><li><c>--coverage-settings</c> via <see cref="DotNetTestMtpSettings.CoverageSettings"/></li><li><c>--coverlet</c> via <see cref="DotNetTestMtpSettings.Coverlet"/></li><li><c>--coverlet-exclude</c> via <see cref="DotNetTestMtpSettings.CoverletExcludeFilters"/></li><li><c>--coverlet-exclude-by-attribute</c> via <see cref="DotNetTestMtpSettings.CoverletExcludeByAttributes"/></li><li><c>--coverlet-exclude-by-file</c> via <see cref="DotNetTestMtpSettings.CoverletExcludeByFiles"/></li><li><c>--coverlet-file-prefix</c> via <see cref="DotNetTestMtpSettings.CoverletFilePrefix"/></li><li><c>--coverlet-include</c> via <see cref="DotNetTestMtpSettings.CoverletIncludeFilters"/></li><li><c>--coverlet-include-test-assembly</c> via <see cref="DotNetTestMtpSettings.CoverletIncludeTestAssembly"/></li><li><c>--coverlet-output-format</c> via <see cref="DotNetTestMtpSettings.CoverletOutputFormats"/></li><li><c>--coverlet-single-hit</c> via <see cref="DotNetTestMtpSettings.CoverletSingleHit"/></li><li><c>--coverlet-skip-auto-props</c> via <see cref="DotNetTestMtpSettings.CoverletSkipAutoProps"/></li><li><c>--coverlet-threshold</c> via <see cref="DotNetTestMtpSettings.CoverletThreshold"/></li><li><c>--crashdump</c> via <see cref="DotNetTestMtpSettings.CrashDump"/></li><li><c>--crashdump-type</c> via <see cref="DotNetTestMtpSettings.CrashDumpType"/></li><li><c>--diagnostic</c> via <see cref="DotNetTestMtpSettings.Diagnostic"/></li><li><c>--diagnostic-file-prefix</c> via <see cref="DotNetTestMtpSettings.DiagnosticFilePrefix"/></li><li><c>--diagnostic-output-directory</c> via <see cref="DotNetTestMtpSettings.DiagnosticOutputDirectory"/></li><li><c>--diagnostic-verbosity</c> via <see cref="DotNetTestMtpSettings.DiagnosticVerbosity"/></li><li><c>--environment</c> via <see cref="DotNetTestMtpSettings.EnvironmentVariables"/></li><li><c>--filter</c> via <see cref="DotNetTestMtpSettings.Filter"/></li><li><c>--filter-uid</c> via <see cref="DotNetTestMtpSettings.FilterUids"/></li><li><c>--framework</c> via <see cref="DotNetTestMtpSettings.Framework"/></li><li><c>--hangdump</c> via <see cref="DotNetTestMtpSettings.HangDump"/></li><li><c>--hangdump-timeout</c> via <see cref="DotNetTestMtpSettings.HangDumpTimeout"/></li><li><c>--hangdump-type</c> via <see cref="DotNetTestMtpSettings.HangDumpType"/></li><li><c>--ignore-exit-code</c> via <see cref="DotNetTestMtpSettings.IgnoreExitCodes"/></li><li><c>--list-tests</c> via <see cref="DotNetTestMtpSettings.ListTests"/></li><li><c>--max-parallel-test-modules</c> via <see cref="DotNetTestMtpSettings.MaxParallelTestModules"/></li><li><c>--maximum-failed-tests</c> via <see cref="DotNetTestMtpSettings.MaximumFailedTests"/></li><li><c>--minimum-expected-tests</c> via <see cref="DotNetTestMtpSettings.MinimumExpectedTests"/></li><li><c>--minimum-expected-tests</c> via <see cref="DotNetTestMtpSettings.MinimumExpectedTestsPerModule"/></li><li><c>--no-ansi</c> via <see cref="DotNetTestMtpSettings.NoAnsi"/></li><li><c>--no-artifact-post-processing</c> via <see cref="DotNetTestMtpSettings.NoArtifactPostProcessing"/></li><li><c>--no-build</c> via <see cref="DotNetTestMtpSettings.NoBuild"/></li><li><c>--no-dependencies</c> via <see cref="DotNetTestMtpSettings.NoDependencies"/></li><li><c>--no-launch-profile</c> via <see cref="DotNetTestMtpSettings.NoLaunchProfile"/></li><li><c>--no-launch-profile-arguments</c> via <see cref="DotNetTestMtpSettings.NoLaunchProfileArguments"/></li><li><c>--no-progress</c> via <see cref="DotNetTestMtpSettings.NoProgress"/></li><li><c>--no-restore</c> via <see cref="DotNetTestMtpSettings.NoRestore"/></li><li><c>--nologo</c> via <see cref="DotNetTestMtpSettings.NoLogo"/></li><li><c>--os</c> via <see cref="DotNetTestMtpSettings.OperatingSystem"/></li><li><c>--output</c> via <see cref="DotNetTestMtpSettings.OutputVerbosity"/></li><li><c>--project</c> via <see cref="DotNetTestMtpSettings.ProjectFile"/></li><li><c>--report-azdo</c> via <see cref="DotNetTestMtpSettings.ReportAzureDevOps"/></li><li><c>--report-gh</c> via <see cref="DotNetTestMtpSettings.ReportGitHubActions"/></li><li><c>--report-trx</c> via <see cref="DotNetTestMtpSettings.ReportTrx"/></li><li><c>--report-trx-filename</c> via <see cref="DotNetTestMtpSettings.ReportTrxFileName"/></li><li><c>--results-directory</c> via <see cref="DotNetTestMtpSettings.ResultsDirectory"/></li><li><c>--results-directory-layout</c> via <see cref="DotNetTestMtpSettings.ResultsDirectoryLayout"/></li><li><c>--retry-failed-tests</c> via <see cref="DotNetTestMtpSettings.RetryFailedTests"/></li><li><c>--root-directory</c> via <see cref="DotNetTestMtpSettings.TestModulesRootDirectory"/></li><li><c>--runtime</c> via <see cref="DotNetTestMtpSettings.Runtime"/></li><li><c>--solution</c> via <see cref="DotNetTestMtpSettings.SolutionFile"/></li><li><c>--test-modules</c> via <see cref="DotNetTestMtpSettings.TestModules"/></li><li><c>--timeout</c> via <see cref="DotNetTestMtpSettings.Timeout"/></li><li><c>--treenode-filter</c> via <see cref="DotNetTestMtpSettings.TreenodeFilter"/></li><li><c>--use-current-runtime</c> via <see cref="DotNetTestMtpSettings.UseCurrentRuntime"/></li><li><c>--verbosity</c> via <see cref="DotNetTestMtpSettings.Verbosity"/></li><li><c>--zero-tests-policy</c> via <see cref="DotNetTestMtpSettings.ZeroTestsPolicy"/></li><li><c>/property</c> via <see cref="DotNetTestMtpSettings.Properties"/></li></ul></remarks>
+    public static IReadOnlyCollection<Output> DotNetTestMtp(DotNetTestMtpSettings options = null) => new DotNetTasks().Run<DotNetTestMtpSettings>(options);
+    /// <inheritdoc cref="DotNetTasks.DotNetTestMtp(Fallout.Common.Tools.DotNet.DotNetTestMtpSettings)"/>
+    public static IReadOnlyCollection<Output> DotNetTestMtp(Configure<DotNetTestMtpSettings> configurator) => new DotNetTasks().Run<DotNetTestMtpSettings>(configurator.Invoke(new DotNetTestMtpSettings()));
+    /// <inheritdoc cref="DotNetTasks.DotNetTestMtp(Fallout.Common.Tools.DotNet.DotNetTestMtpSettings)"/>
+    public static IEnumerable<(DotNetTestMtpSettings Settings, IReadOnlyCollection<Output> Output)> DotNetTestMtp(CombinatorialConfigure<DotNetTestMtpSettings> configurator, int degreeOfParallelism = 1, bool completeOnFailure = false) => configurator.Invoke(DotNetTestMtp, degreeOfParallelism, completeOnFailure);
     /// <summary><p>The <c>dotnet run</c> command provides a convenient option to run your application from the source code with one command. It's useful for fast iterative development from the command line. The command depends on the <a href="https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-build"><c>dotnet build</c></a> command to build the code. Any requirements for the build, such as that the project must be restored first, apply to <c>dotnet run</c> as well.</p><p>Output files are written into the default location, which is <c>bin/&lt;configuration&gt;/&lt;target&gt;</c>. For example if you have a <c>netcoreapp1.0</c> application and you run <c>dotnet run</c>, the output is placed in <c>bin/Debug/netcoreapp1.0</c>. Files are overwritten as needed. Temporary files are placed in the <c>obj</c> directory.</p><p>If the project specifies multiple frameworks, executing <c>dotnet run</c> results in an error unless the <c>-f|--framework &lt;FRAMEWORK&gt;</c> option is used to specify the framework.</p><p>The <c>dotnet run</c> command is used in the context of projects, not built assemblies. If you're trying to run a framework-dependent application DLL instead, you must use <a href="https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet">dotnet</a> without a command. For example, to run <c>myapp.dll</c>, use: <c>dotnet myapp.dll</c></p><p>For more information on the <c>dotnet</c> driver, see the <a href="https://docs.microsoft.com/en-us/dotnet/core/tools/index">.NET Core Command Line Tools (CLI)</a> topic.</p><p>In order to run the application, the <c>dotnet run</c> command resolves the dependencies of the application that are outside of the shared runtime from the NuGet cache. Because it uses cached dependencies, it's not recommended to use <c>dotnet run</c> to run applications in production. Instead, <a href="https://docs.microsoft.com/en-us/dotnet/core/deploying/index">create a deployment</a> using the <a href="https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-publish"><c>dotnet publish</c></a> command and deploy the published output.</p><p>For more details, visit the <a href="https://docs.microsoft.com/en-us/dotnet/core/tools/">official website</a>.</p></summary>
     /// <remarks><p>This is a <a href="https://github.com/Fallout-build/Fallout">CLI wrapper with fluent API</a> that allows to modify the following arguments:</p><ul><li><c>--</c> via <see cref="DotNetRunSettings.ApplicationArguments"/></li><li><c>--arch</c> via <see cref="DotNetRunSettings.Architecture"/></li><li><c>--artifacts-path</c> via <see cref="DotNetRunSettings.ArtifactsPath"/></li><li><c>--configuration</c> via <see cref="DotNetRunSettings.Configuration"/></li><li><c>--disable-build-servers</c> via <see cref="DotNetRunSettings.DisableBuildServers"/></li><li><c>--disable-parallel</c> via <see cref="DotNetRunSettings.DisableParallel"/></li><li><c>--force</c> via <see cref="DotNetRunSettings.Force"/></li><li><c>--force-evaluate</c> via <see cref="DotNetRunSettings.ForceEvaluate"/></li><li><c>--framework</c> via <see cref="DotNetRunSettings.Framework"/></li><li><c>--ignore-failed-sources</c> via <see cref="DotNetRunSettings.IgnoreFailedSources"/></li><li><c>--interactive</c> via <see cref="DotNetRunSettings.Interactive"/></li><li><c>--launch-profile</c> via <see cref="DotNetRunSettings.LaunchProfile"/></li><li><c>--lock-file-path</c> via <see cref="DotNetRunSettings.LockFilePath"/></li><li><c>--locked-mode</c> via <see cref="DotNetRunSettings.LockedMode"/></li><li><c>--no-build</c> via <see cref="DotNetRunSettings.NoBuild"/></li><li><c>--no-cache</c> via <see cref="DotNetRunSettings.NoCache"/></li><li><c>--no-dependencies</c> via <see cref="DotNetRunSettings.NoDependencies"/></li><li><c>--no-launch-profile</c> via <see cref="DotNetRunSettings.NoLaunchProfile"/></li><li><c>--no-restore</c> via <see cref="DotNetRunSettings.NoRestore"/></li><li><c>--no-self-contained</c> via <see cref="DotNetRunSettings.NoSelfContained"/></li><li><c>--os</c> via <see cref="DotNetRunSettings.OperatingSystem"/></li><li><c>--packages</c> via <see cref="DotNetRunSettings.PackageDirectory"/></li><li><c>--project</c> via <see cref="DotNetRunSettings.ProjectFile"/></li><li><c>--property</c> via <see cref="DotNetRunSettings.Properties"/></li><li><c>--runtime</c> via <see cref="DotNetRunSettings.Runtime"/></li><li><c>--self-contained</c> via <see cref="DotNetRunSettings.SelfContained"/></li><li><c>--source</c> via <see cref="DotNetRunSettings.Sources"/></li><li><c>--use-lock-file</c> via <see cref="DotNetRunSettings.UseLockFile"/></li><li><c>--verbosity</c> via <see cref="DotNetRunSettings.Verbosity"/></li></ul></remarks>
     public static IReadOnlyCollection<Output> DotNetRun(DotNetRunSettings options = null) => new DotNetTasks().Run<DotNetRunSettings>(options);
@@ -276,6 +283,150 @@ public partial class DotNetTestSettings : ToolOptions
     [Argument(Format = "--force-evaluate")] public bool? ForceEvaluate => Get<bool?>(() => ForceEvaluate);
     /// <summary>Specifies a runtime for the package restore. This is used to restore packages for runtimes not explicitly listed in the <c>&lt;RuntimeIdentifiers&gt;</c> tag in the <em>.csproj</em> file. For a list of Runtime Identifiers (RIDs), see the <a href="https://docs.microsoft.com/en-us/dotnet/core/rid-catalog">RID catalog</a>. Provide multiple RIDs by specifying this option multiple times.</summary>
     [Argument(Format = "--runtime {value}")] public string Runtime => Get<string>(() => Runtime);
+}
+#endregion
+#region DotNetTestMtpSettings
+/// <inheritdoc cref="DotNetTasks.DotNetTestMtp(Fallout.Common.Tools.DotNet.DotNetTestMtpSettings)"/>
+[ExcludeFromCodeCoverage]
+[Command(Type = typeof(DotNetTasks), Command = nameof(DotNetTasks.DotNetTestMtp), Arguments = "test")]
+public partial class DotNetTestMtpSettings : ToolOptions
+{
+    /// <summary>The test project to run, or a folder that contains it. Use only one of <c>ProjectFile</c>, <c>SolutionFile</c> and <c>TestModules</c>.</summary>
+    [Argument(Format = "--project {value}")] public string ProjectFile => Get<string>(() => ProjectFile);
+    /// <summary>The solution to run, or a folder that contains it. Use only one of <c>ProjectFile</c>, <c>SolutionFile</c> and <c>TestModules</c>.</summary>
+    [Argument(Format = "--solution {value}")] public string SolutionFile => Get<string>(() => SolutionFile);
+    /// <summary>A glob of already built test applications to run, such as <c>**/bin/**/Release/net10.0/*.Tests.dll</c>. Use only one of <c>ProjectFile</c>, <c>SolutionFile</c> and <c>TestModules</c>. Can't be used with <c>Configuration</c>, <c>Framework</c>, <c>Runtime</c>, <c>Architecture</c> or <c>OperatingSystem</c>.</summary>
+    [Argument(Format = "--test-modules {value}")] public string TestModules => Get<string>(() => TestModules);
+    /// <summary>The root directory of the <c>TestModules</c> glob.</summary>
+    [Argument(Format = "--root-directory {value}")] public string TestModulesRootDirectory => Get<string>(() => TestModulesRootDirectory);
+    /// <summary>The maximum number of test applications that run at the same time. The default is the number of processors.</summary>
+    [Argument(Format = "--max-parallel-test-modules {value}")] public int? MaxParallelTestModules => Get<int?>(() => MaxParallelTestModules);
+    /// <summary>The <a href="https://learn.microsoft.com/dotnet/core/testing/microsoft-testing-platform-config"><c>testconfig.json</c></a> file to use.</summary>
+    [Argument(Format = "--config-file {value}")] public string ConfigFile => Get<string>(() => ConfigFile);
+    /// <summary>The build configuration. The default for most projects is <c>Debug</c>.</summary>
+    [Argument(Format = "--configuration {value}")] public string Configuration => Get<string>(() => Configuration);
+    /// <summary>The <a href="https://learn.microsoft.com/dotnet/standard/frameworks">target framework</a> to run the tests for. The project must target it.</summary>
+    [Argument(Format = "--framework {value}")] public string Framework => Get<string>(() => Framework);
+    /// <summary>The <a href="https://learn.microsoft.com/dotnet/core/rid-catalog">runtime identifier</a> to test for.</summary>
+    [Argument(Format = "--runtime {value}")] public string Runtime => Get<string>(() => Runtime);
+    /// <summary>The target architecture. It's combined with the default runtime identifier. Don't use it together with <c>Runtime</c>.</summary>
+    [Argument(Format = "--arch {value}")] public string Architecture => Get<string>(() => Architecture);
+    /// <summary>The target operating system. It's combined with the default runtime identifier. Don't use it together with <c>Runtime</c>.</summary>
+    [Argument(Format = "--os {value}")] public string OperatingSystem => Get<string>(() => OperatingSystem);
+    /// <summary>Uses the current runtime as the target runtime. Needs the .NET 11 SDK.</summary>
+    [Argument(Format = "--use-current-runtime")] public bool? UseCurrentRuntime => Get<bool?>(() => UseCurrentRuntime);
+    /// <summary>Puts all build output in subfolders of this path, separated by project. For more information see <a href="https://learn.microsoft.com/dotnet/core/sdk/artifacts-output">Artifacts Output Layout</a>. Needs the .NET 11 SDK.</summary>
+    [Argument(Format = "--artifacts-path {value}")] public string ArtifactsPath => Get<string>(() => ArtifactsPath);
+    /// <summary>Doesn't build the test projects before running them. Implies <c>NoRestore</c>.</summary>
+    [Argument(Format = "--no-build")] public bool? NoBuild => Get<bool?>(() => NoBuild);
+    /// <summary>Doesn't run an implicit restore.</summary>
+    [Argument(Format = "--no-restore")] public bool? NoRestore => Get<bool?>(() => NoRestore);
+    /// <summary>Doesn't build the project-to-project references. Needs the .NET 11 SDK.</summary>
+    [Argument(Format = "--no-dependencies")] public bool? NoDependencies => Get<bool?>(() => NoDependencies);
+    /// <summary>The MSBuild verbosity level.</summary>
+    [Argument(Format = "--verbosity {value}")] public DotNetVerbosity Verbosity => Get<DotNetVerbosity>(() => Verbosity);
+    /// <summary>Sets or overrides MSBuild properties.</summary>
+    [Argument(Format = "/property:{key}={value}")] public IReadOnlyDictionary<string, object> Properties => Get<Dictionary<string, object>>(() => Properties);
+    /// <summary>Sets environment variables for the test applications. These override the values of a launch profile.</summary>
+    [Argument(Format = "--environment {key}={value}")] public IReadOnlyDictionary<string, object> EnvironmentVariables => Get<Dictionary<string, object>>(() => EnvironmentVariables);
+    /// <summary>The directory for the test results. It's created when it doesn't exist.</summary>
+    [Argument(Format = "--results-directory {value}")] public string ResultsDirectory => Get<string>(() => ResultsDirectory);
+    /// <summary>How a run of several test applications organizes the results directory. <c>flat</c> (the default) writes all results to one directory. <c>per-module</c> writes the results of each application to a subdirectory, so files with the same name don't overwrite each other. Needs the .NET SDK 10.0.402 or later.</summary>
+    [Argument(Format = "--results-directory-layout {value}")] public DotNetTestResultsDirectoryLayout ResultsDirectoryLayout => Get<DotNetTestResultsDirectoryLayout>(() => ResultsDirectoryLayout);
+    /// <summary>The directory for the diagnostic output.</summary>
+    [Argument(Format = "--diagnostic-output-directory {value}")] public string DiagnosticOutputDirectory => Get<string>(() => DiagnosticOutputDirectory);
+    /// <summary>The minimum number of tests of the whole run, including skipped tests. The run fails with exit code 9 when fewer tests run. For a minimum per test application, use <c>MinimumExpectedTestsPerModule</c>.</summary>
+    [Argument(Format = "--minimum-expected-tests {value}")] public int? MinimumExpectedTests => Get<int?>(() => MinimumExpectedTests);
+    /// <summary>Stops the run after this number of failed tests, with exit code 13. Applies to the whole run with the .NET 11 SDK, and to each test application before.</summary>
+    [Argument(Format = "--maximum-failed-tests {value}")] public int? MaximumFailedTests => Get<int?>(() => MaximumFailedTests);
+    /// <summary>Stops the run after this time, such as <c>90s</c>, <c>10m</c> or <c>2h</c>, with exit code 3. Applies to the whole run with the .NET 11 SDK, and to each test application before.</summary>
+    [Argument(Format = "--timeout {value}")] public string Timeout => Get<string>(() => Timeout);
+    /// <summary>Lists the discovered tests instead of running them.</summary>
+    [Argument(Format = "--list-tests")] public bool? ListTests => Get<bool?>(() => ListTests);
+    /// <summary>Doesn't write ANSI escape characters to the screen.</summary>
+    [Argument(Format = "--no-ansi")] public bool? NoAnsi => Get<bool?>(() => NoAnsi);
+    /// <summary>Doesn't report progress to the screen.</summary>
+    [Argument(Format = "--no-progress")] public bool? NoProgress => Get<bool?>(() => NoProgress);
+    /// <summary>Hides the .NET and Microsoft.Testing.Platform banners. Needs the .NET 11 SDK.</summary>
+    [Argument(Format = "--nologo")] public bool? NoLogo => Get<bool?>(() => NoLogo);
+    /// <summary>Doesn't merge compatible reports, such as TRX files, after a run of several test applications. Needs the .NET 11 SDK.</summary>
+    [Argument(Format = "--no-artifact-post-processing")] public bool? NoArtifactPostProcessing => Get<bool?>(() => NoArtifactPostProcessing);
+    /// <summary>Doesn't use <c>launchSettings.json</c> to configure the test applications.</summary>
+    [Argument(Format = "--no-launch-profile")] public bool? NoLaunchProfile => Get<bool?>(() => NoLaunchProfile);
+    /// <summary>Doesn't use the <c>commandLineArgs</c> of the launch profile.</summary>
+    [Argument(Format = "--no-launch-profile-arguments")] public bool? NoLaunchProfileArguments => Get<bool?>(() => NoLaunchProfileArguments);
+    /// <summary>The verbosity of the test output. <c>Minimal</c> needs Microsoft.Testing.Platform 2.4 or later.</summary>
+    [Argument(Format = "--output {value}")] public DotNetTestOutputVerbosity OutputVerbosity => Get<DotNetTestOutputVerbosity>(() => OutputVerbosity);
+    /// <summary>Runs the tests that match the expression. The syntax belongs to the test framework. MSTest, NUnit and xunit.v3 take the <a href="https://learn.microsoft.com/dotnet/core/testing/selective-unit-tests">VSTest filter syntax</a>.</summary>
+    [Argument(Format = "--filter {value}", Forwarded = true)] public string Filter => Get<string>(() => Filter);
+    /// <summary>Runs the tests that match the tree filter expression, for test frameworks that support it, such as TUnit.</summary>
+    [Argument(Format = "--treenode-filter {value}", Forwarded = true)] public string TreenodeFilter => Get<string>(() => TreenodeFilter);
+    /// <summary>Runs the tests with these test node UIDs.</summary>
+    [Argument(Format = "--filter-uid {value}", Separator = " ", Forwarded = true)] public IReadOnlyList<string> FilterUids => Get<List<string>>(() => FilterUids);
+    /// <summary>The minimum number of tests of each test application. Skipped tests don't count. A test application fails with exit code 9 when fewer tests run.</summary>
+    [Argument(Format = "--minimum-expected-tests {value}", Forwarded = true)] public int? MinimumExpectedTestsPerModule => Get<int?>(() => MinimumExpectedTestsPerModule);
+    /// <summary>Whether a test application that skipped all its tests fails. <c>allow-skipped</c> (the default) lets it pass. <c>strict</c> fails it with exit code 8. Needs Microsoft.Testing.Platform 2.3 or later.</summary>
+    [Argument(Format = "--zero-tests-policy {value}", Forwarded = true)] public DotNetTestZeroTestsPolicy ZeroTestsPolicy => Get<DotNetTestZeroTestsPolicy>(() => ZeroTestsPolicy);
+    /// <summary>Exit codes of the test applications that count as success, such as <c>8</c> for a test application without tests. See <a href="https://aka.ms/testingplatform/exitcodes">the exit codes</a>.</summary>
+    [Argument(Format = "--ignore-exit-code {value}", Separator = ";", Forwarded = true)] public IReadOnlyList<int> IgnoreExitCodes => Get<List<int>>(() => IgnoreExitCodes);
+    /// <summary>Writes a diagnostic log for each test application.</summary>
+    [Argument(Format = "--diagnostic", Forwarded = true)] public bool? Diagnostic => Get<bool?>(() => Diagnostic);
+    /// <summary>The level of the diagnostic log. The default is <c>Trace</c>.</summary>
+    [Argument(Format = "--diagnostic-verbosity {value}", Forwarded = true)] public DotNetTestDiagnosticVerbosity DiagnosticVerbosity => Get<DotNetTestDiagnosticVerbosity>(() => DiagnosticVerbosity);
+    /// <summary>The prefix of the diagnostic log file names.</summary>
+    [Argument(Format = "--diagnostic-file-prefix {value}", Forwarded = true)] public string DiagnosticFilePrefix => Get<string>(() => DiagnosticFilePrefix);
+    /// <summary>Writes a TRX report. Needs the <c>Microsoft.Testing.Extensions.TrxReport</c> package.</summary>
+    [Argument(Format = "--report-trx", Forwarded = true)] public bool? ReportTrx => Get<bool?>(() => ReportTrx);
+    /// <summary>The file name of the TRX report, relative to the results directory. Needs <c>ReportTrx</c>.</summary>
+    [Argument(Format = "--report-trx-filename {value}", Forwarded = true)] public string ReportTrxFileName => Get<string>(() => ReportTrxFileName);
+    /// <summary>Collects code coverage. Needs the <c>Microsoft.Testing.Extensions.CodeCoverage</c> package.</summary>
+    [Argument(Format = "--coverage", Forwarded = true)] public bool? Coverage => Get<bool?>(() => Coverage);
+    /// <summary>The file name of the coverage report, relative to the results directory. Give each test application its own name, or the reports overwrite each other.</summary>
+    [Argument(Format = "--coverage-output {value}", Forwarded = true)] public string CoverageOutput => Get<string>(() => CoverageOutput);
+    /// <summary>The format of the coverage report. The default is <c>coverage</c>.</summary>
+    [Argument(Format = "--coverage-output-format {value}", Forwarded = true)] public DotNetTestCoverageOutputFormat CoverageOutputFormat => Get<DotNetTestCoverageOutputFormat>(() => CoverageOutputFormat);
+    /// <summary>An XML file with <a href="https://learn.microsoft.com/dotnet/core/additional-tools/dotnet-coverage#settings">code coverage settings</a>.</summary>
+    [Argument(Format = "--coverage-settings {value}", Forwarded = true)] public string CoverageSettings => Get<string>(() => CoverageSettings);
+    /// <summary>Collects code coverage with Coverlet. Needs the <c>coverlet.MTP</c> package.</summary>
+    [Argument(Format = "--coverlet", Forwarded = true)] public bool? Coverlet => Get<bool?>(() => Coverlet);
+    /// <summary>The formats of the Coverlet reports. The default is <c>json</c> and <c>cobertura</c>.</summary>
+    [Argument(Format = "--coverlet-output-format {value}", Forwarded = true)] public IReadOnlyList<DotNetTestCoverletOutputFormat> CoverletOutputFormats => Get<List<DotNetTestCoverletOutputFormat>>(() => CoverletOutputFormats);
+    /// <summary>The prefix of the Coverlet report file names. Give each test application its own prefix, or the reports overwrite each other.</summary>
+    [Argument(Format = "--coverlet-file-prefix {value}", Forwarded = true)] public string CoverletFilePrefix => Get<string>(() => CoverletFilePrefix);
+    /// <summary>Includes the assemblies and types that match the filters, such as <c>[MyAssembly]MyNamespace.*</c>.</summary>
+    [Argument(Format = "--coverlet-include {value}", Forwarded = true)] public IReadOnlyList<string> CoverletIncludeFilters => Get<List<string>>(() => CoverletIncludeFilters);
+    /// <summary>Excludes the assemblies and types that match the filters, such as <c>[*.Tests]*</c>.</summary>
+    [Argument(Format = "--coverlet-exclude {value}", Forwarded = true)] public IReadOnlyList<string> CoverletExcludeFilters => Get<List<string>>(() => CoverletExcludeFilters);
+    /// <summary>Excludes the source files that match the glob patterns, such as <c>**/*.Generated.cs</c>.</summary>
+    [Argument(Format = "--coverlet-exclude-by-file {value}", Forwarded = true)] public IReadOnlyList<string> CoverletExcludeByFiles => Get<List<string>>(() => CoverletExcludeByFiles);
+    /// <summary>Excludes the methods and classes that have these attributes.</summary>
+    [Argument(Format = "--coverlet-exclude-by-attribute {value}", Forwarded = true)] public IReadOnlyList<string> CoverletExcludeByAttributes => Get<List<string>>(() => CoverletExcludeByAttributes);
+    /// <summary>Includes the test assembly in the coverage report.</summary>
+    [Argument(Format = "--coverlet-include-test-assembly", Forwarded = true)] public bool? CoverletIncludeTestAssembly => Get<bool?>(() => CoverletIncludeTestAssembly);
+    /// <summary>Counts at most one hit for each location in the code.</summary>
+    [Argument(Format = "--coverlet-single-hit", Forwarded = true)] public bool? CoverletSingleHit => Get<bool?>(() => CoverletSingleHit);
+    /// <summary>Skips auto-implemented properties.</summary>
+    [Argument(Format = "--coverlet-skip-auto-props", Forwarded = true)] public bool? CoverletSkipAutoProps => Get<bool?>(() => CoverletSkipAutoProps);
+    /// <summary>Fails the test application when the coverage percentage is lower.</summary>
+    [Argument(Format = "--coverlet-threshold {value}", Forwarded = true)] public int? CoverletThreshold => Get<int?>(() => CoverletThreshold);
+    /// <summary>Writes a dump file when a test application crashes. Needs the <c>Microsoft.Testing.Extensions.CrashDump</c> package.</summary>
+    [Argument(Format = "--crashdump", Forwarded = true)] public bool? CrashDump => Get<bool?>(() => CrashDump);
+    /// <summary>The type of the crash dump. The default is <c>Full</c>.</summary>
+    [Argument(Format = "--crashdump-type {value}", Forwarded = true)] public DotNetTestDumpType CrashDumpType => Get<DotNetTestDumpType>(() => CrashDumpType);
+    /// <summary>Writes a dump file and stops the test application when it runs longer than <c>HangDumpTimeout</c>. Needs the <c>Microsoft.Testing.Extensions.HangDump</c> package.</summary>
+    [Argument(Format = "--hangdump", Forwarded = true)] public bool? HangDump => Get<bool?>(() => HangDump);
+    /// <summary>The time after which the hang dump is written, such as <c>90s</c> or <c>10m</c>. The default is <c>30m</c>.</summary>
+    [Argument(Format = "--hangdump-timeout {value}", Forwarded = true)] public string HangDumpTimeout => Get<string>(() => HangDumpTimeout);
+    /// <summary>The type of the hang dump. The default is <c>Full</c>. <c>None</c> stops the test application without a dump.</summary>
+    [Argument(Format = "--hangdump-type {value}", Forwarded = true)] public DotNetTestDumpType HangDumpType => Get<DotNetTestDumpType>(() => HangDumpType);
+    /// <summary>Runs failed tests again, at most this number of times. Needs the <c>Microsoft.Testing.Extensions.Retry</c> package.</summary>
+    [Argument(Format = "--retry-failed-tests {value}", Forwarded = true)] public int? RetryFailedTests => Get<int?>(() => RetryFailedTests);
+    /// <summary>Writes log groups, annotations and a job summary on GitHub Actions. Needs the <c>Microsoft.Testing.Extensions.GitHubActionsReport</c> package.</summary>
+    [Argument(Format = "--report-gh", Forwarded = true)] public bool? ReportGitHubActions => Get<bool?>(() => ReportGitHubActions);
+    /// <summary>Writes errors, warnings and annotations in the format of Azure Pipelines. Needs the <c>Microsoft.Testing.Extensions.AzureDevOpsReport</c> package.</summary>
+    [Argument(Format = "--report-azdo", Forwarded = true)] public bool? ReportAzureDevOps => Get<bool?>(() => ReportAzureDevOps);
+    /// <summary>Other arguments for the test applications, such as the options of the test framework (for example <c>--report-xunit-trx</c> of xunit.v3) or of other extensions.</summary>
+    [Argument(Format = "{value}", Position = -1, Forwarded = true)] public IReadOnlyList<string> TestApplicationArguments => Get<List<string>>(() => TestApplicationArguments);
 }
 #endregion
 #region DotNetRunSettings
@@ -1532,6 +1683,893 @@ public static partial class DotNetTestSettingsExtensions
     /// <inheritdoc cref="DotNetTestSettings.Runtime"/>
     [Builder(Type = typeof(DotNetTestSettings), Property = nameof(DotNetTestSettings.Runtime))]
     public static T ResetRuntime<T>(this T o) where T : DotNetTestSettings => o.Modify(b => b.Remove(() => o.Runtime));
+    #endregion
+}
+#endregion
+#region DotNetTestMtpSettingsExtensions
+/// <inheritdoc cref="DotNetTasks.DotNetTestMtp(Fallout.Common.Tools.DotNet.DotNetTestMtpSettings)"/>
+[ExcludeFromCodeCoverage]
+public static partial class DotNetTestMtpSettingsExtensions
+{
+    #region ProjectFile
+    /// <inheritdoc cref="DotNetTestMtpSettings.ProjectFile"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ProjectFile))]
+    public static T SetProjectFile<T>(this T o, string v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.ProjectFile, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.ProjectFile"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ProjectFile))]
+    public static T ResetProjectFile<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.ProjectFile));
+    #endregion
+    #region SolutionFile
+    /// <inheritdoc cref="DotNetTestMtpSettings.SolutionFile"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.SolutionFile))]
+    public static T SetSolutionFile<T>(this T o, string v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.SolutionFile, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.SolutionFile"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.SolutionFile))]
+    public static T ResetSolutionFile<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.SolutionFile));
+    #endregion
+    #region TestModules
+    /// <inheritdoc cref="DotNetTestMtpSettings.TestModules"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.TestModules))]
+    public static T SetTestModules<T>(this T o, string v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.TestModules, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.TestModules"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.TestModules))]
+    public static T ResetTestModules<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.TestModules));
+    #endregion
+    #region TestModulesRootDirectory
+    /// <inheritdoc cref="DotNetTestMtpSettings.TestModulesRootDirectory"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.TestModulesRootDirectory))]
+    public static T SetTestModulesRootDirectory<T>(this T o, string v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.TestModulesRootDirectory, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.TestModulesRootDirectory"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.TestModulesRootDirectory))]
+    public static T ResetTestModulesRootDirectory<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.TestModulesRootDirectory));
+    #endregion
+    #region MaxParallelTestModules
+    /// <inheritdoc cref="DotNetTestMtpSettings.MaxParallelTestModules"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.MaxParallelTestModules))]
+    public static T SetMaxParallelTestModules<T>(this T o, int? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.MaxParallelTestModules, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.MaxParallelTestModules"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.MaxParallelTestModules))]
+    public static T ResetMaxParallelTestModules<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.MaxParallelTestModules));
+    #endregion
+    #region ConfigFile
+    /// <inheritdoc cref="DotNetTestMtpSettings.ConfigFile"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ConfigFile))]
+    public static T SetConfigFile<T>(this T o, string v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.ConfigFile, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.ConfigFile"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ConfigFile))]
+    public static T ResetConfigFile<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.ConfigFile));
+    #endregion
+    #region Configuration
+    /// <inheritdoc cref="DotNetTestMtpSettings.Configuration"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Configuration))]
+    public static T SetConfiguration<T>(this T o, string v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.Configuration, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.Configuration"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Configuration))]
+    public static T ResetConfiguration<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.Configuration));
+    #endregion
+    #region Framework
+    /// <inheritdoc cref="DotNetTestMtpSettings.Framework"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Framework))]
+    public static T SetFramework<T>(this T o, string v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.Framework, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.Framework"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Framework))]
+    public static T ResetFramework<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.Framework));
+    #endregion
+    #region Runtime
+    /// <inheritdoc cref="DotNetTestMtpSettings.Runtime"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Runtime))]
+    public static T SetRuntime<T>(this T o, string v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.Runtime, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.Runtime"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Runtime))]
+    public static T ResetRuntime<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.Runtime));
+    #endregion
+    #region Architecture
+    /// <inheritdoc cref="DotNetTestMtpSettings.Architecture"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Architecture))]
+    public static T SetArchitecture<T>(this T o, string v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.Architecture, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.Architecture"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Architecture))]
+    public static T ResetArchitecture<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.Architecture));
+    #endregion
+    #region OperatingSystem
+    /// <inheritdoc cref="DotNetTestMtpSettings.OperatingSystem"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.OperatingSystem))]
+    public static T SetOperatingSystem<T>(this T o, string v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.OperatingSystem, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.OperatingSystem"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.OperatingSystem))]
+    public static T ResetOperatingSystem<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.OperatingSystem));
+    #endregion
+    #region UseCurrentRuntime
+    /// <inheritdoc cref="DotNetTestMtpSettings.UseCurrentRuntime"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.UseCurrentRuntime))]
+    public static T SetUseCurrentRuntime<T>(this T o, bool? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.UseCurrentRuntime, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.UseCurrentRuntime"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.UseCurrentRuntime))]
+    public static T ResetUseCurrentRuntime<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.UseCurrentRuntime));
+    /// <inheritdoc cref="DotNetTestMtpSettings.UseCurrentRuntime"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.UseCurrentRuntime))]
+    public static T EnableUseCurrentRuntime<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.UseCurrentRuntime, true));
+    /// <inheritdoc cref="DotNetTestMtpSettings.UseCurrentRuntime"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.UseCurrentRuntime))]
+    public static T DisableUseCurrentRuntime<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.UseCurrentRuntime, false));
+    /// <inheritdoc cref="DotNetTestMtpSettings.UseCurrentRuntime"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.UseCurrentRuntime))]
+    public static T ToggleUseCurrentRuntime<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.UseCurrentRuntime, !o.UseCurrentRuntime));
+    #endregion
+    #region ArtifactsPath
+    /// <inheritdoc cref="DotNetTestMtpSettings.ArtifactsPath"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ArtifactsPath))]
+    public static T SetArtifactsPath<T>(this T o, string v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.ArtifactsPath, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.ArtifactsPath"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ArtifactsPath))]
+    public static T ResetArtifactsPath<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.ArtifactsPath));
+    #endregion
+    #region NoBuild
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoBuild"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoBuild))]
+    public static T SetNoBuild<T>(this T o, bool? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoBuild, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoBuild"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoBuild))]
+    public static T ResetNoBuild<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.NoBuild));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoBuild"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoBuild))]
+    public static T EnableNoBuild<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoBuild, true));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoBuild"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoBuild))]
+    public static T DisableNoBuild<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoBuild, false));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoBuild"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoBuild))]
+    public static T ToggleNoBuild<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoBuild, !o.NoBuild));
+    #endregion
+    #region NoRestore
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoRestore"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoRestore))]
+    public static T SetNoRestore<T>(this T o, bool? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoRestore, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoRestore"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoRestore))]
+    public static T ResetNoRestore<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.NoRestore));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoRestore"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoRestore))]
+    public static T EnableNoRestore<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoRestore, true));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoRestore"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoRestore))]
+    public static T DisableNoRestore<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoRestore, false));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoRestore"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoRestore))]
+    public static T ToggleNoRestore<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoRestore, !o.NoRestore));
+    #endregion
+    #region NoDependencies
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoDependencies"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoDependencies))]
+    public static T SetNoDependencies<T>(this T o, bool? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoDependencies, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoDependencies"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoDependencies))]
+    public static T ResetNoDependencies<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.NoDependencies));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoDependencies"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoDependencies))]
+    public static T EnableNoDependencies<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoDependencies, true));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoDependencies"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoDependencies))]
+    public static T DisableNoDependencies<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoDependencies, false));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoDependencies"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoDependencies))]
+    public static T ToggleNoDependencies<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoDependencies, !o.NoDependencies));
+    #endregion
+    #region Verbosity
+    /// <inheritdoc cref="DotNetTestMtpSettings.Verbosity"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Verbosity))]
+    public static T SetVerbosity<T>(this T o, DotNetVerbosity v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.Verbosity, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.Verbosity"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Verbosity))]
+    public static T ResetVerbosity<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.Verbosity));
+    #endregion
+    #region Properties
+    /// <inheritdoc cref="DotNetTestMtpSettings.Properties"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Properties))]
+    public static T SetProperties<T>(this T o, IDictionary<string, object> v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.Properties, v.ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase)));
+    /// <inheritdoc cref="DotNetTestMtpSettings.Properties"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Properties))]
+    public static T SetProperty<T>(this T o, string k, object v) where T : DotNetTestMtpSettings => o.Modify(b => b.SetDictionary(() => o.Properties, k, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.Properties"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Properties))]
+    public static T AddProperty<T>(this T o, string k, object v) where T : DotNetTestMtpSettings => o.Modify(b => b.AddDictionary(() => o.Properties, k, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.Properties"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Properties))]
+    public static T RemoveProperty<T>(this T o, string k) where T : DotNetTestMtpSettings => o.Modify(b => b.RemoveDictionary(() => o.Properties, k));
+    /// <inheritdoc cref="DotNetTestMtpSettings.Properties"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Properties))]
+    public static T ClearProperties<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.ClearDictionary(() => o.Properties));
+    #endregion
+    #region EnvironmentVariables
+    /// <inheritdoc cref="DotNetTestMtpSettings.EnvironmentVariables"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.EnvironmentVariables))]
+    public static T SetEnvironmentVariables<T>(this T o, IDictionary<string, object> v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.EnvironmentVariables, v.ToDictionary(x => x.Key, x => x.Value, StringComparer.OrdinalIgnoreCase)));
+    /// <inheritdoc cref="DotNetTestMtpSettings.EnvironmentVariables"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.EnvironmentVariables))]
+    public static T SetEnvironmentVariable<T>(this T o, string k, object v) where T : DotNetTestMtpSettings => o.Modify(b => b.SetDictionary(() => o.EnvironmentVariables, k, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.EnvironmentVariables"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.EnvironmentVariables))]
+    public static T AddEnvironmentVariable<T>(this T o, string k, object v) where T : DotNetTestMtpSettings => o.Modify(b => b.AddDictionary(() => o.EnvironmentVariables, k, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.EnvironmentVariables"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.EnvironmentVariables))]
+    public static T RemoveEnvironmentVariable<T>(this T o, string k) where T : DotNetTestMtpSettings => o.Modify(b => b.RemoveDictionary(() => o.EnvironmentVariables, k));
+    /// <inheritdoc cref="DotNetTestMtpSettings.EnvironmentVariables"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.EnvironmentVariables))]
+    public static T ClearEnvironmentVariables<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.ClearDictionary(() => o.EnvironmentVariables));
+    #endregion
+    #region ResultsDirectory
+    /// <inheritdoc cref="DotNetTestMtpSettings.ResultsDirectory"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ResultsDirectory))]
+    public static T SetResultsDirectory<T>(this T o, string v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.ResultsDirectory, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.ResultsDirectory"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ResultsDirectory))]
+    public static T ResetResultsDirectory<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.ResultsDirectory));
+    #endregion
+    #region ResultsDirectoryLayout
+    /// <inheritdoc cref="DotNetTestMtpSettings.ResultsDirectoryLayout"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ResultsDirectoryLayout))]
+    public static T SetResultsDirectoryLayout<T>(this T o, DotNetTestResultsDirectoryLayout v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.ResultsDirectoryLayout, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.ResultsDirectoryLayout"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ResultsDirectoryLayout))]
+    public static T ResetResultsDirectoryLayout<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.ResultsDirectoryLayout));
+    #endregion
+    #region DiagnosticOutputDirectory
+    /// <inheritdoc cref="DotNetTestMtpSettings.DiagnosticOutputDirectory"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.DiagnosticOutputDirectory))]
+    public static T SetDiagnosticOutputDirectory<T>(this T o, string v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.DiagnosticOutputDirectory, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.DiagnosticOutputDirectory"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.DiagnosticOutputDirectory))]
+    public static T ResetDiagnosticOutputDirectory<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.DiagnosticOutputDirectory));
+    #endregion
+    #region MinimumExpectedTests
+    /// <inheritdoc cref="DotNetTestMtpSettings.MinimumExpectedTests"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.MinimumExpectedTests))]
+    public static T SetMinimumExpectedTests<T>(this T o, int? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.MinimumExpectedTests, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.MinimumExpectedTests"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.MinimumExpectedTests))]
+    public static T ResetMinimumExpectedTests<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.MinimumExpectedTests));
+    #endregion
+    #region MaximumFailedTests
+    /// <inheritdoc cref="DotNetTestMtpSettings.MaximumFailedTests"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.MaximumFailedTests))]
+    public static T SetMaximumFailedTests<T>(this T o, int? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.MaximumFailedTests, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.MaximumFailedTests"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.MaximumFailedTests))]
+    public static T ResetMaximumFailedTests<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.MaximumFailedTests));
+    #endregion
+    #region Timeout
+    /// <inheritdoc cref="DotNetTestMtpSettings.Timeout"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Timeout))]
+    public static T SetTimeout<T>(this T o, string v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.Timeout, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.Timeout"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Timeout))]
+    public static T ResetTimeout<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.Timeout));
+    #endregion
+    #region ListTests
+    /// <inheritdoc cref="DotNetTestMtpSettings.ListTests"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ListTests))]
+    public static T SetListTests<T>(this T o, bool? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.ListTests, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.ListTests"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ListTests))]
+    public static T ResetListTests<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.ListTests));
+    /// <inheritdoc cref="DotNetTestMtpSettings.ListTests"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ListTests))]
+    public static T EnableListTests<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.ListTests, true));
+    /// <inheritdoc cref="DotNetTestMtpSettings.ListTests"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ListTests))]
+    public static T DisableListTests<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.ListTests, false));
+    /// <inheritdoc cref="DotNetTestMtpSettings.ListTests"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ListTests))]
+    public static T ToggleListTests<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.ListTests, !o.ListTests));
+    #endregion
+    #region NoAnsi
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoAnsi"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoAnsi))]
+    public static T SetNoAnsi<T>(this T o, bool? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoAnsi, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoAnsi"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoAnsi))]
+    public static T ResetNoAnsi<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.NoAnsi));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoAnsi"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoAnsi))]
+    public static T EnableNoAnsi<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoAnsi, true));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoAnsi"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoAnsi))]
+    public static T DisableNoAnsi<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoAnsi, false));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoAnsi"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoAnsi))]
+    public static T ToggleNoAnsi<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoAnsi, !o.NoAnsi));
+    #endregion
+    #region NoProgress
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoProgress"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoProgress))]
+    public static T SetNoProgress<T>(this T o, bool? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoProgress, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoProgress"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoProgress))]
+    public static T ResetNoProgress<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.NoProgress));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoProgress"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoProgress))]
+    public static T EnableNoProgress<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoProgress, true));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoProgress"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoProgress))]
+    public static T DisableNoProgress<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoProgress, false));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoProgress"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoProgress))]
+    public static T ToggleNoProgress<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoProgress, !o.NoProgress));
+    #endregion
+    #region NoLogo
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoLogo"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoLogo))]
+    public static T SetNoLogo<T>(this T o, bool? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoLogo, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoLogo"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoLogo))]
+    public static T ResetNoLogo<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.NoLogo));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoLogo"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoLogo))]
+    public static T EnableNoLogo<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoLogo, true));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoLogo"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoLogo))]
+    public static T DisableNoLogo<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoLogo, false));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoLogo"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoLogo))]
+    public static T ToggleNoLogo<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoLogo, !o.NoLogo));
+    #endregion
+    #region NoArtifactPostProcessing
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoArtifactPostProcessing"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoArtifactPostProcessing))]
+    public static T SetNoArtifactPostProcessing<T>(this T o, bool? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoArtifactPostProcessing, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoArtifactPostProcessing"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoArtifactPostProcessing))]
+    public static T ResetNoArtifactPostProcessing<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.NoArtifactPostProcessing));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoArtifactPostProcessing"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoArtifactPostProcessing))]
+    public static T EnableNoArtifactPostProcessing<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoArtifactPostProcessing, true));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoArtifactPostProcessing"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoArtifactPostProcessing))]
+    public static T DisableNoArtifactPostProcessing<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoArtifactPostProcessing, false));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoArtifactPostProcessing"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoArtifactPostProcessing))]
+    public static T ToggleNoArtifactPostProcessing<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoArtifactPostProcessing, !o.NoArtifactPostProcessing));
+    #endregion
+    #region NoLaunchProfile
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoLaunchProfile"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoLaunchProfile))]
+    public static T SetNoLaunchProfile<T>(this T o, bool? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoLaunchProfile, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoLaunchProfile"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoLaunchProfile))]
+    public static T ResetNoLaunchProfile<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.NoLaunchProfile));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoLaunchProfile"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoLaunchProfile))]
+    public static T EnableNoLaunchProfile<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoLaunchProfile, true));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoLaunchProfile"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoLaunchProfile))]
+    public static T DisableNoLaunchProfile<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoLaunchProfile, false));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoLaunchProfile"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoLaunchProfile))]
+    public static T ToggleNoLaunchProfile<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoLaunchProfile, !o.NoLaunchProfile));
+    #endregion
+    #region NoLaunchProfileArguments
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoLaunchProfileArguments"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoLaunchProfileArguments))]
+    public static T SetNoLaunchProfileArguments<T>(this T o, bool? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoLaunchProfileArguments, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoLaunchProfileArguments"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoLaunchProfileArguments))]
+    public static T ResetNoLaunchProfileArguments<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.NoLaunchProfileArguments));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoLaunchProfileArguments"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoLaunchProfileArguments))]
+    public static T EnableNoLaunchProfileArguments<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoLaunchProfileArguments, true));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoLaunchProfileArguments"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoLaunchProfileArguments))]
+    public static T DisableNoLaunchProfileArguments<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoLaunchProfileArguments, false));
+    /// <inheritdoc cref="DotNetTestMtpSettings.NoLaunchProfileArguments"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.NoLaunchProfileArguments))]
+    public static T ToggleNoLaunchProfileArguments<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.NoLaunchProfileArguments, !o.NoLaunchProfileArguments));
+    #endregion
+    #region OutputVerbosity
+    /// <inheritdoc cref="DotNetTestMtpSettings.OutputVerbosity"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.OutputVerbosity))]
+    public static T SetOutputVerbosity<T>(this T o, DotNetTestOutputVerbosity v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.OutputVerbosity, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.OutputVerbosity"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.OutputVerbosity))]
+    public static T ResetOutputVerbosity<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.OutputVerbosity));
+    #endregion
+    #region Filter
+    /// <inheritdoc cref="DotNetTestMtpSettings.Filter"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Filter))]
+    public static T SetFilter<T>(this T o, string v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.Filter, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.Filter"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Filter))]
+    public static T ResetFilter<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.Filter));
+    #endregion
+    #region TreenodeFilter
+    /// <inheritdoc cref="DotNetTestMtpSettings.TreenodeFilter"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.TreenodeFilter))]
+    public static T SetTreenodeFilter<T>(this T o, string v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.TreenodeFilter, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.TreenodeFilter"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.TreenodeFilter))]
+    public static T ResetTreenodeFilter<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.TreenodeFilter));
+    #endregion
+    #region FilterUids
+    /// <inheritdoc cref="DotNetTestMtpSettings.FilterUids"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.FilterUids))]
+    public static T SetFilterUids<T>(this T o, params string[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.FilterUids, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.FilterUids"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.FilterUids))]
+    public static T SetFilterUids<T>(this T o, IEnumerable<string> v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.FilterUids, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.FilterUids"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.FilterUids))]
+    public static T AddFilterUids<T>(this T o, params string[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.AddCollection(() => o.FilterUids, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.FilterUids"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.FilterUids))]
+    public static T AddFilterUids<T>(this T o, IEnumerable<string> v) where T : DotNetTestMtpSettings => o.Modify(b => b.AddCollection(() => o.FilterUids, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.FilterUids"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.FilterUids))]
+    public static T RemoveFilterUids<T>(this T o, params string[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.RemoveCollection(() => o.FilterUids, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.FilterUids"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.FilterUids))]
+    public static T RemoveFilterUids<T>(this T o, IEnumerable<string> v) where T : DotNetTestMtpSettings => o.Modify(b => b.RemoveCollection(() => o.FilterUids, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.FilterUids"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.FilterUids))]
+    public static T ClearFilterUids<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.ClearCollection(() => o.FilterUids));
+    #endregion
+    #region MinimumExpectedTestsPerModule
+    /// <inheritdoc cref="DotNetTestMtpSettings.MinimumExpectedTestsPerModule"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.MinimumExpectedTestsPerModule))]
+    public static T SetMinimumExpectedTestsPerModule<T>(this T o, int? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.MinimumExpectedTestsPerModule, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.MinimumExpectedTestsPerModule"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.MinimumExpectedTestsPerModule))]
+    public static T ResetMinimumExpectedTestsPerModule<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.MinimumExpectedTestsPerModule));
+    #endregion
+    #region ZeroTestsPolicy
+    /// <inheritdoc cref="DotNetTestMtpSettings.ZeroTestsPolicy"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ZeroTestsPolicy))]
+    public static T SetZeroTestsPolicy<T>(this T o, DotNetTestZeroTestsPolicy v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.ZeroTestsPolicy, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.ZeroTestsPolicy"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ZeroTestsPolicy))]
+    public static T ResetZeroTestsPolicy<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.ZeroTestsPolicy));
+    #endregion
+    #region IgnoreExitCodes
+    /// <inheritdoc cref="DotNetTestMtpSettings.IgnoreExitCodes"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.IgnoreExitCodes))]
+    public static T SetIgnoreExitCodes<T>(this T o, params int[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.IgnoreExitCodes, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.IgnoreExitCodes"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.IgnoreExitCodes))]
+    public static T SetIgnoreExitCodes<T>(this T o, IEnumerable<int> v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.IgnoreExitCodes, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.IgnoreExitCodes"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.IgnoreExitCodes))]
+    public static T AddIgnoreExitCodes<T>(this T o, params int[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.AddCollection(() => o.IgnoreExitCodes, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.IgnoreExitCodes"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.IgnoreExitCodes))]
+    public static T AddIgnoreExitCodes<T>(this T o, IEnumerable<int> v) where T : DotNetTestMtpSettings => o.Modify(b => b.AddCollection(() => o.IgnoreExitCodes, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.IgnoreExitCodes"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.IgnoreExitCodes))]
+    public static T RemoveIgnoreExitCodes<T>(this T o, params int[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.RemoveCollection(() => o.IgnoreExitCodes, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.IgnoreExitCodes"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.IgnoreExitCodes))]
+    public static T RemoveIgnoreExitCodes<T>(this T o, IEnumerable<int> v) where T : DotNetTestMtpSettings => o.Modify(b => b.RemoveCollection(() => o.IgnoreExitCodes, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.IgnoreExitCodes"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.IgnoreExitCodes))]
+    public static T ClearIgnoreExitCodes<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.ClearCollection(() => o.IgnoreExitCodes));
+    #endregion
+    #region Diagnostic
+    /// <inheritdoc cref="DotNetTestMtpSettings.Diagnostic"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Diagnostic))]
+    public static T SetDiagnostic<T>(this T o, bool? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.Diagnostic, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.Diagnostic"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Diagnostic))]
+    public static T ResetDiagnostic<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.Diagnostic));
+    /// <inheritdoc cref="DotNetTestMtpSettings.Diagnostic"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Diagnostic))]
+    public static T EnableDiagnostic<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.Diagnostic, true));
+    /// <inheritdoc cref="DotNetTestMtpSettings.Diagnostic"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Diagnostic))]
+    public static T DisableDiagnostic<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.Diagnostic, false));
+    /// <inheritdoc cref="DotNetTestMtpSettings.Diagnostic"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Diagnostic))]
+    public static T ToggleDiagnostic<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.Diagnostic, !o.Diagnostic));
+    #endregion
+    #region DiagnosticVerbosity
+    /// <inheritdoc cref="DotNetTestMtpSettings.DiagnosticVerbosity"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.DiagnosticVerbosity))]
+    public static T SetDiagnosticVerbosity<T>(this T o, DotNetTestDiagnosticVerbosity v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.DiagnosticVerbosity, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.DiagnosticVerbosity"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.DiagnosticVerbosity))]
+    public static T ResetDiagnosticVerbosity<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.DiagnosticVerbosity));
+    #endregion
+    #region DiagnosticFilePrefix
+    /// <inheritdoc cref="DotNetTestMtpSettings.DiagnosticFilePrefix"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.DiagnosticFilePrefix))]
+    public static T SetDiagnosticFilePrefix<T>(this T o, string v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.DiagnosticFilePrefix, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.DiagnosticFilePrefix"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.DiagnosticFilePrefix))]
+    public static T ResetDiagnosticFilePrefix<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.DiagnosticFilePrefix));
+    #endregion
+    #region ReportTrx
+    /// <inheritdoc cref="DotNetTestMtpSettings.ReportTrx"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ReportTrx))]
+    public static T SetReportTrx<T>(this T o, bool? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.ReportTrx, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.ReportTrx"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ReportTrx))]
+    public static T ResetReportTrx<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.ReportTrx));
+    /// <inheritdoc cref="DotNetTestMtpSettings.ReportTrx"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ReportTrx))]
+    public static T EnableReportTrx<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.ReportTrx, true));
+    /// <inheritdoc cref="DotNetTestMtpSettings.ReportTrx"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ReportTrx))]
+    public static T DisableReportTrx<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.ReportTrx, false));
+    /// <inheritdoc cref="DotNetTestMtpSettings.ReportTrx"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ReportTrx))]
+    public static T ToggleReportTrx<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.ReportTrx, !o.ReportTrx));
+    #endregion
+    #region ReportTrxFileName
+    /// <inheritdoc cref="DotNetTestMtpSettings.ReportTrxFileName"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ReportTrxFileName))]
+    public static T SetReportTrxFileName<T>(this T o, string v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.ReportTrxFileName, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.ReportTrxFileName"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ReportTrxFileName))]
+    public static T ResetReportTrxFileName<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.ReportTrxFileName));
+    #endregion
+    #region Coverage
+    /// <inheritdoc cref="DotNetTestMtpSettings.Coverage"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Coverage))]
+    public static T SetCoverage<T>(this T o, bool? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.Coverage, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.Coverage"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Coverage))]
+    public static T ResetCoverage<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.Coverage));
+    /// <inheritdoc cref="DotNetTestMtpSettings.Coverage"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Coverage))]
+    public static T EnableCoverage<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.Coverage, true));
+    /// <inheritdoc cref="DotNetTestMtpSettings.Coverage"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Coverage))]
+    public static T DisableCoverage<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.Coverage, false));
+    /// <inheritdoc cref="DotNetTestMtpSettings.Coverage"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Coverage))]
+    public static T ToggleCoverage<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.Coverage, !o.Coverage));
+    #endregion
+    #region CoverageOutput
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverageOutput"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverageOutput))]
+    public static T SetCoverageOutput<T>(this T o, string v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverageOutput, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverageOutput"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverageOutput))]
+    public static T ResetCoverageOutput<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.CoverageOutput));
+    #endregion
+    #region CoverageOutputFormat
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverageOutputFormat"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverageOutputFormat))]
+    public static T SetCoverageOutputFormat<T>(this T o, DotNetTestCoverageOutputFormat v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverageOutputFormat, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverageOutputFormat"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverageOutputFormat))]
+    public static T ResetCoverageOutputFormat<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.CoverageOutputFormat));
+    #endregion
+    #region CoverageSettings
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverageSettings"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverageSettings))]
+    public static T SetCoverageSettings<T>(this T o, string v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverageSettings, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverageSettings"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverageSettings))]
+    public static T ResetCoverageSettings<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.CoverageSettings));
+    #endregion
+    #region Coverlet
+    /// <inheritdoc cref="DotNetTestMtpSettings.Coverlet"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Coverlet))]
+    public static T SetCoverlet<T>(this T o, bool? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.Coverlet, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.Coverlet"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Coverlet))]
+    public static T ResetCoverlet<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.Coverlet));
+    /// <inheritdoc cref="DotNetTestMtpSettings.Coverlet"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Coverlet))]
+    public static T EnableCoverlet<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.Coverlet, true));
+    /// <inheritdoc cref="DotNetTestMtpSettings.Coverlet"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Coverlet))]
+    public static T DisableCoverlet<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.Coverlet, false));
+    /// <inheritdoc cref="DotNetTestMtpSettings.Coverlet"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.Coverlet))]
+    public static T ToggleCoverlet<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.Coverlet, !o.Coverlet));
+    #endregion
+    #region CoverletOutputFormats
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletOutputFormats"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletOutputFormats))]
+    public static T SetCoverletOutputFormats<T>(this T o, params DotNetTestCoverletOutputFormat[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletOutputFormats, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletOutputFormats"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletOutputFormats))]
+    public static T SetCoverletOutputFormats<T>(this T o, IEnumerable<DotNetTestCoverletOutputFormat> v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletOutputFormats, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletOutputFormats"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletOutputFormats))]
+    public static T AddCoverletOutputFormats<T>(this T o, params DotNetTestCoverletOutputFormat[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.AddCollection(() => o.CoverletOutputFormats, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletOutputFormats"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletOutputFormats))]
+    public static T AddCoverletOutputFormats<T>(this T o, IEnumerable<DotNetTestCoverletOutputFormat> v) where T : DotNetTestMtpSettings => o.Modify(b => b.AddCollection(() => o.CoverletOutputFormats, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletOutputFormats"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletOutputFormats))]
+    public static T RemoveCoverletOutputFormats<T>(this T o, params DotNetTestCoverletOutputFormat[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.RemoveCollection(() => o.CoverletOutputFormats, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletOutputFormats"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletOutputFormats))]
+    public static T RemoveCoverletOutputFormats<T>(this T o, IEnumerable<DotNetTestCoverletOutputFormat> v) where T : DotNetTestMtpSettings => o.Modify(b => b.RemoveCollection(() => o.CoverletOutputFormats, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletOutputFormats"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletOutputFormats))]
+    public static T ClearCoverletOutputFormats<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.ClearCollection(() => o.CoverletOutputFormats));
+    #endregion
+    #region CoverletFilePrefix
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletFilePrefix"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletFilePrefix))]
+    public static T SetCoverletFilePrefix<T>(this T o, string v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletFilePrefix, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletFilePrefix"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletFilePrefix))]
+    public static T ResetCoverletFilePrefix<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.CoverletFilePrefix));
+    #endregion
+    #region CoverletIncludeFilters
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletIncludeFilters"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletIncludeFilters))]
+    public static T SetCoverletIncludeFilters<T>(this T o, params string[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletIncludeFilters, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletIncludeFilters"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletIncludeFilters))]
+    public static T SetCoverletIncludeFilters<T>(this T o, IEnumerable<string> v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletIncludeFilters, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletIncludeFilters"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletIncludeFilters))]
+    public static T AddCoverletIncludeFilters<T>(this T o, params string[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.AddCollection(() => o.CoverletIncludeFilters, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletIncludeFilters"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletIncludeFilters))]
+    public static T AddCoverletIncludeFilters<T>(this T o, IEnumerable<string> v) where T : DotNetTestMtpSettings => o.Modify(b => b.AddCollection(() => o.CoverletIncludeFilters, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletIncludeFilters"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletIncludeFilters))]
+    public static T RemoveCoverletIncludeFilters<T>(this T o, params string[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.RemoveCollection(() => o.CoverletIncludeFilters, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletIncludeFilters"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletIncludeFilters))]
+    public static T RemoveCoverletIncludeFilters<T>(this T o, IEnumerable<string> v) where T : DotNetTestMtpSettings => o.Modify(b => b.RemoveCollection(() => o.CoverletIncludeFilters, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletIncludeFilters"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletIncludeFilters))]
+    public static T ClearCoverletIncludeFilters<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.ClearCollection(() => o.CoverletIncludeFilters));
+    #endregion
+    #region CoverletExcludeFilters
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletExcludeFilters"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletExcludeFilters))]
+    public static T SetCoverletExcludeFilters<T>(this T o, params string[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletExcludeFilters, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletExcludeFilters"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletExcludeFilters))]
+    public static T SetCoverletExcludeFilters<T>(this T o, IEnumerable<string> v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletExcludeFilters, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletExcludeFilters"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletExcludeFilters))]
+    public static T AddCoverletExcludeFilters<T>(this T o, params string[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.AddCollection(() => o.CoverletExcludeFilters, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletExcludeFilters"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletExcludeFilters))]
+    public static T AddCoverletExcludeFilters<T>(this T o, IEnumerable<string> v) where T : DotNetTestMtpSettings => o.Modify(b => b.AddCollection(() => o.CoverletExcludeFilters, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletExcludeFilters"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletExcludeFilters))]
+    public static T RemoveCoverletExcludeFilters<T>(this T o, params string[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.RemoveCollection(() => o.CoverletExcludeFilters, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletExcludeFilters"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletExcludeFilters))]
+    public static T RemoveCoverletExcludeFilters<T>(this T o, IEnumerable<string> v) where T : DotNetTestMtpSettings => o.Modify(b => b.RemoveCollection(() => o.CoverletExcludeFilters, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletExcludeFilters"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletExcludeFilters))]
+    public static T ClearCoverletExcludeFilters<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.ClearCollection(() => o.CoverletExcludeFilters));
+    #endregion
+    #region CoverletExcludeByFiles
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletExcludeByFiles"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletExcludeByFiles))]
+    public static T SetCoverletExcludeByFiles<T>(this T o, params string[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletExcludeByFiles, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletExcludeByFiles"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletExcludeByFiles))]
+    public static T SetCoverletExcludeByFiles<T>(this T o, IEnumerable<string> v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletExcludeByFiles, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletExcludeByFiles"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletExcludeByFiles))]
+    public static T AddCoverletExcludeByFiles<T>(this T o, params string[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.AddCollection(() => o.CoverletExcludeByFiles, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletExcludeByFiles"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletExcludeByFiles))]
+    public static T AddCoverletExcludeByFiles<T>(this T o, IEnumerable<string> v) where T : DotNetTestMtpSettings => o.Modify(b => b.AddCollection(() => o.CoverletExcludeByFiles, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletExcludeByFiles"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletExcludeByFiles))]
+    public static T RemoveCoverletExcludeByFiles<T>(this T o, params string[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.RemoveCollection(() => o.CoverletExcludeByFiles, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletExcludeByFiles"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletExcludeByFiles))]
+    public static T RemoveCoverletExcludeByFiles<T>(this T o, IEnumerable<string> v) where T : DotNetTestMtpSettings => o.Modify(b => b.RemoveCollection(() => o.CoverletExcludeByFiles, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletExcludeByFiles"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletExcludeByFiles))]
+    public static T ClearCoverletExcludeByFiles<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.ClearCollection(() => o.CoverletExcludeByFiles));
+    #endregion
+    #region CoverletExcludeByAttributes
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletExcludeByAttributes"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletExcludeByAttributes))]
+    public static T SetCoverletExcludeByAttributes<T>(this T o, params string[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletExcludeByAttributes, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletExcludeByAttributes"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletExcludeByAttributes))]
+    public static T SetCoverletExcludeByAttributes<T>(this T o, IEnumerable<string> v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletExcludeByAttributes, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletExcludeByAttributes"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletExcludeByAttributes))]
+    public static T AddCoverletExcludeByAttributes<T>(this T o, params string[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.AddCollection(() => o.CoverletExcludeByAttributes, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletExcludeByAttributes"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletExcludeByAttributes))]
+    public static T AddCoverletExcludeByAttributes<T>(this T o, IEnumerable<string> v) where T : DotNetTestMtpSettings => o.Modify(b => b.AddCollection(() => o.CoverletExcludeByAttributes, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletExcludeByAttributes"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletExcludeByAttributes))]
+    public static T RemoveCoverletExcludeByAttributes<T>(this T o, params string[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.RemoveCollection(() => o.CoverletExcludeByAttributes, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletExcludeByAttributes"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletExcludeByAttributes))]
+    public static T RemoveCoverletExcludeByAttributes<T>(this T o, IEnumerable<string> v) where T : DotNetTestMtpSettings => o.Modify(b => b.RemoveCollection(() => o.CoverletExcludeByAttributes, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletExcludeByAttributes"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletExcludeByAttributes))]
+    public static T ClearCoverletExcludeByAttributes<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.ClearCollection(() => o.CoverletExcludeByAttributes));
+    #endregion
+    #region CoverletIncludeTestAssembly
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletIncludeTestAssembly"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletIncludeTestAssembly))]
+    public static T SetCoverletIncludeTestAssembly<T>(this T o, bool? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletIncludeTestAssembly, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletIncludeTestAssembly"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletIncludeTestAssembly))]
+    public static T ResetCoverletIncludeTestAssembly<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.CoverletIncludeTestAssembly));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletIncludeTestAssembly"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletIncludeTestAssembly))]
+    public static T EnableCoverletIncludeTestAssembly<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletIncludeTestAssembly, true));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletIncludeTestAssembly"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletIncludeTestAssembly))]
+    public static T DisableCoverletIncludeTestAssembly<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletIncludeTestAssembly, false));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletIncludeTestAssembly"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletIncludeTestAssembly))]
+    public static T ToggleCoverletIncludeTestAssembly<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletIncludeTestAssembly, !o.CoverletIncludeTestAssembly));
+    #endregion
+    #region CoverletSingleHit
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletSingleHit"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletSingleHit))]
+    public static T SetCoverletSingleHit<T>(this T o, bool? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletSingleHit, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletSingleHit"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletSingleHit))]
+    public static T ResetCoverletSingleHit<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.CoverletSingleHit));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletSingleHit"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletSingleHit))]
+    public static T EnableCoverletSingleHit<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletSingleHit, true));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletSingleHit"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletSingleHit))]
+    public static T DisableCoverletSingleHit<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletSingleHit, false));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletSingleHit"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletSingleHit))]
+    public static T ToggleCoverletSingleHit<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletSingleHit, !o.CoverletSingleHit));
+    #endregion
+    #region CoverletSkipAutoProps
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletSkipAutoProps"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletSkipAutoProps))]
+    public static T SetCoverletSkipAutoProps<T>(this T o, bool? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletSkipAutoProps, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletSkipAutoProps"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletSkipAutoProps))]
+    public static T ResetCoverletSkipAutoProps<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.CoverletSkipAutoProps));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletSkipAutoProps"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletSkipAutoProps))]
+    public static T EnableCoverletSkipAutoProps<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletSkipAutoProps, true));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletSkipAutoProps"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletSkipAutoProps))]
+    public static T DisableCoverletSkipAutoProps<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletSkipAutoProps, false));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletSkipAutoProps"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletSkipAutoProps))]
+    public static T ToggleCoverletSkipAutoProps<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletSkipAutoProps, !o.CoverletSkipAutoProps));
+    #endregion
+    #region CoverletThreshold
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletThreshold"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletThreshold))]
+    public static T SetCoverletThreshold<T>(this T o, int? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CoverletThreshold, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CoverletThreshold"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CoverletThreshold))]
+    public static T ResetCoverletThreshold<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.CoverletThreshold));
+    #endregion
+    #region CrashDump
+    /// <inheritdoc cref="DotNetTestMtpSettings.CrashDump"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CrashDump))]
+    public static T SetCrashDump<T>(this T o, bool? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CrashDump, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CrashDump"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CrashDump))]
+    public static T ResetCrashDump<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.CrashDump));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CrashDump"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CrashDump))]
+    public static T EnableCrashDump<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CrashDump, true));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CrashDump"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CrashDump))]
+    public static T DisableCrashDump<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CrashDump, false));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CrashDump"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CrashDump))]
+    public static T ToggleCrashDump<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CrashDump, !o.CrashDump));
+    #endregion
+    #region CrashDumpType
+    /// <inheritdoc cref="DotNetTestMtpSettings.CrashDumpType"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CrashDumpType))]
+    public static T SetCrashDumpType<T>(this T o, DotNetTestDumpType v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.CrashDumpType, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.CrashDumpType"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.CrashDumpType))]
+    public static T ResetCrashDumpType<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.CrashDumpType));
+    #endregion
+    #region HangDump
+    /// <inheritdoc cref="DotNetTestMtpSettings.HangDump"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.HangDump))]
+    public static T SetHangDump<T>(this T o, bool? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.HangDump, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.HangDump"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.HangDump))]
+    public static T ResetHangDump<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.HangDump));
+    /// <inheritdoc cref="DotNetTestMtpSettings.HangDump"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.HangDump))]
+    public static T EnableHangDump<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.HangDump, true));
+    /// <inheritdoc cref="DotNetTestMtpSettings.HangDump"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.HangDump))]
+    public static T DisableHangDump<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.HangDump, false));
+    /// <inheritdoc cref="DotNetTestMtpSettings.HangDump"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.HangDump))]
+    public static T ToggleHangDump<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.HangDump, !o.HangDump));
+    #endregion
+    #region HangDumpTimeout
+    /// <inheritdoc cref="DotNetTestMtpSettings.HangDumpTimeout"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.HangDumpTimeout))]
+    public static T SetHangDumpTimeout<T>(this T o, string v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.HangDumpTimeout, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.HangDumpTimeout"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.HangDumpTimeout))]
+    public static T ResetHangDumpTimeout<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.HangDumpTimeout));
+    #endregion
+    #region HangDumpType
+    /// <inheritdoc cref="DotNetTestMtpSettings.HangDumpType"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.HangDumpType))]
+    public static T SetHangDumpType<T>(this T o, DotNetTestDumpType v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.HangDumpType, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.HangDumpType"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.HangDumpType))]
+    public static T ResetHangDumpType<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.HangDumpType));
+    #endregion
+    #region RetryFailedTests
+    /// <inheritdoc cref="DotNetTestMtpSettings.RetryFailedTests"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.RetryFailedTests))]
+    public static T SetRetryFailedTests<T>(this T o, int? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.RetryFailedTests, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.RetryFailedTests"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.RetryFailedTests))]
+    public static T ResetRetryFailedTests<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.RetryFailedTests));
+    #endregion
+    #region ReportGitHubActions
+    /// <inheritdoc cref="DotNetTestMtpSettings.ReportGitHubActions"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ReportGitHubActions))]
+    public static T SetReportGitHubActions<T>(this T o, bool? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.ReportGitHubActions, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.ReportGitHubActions"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ReportGitHubActions))]
+    public static T ResetReportGitHubActions<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.ReportGitHubActions));
+    /// <inheritdoc cref="DotNetTestMtpSettings.ReportGitHubActions"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ReportGitHubActions))]
+    public static T EnableReportGitHubActions<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.ReportGitHubActions, true));
+    /// <inheritdoc cref="DotNetTestMtpSettings.ReportGitHubActions"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ReportGitHubActions))]
+    public static T DisableReportGitHubActions<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.ReportGitHubActions, false));
+    /// <inheritdoc cref="DotNetTestMtpSettings.ReportGitHubActions"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ReportGitHubActions))]
+    public static T ToggleReportGitHubActions<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.ReportGitHubActions, !o.ReportGitHubActions));
+    #endregion
+    #region ReportAzureDevOps
+    /// <inheritdoc cref="DotNetTestMtpSettings.ReportAzureDevOps"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ReportAzureDevOps))]
+    public static T SetReportAzureDevOps<T>(this T o, bool? v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.ReportAzureDevOps, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.ReportAzureDevOps"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ReportAzureDevOps))]
+    public static T ResetReportAzureDevOps<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Remove(() => o.ReportAzureDevOps));
+    /// <inheritdoc cref="DotNetTestMtpSettings.ReportAzureDevOps"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ReportAzureDevOps))]
+    public static T EnableReportAzureDevOps<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.ReportAzureDevOps, true));
+    /// <inheritdoc cref="DotNetTestMtpSettings.ReportAzureDevOps"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ReportAzureDevOps))]
+    public static T DisableReportAzureDevOps<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.ReportAzureDevOps, false));
+    /// <inheritdoc cref="DotNetTestMtpSettings.ReportAzureDevOps"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.ReportAzureDevOps))]
+    public static T ToggleReportAzureDevOps<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.ReportAzureDevOps, !o.ReportAzureDevOps));
+    #endregion
+    #region TestApplicationArguments
+    /// <inheritdoc cref="DotNetTestMtpSettings.TestApplicationArguments"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.TestApplicationArguments))]
+    public static T SetTestApplicationArguments<T>(this T o, params string[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.TestApplicationArguments, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.TestApplicationArguments"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.TestApplicationArguments))]
+    public static T SetTestApplicationArguments<T>(this T o, IEnumerable<string> v) where T : DotNetTestMtpSettings => o.Modify(b => b.Set(() => o.TestApplicationArguments, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.TestApplicationArguments"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.TestApplicationArguments))]
+    public static T AddTestApplicationArguments<T>(this T o, params string[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.AddCollection(() => o.TestApplicationArguments, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.TestApplicationArguments"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.TestApplicationArguments))]
+    public static T AddTestApplicationArguments<T>(this T o, IEnumerable<string> v) where T : DotNetTestMtpSettings => o.Modify(b => b.AddCollection(() => o.TestApplicationArguments, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.TestApplicationArguments"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.TestApplicationArguments))]
+    public static T RemoveTestApplicationArguments<T>(this T o, params string[] v) where T : DotNetTestMtpSettings => o.Modify(b => b.RemoveCollection(() => o.TestApplicationArguments, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.TestApplicationArguments"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.TestApplicationArguments))]
+    public static T RemoveTestApplicationArguments<T>(this T o, IEnumerable<string> v) where T : DotNetTestMtpSettings => o.Modify(b => b.RemoveCollection(() => o.TestApplicationArguments, v));
+    /// <inheritdoc cref="DotNetTestMtpSettings.TestApplicationArguments"/>
+    [Builder(Type = typeof(DotNetTestMtpSettings), Property = nameof(DotNetTestMtpSettings.TestApplicationArguments))]
+    public static T ClearTestApplicationArguments<T>(this T o) where T : DotNetTestMtpSettings => o.Modify(b => b.ClearCollection(() => o.TestApplicationArguments));
     #endregion
 }
 #endregion
@@ -8595,6 +9633,123 @@ public partial class DotNetVerbosity : Enumeration
     public static implicit operator DotNetVerbosity(string value)
     {
         return new DotNetVerbosity { Value = value };
+    }
+}
+#endregion
+#region DotNetTestResultsDirectoryLayout
+/// <summary>Used within <see cref="DotNetTasks"/>.</summary>
+[Serializable]
+[ExcludeFromCodeCoverage]
+[TypeConverter(typeof(TypeConverter<DotNetTestResultsDirectoryLayout>))]
+public partial class DotNetTestResultsDirectoryLayout : Enumeration
+{
+    public static DotNetTestResultsDirectoryLayout flat = (DotNetTestResultsDirectoryLayout) "flat";
+    public static DotNetTestResultsDirectoryLayout per_module = (DotNetTestResultsDirectoryLayout) "per-module";
+    public static implicit operator DotNetTestResultsDirectoryLayout(string value)
+    {
+        return new DotNetTestResultsDirectoryLayout { Value = value };
+    }
+}
+#endregion
+#region DotNetTestOutputVerbosity
+/// <summary>Used within <see cref="DotNetTasks"/>.</summary>
+[Serializable]
+[ExcludeFromCodeCoverage]
+[TypeConverter(typeof(TypeConverter<DotNetTestOutputVerbosity>))]
+public partial class DotNetTestOutputVerbosity : Enumeration
+{
+    public static DotNetTestOutputVerbosity Minimal = (DotNetTestOutputVerbosity) "Minimal";
+    public static DotNetTestOutputVerbosity Normal = (DotNetTestOutputVerbosity) "Normal";
+    public static DotNetTestOutputVerbosity Detailed = (DotNetTestOutputVerbosity) "Detailed";
+    public static implicit operator DotNetTestOutputVerbosity(string value)
+    {
+        return new DotNetTestOutputVerbosity { Value = value };
+    }
+}
+#endregion
+#region DotNetTestZeroTestsPolicy
+/// <summary>Used within <see cref="DotNetTasks"/>.</summary>
+[Serializable]
+[ExcludeFromCodeCoverage]
+[TypeConverter(typeof(TypeConverter<DotNetTestZeroTestsPolicy>))]
+public partial class DotNetTestZeroTestsPolicy : Enumeration
+{
+    public static DotNetTestZeroTestsPolicy allow_skipped = (DotNetTestZeroTestsPolicy) "allow-skipped";
+    public static DotNetTestZeroTestsPolicy strict = (DotNetTestZeroTestsPolicy) "strict";
+    public static implicit operator DotNetTestZeroTestsPolicy(string value)
+    {
+        return new DotNetTestZeroTestsPolicy { Value = value };
+    }
+}
+#endregion
+#region DotNetTestDiagnosticVerbosity
+/// <summary>Used within <see cref="DotNetTasks"/>.</summary>
+[Serializable]
+[ExcludeFromCodeCoverage]
+[TypeConverter(typeof(TypeConverter<DotNetTestDiagnosticVerbosity>))]
+public partial class DotNetTestDiagnosticVerbosity : Enumeration
+{
+    public static DotNetTestDiagnosticVerbosity Trace = (DotNetTestDiagnosticVerbosity) "Trace";
+    public static DotNetTestDiagnosticVerbosity Debug = (DotNetTestDiagnosticVerbosity) "Debug";
+    public static DotNetTestDiagnosticVerbosity Information = (DotNetTestDiagnosticVerbosity) "Information";
+    public static DotNetTestDiagnosticVerbosity Warning = (DotNetTestDiagnosticVerbosity) "Warning";
+    public static DotNetTestDiagnosticVerbosity Error = (DotNetTestDiagnosticVerbosity) "Error";
+    public static DotNetTestDiagnosticVerbosity Critical = (DotNetTestDiagnosticVerbosity) "Critical";
+    public static implicit operator DotNetTestDiagnosticVerbosity(string value)
+    {
+        return new DotNetTestDiagnosticVerbosity { Value = value };
+    }
+}
+#endregion
+#region DotNetTestCoverageOutputFormat
+/// <summary>Used within <see cref="DotNetTasks"/>.</summary>
+[Serializable]
+[ExcludeFromCodeCoverage]
+[TypeConverter(typeof(TypeConverter<DotNetTestCoverageOutputFormat>))]
+public partial class DotNetTestCoverageOutputFormat : Enumeration
+{
+    public static DotNetTestCoverageOutputFormat coverage = (DotNetTestCoverageOutputFormat) "coverage";
+    public static DotNetTestCoverageOutputFormat xml = (DotNetTestCoverageOutputFormat) "xml";
+    public static DotNetTestCoverageOutputFormat cobertura = (DotNetTestCoverageOutputFormat) "cobertura";
+    public static implicit operator DotNetTestCoverageOutputFormat(string value)
+    {
+        return new DotNetTestCoverageOutputFormat { Value = value };
+    }
+}
+#endregion
+#region DotNetTestCoverletOutputFormat
+/// <summary>Used within <see cref="DotNetTasks"/>.</summary>
+[Serializable]
+[ExcludeFromCodeCoverage]
+[TypeConverter(typeof(TypeConverter<DotNetTestCoverletOutputFormat>))]
+public partial class DotNetTestCoverletOutputFormat : Enumeration
+{
+    public static DotNetTestCoverletOutputFormat json = (DotNetTestCoverletOutputFormat) "json";
+    public static DotNetTestCoverletOutputFormat lcov = (DotNetTestCoverletOutputFormat) "lcov";
+    public static DotNetTestCoverletOutputFormat opencover = (DotNetTestCoverletOutputFormat) "opencover";
+    public static DotNetTestCoverletOutputFormat cobertura = (DotNetTestCoverletOutputFormat) "cobertura";
+    public static DotNetTestCoverletOutputFormat teamcity = (DotNetTestCoverletOutputFormat) "teamcity";
+    public static implicit operator DotNetTestCoverletOutputFormat(string value)
+    {
+        return new DotNetTestCoverletOutputFormat { Value = value };
+    }
+}
+#endregion
+#region DotNetTestDumpType
+/// <summary>Used within <see cref="DotNetTasks"/>.</summary>
+[Serializable]
+[ExcludeFromCodeCoverage]
+[TypeConverter(typeof(TypeConverter<DotNetTestDumpType>))]
+public partial class DotNetTestDumpType : Enumeration
+{
+    public static DotNetTestDumpType Mini = (DotNetTestDumpType) "Mini";
+    public static DotNetTestDumpType Heap = (DotNetTestDumpType) "Heap";
+    public static DotNetTestDumpType Triage = (DotNetTestDumpType) "Triage";
+    public static DotNetTestDumpType Full = (DotNetTestDumpType) "Full";
+    public static DotNetTestDumpType None = (DotNetTestDumpType) "None";
+    public static implicit operator DotNetTestDumpType(string value)
+    {
+        return new DotNetTestDumpType { Value = value };
     }
 }
 #endregion
