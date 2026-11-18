@@ -30,6 +30,19 @@ internal sealed class NumberToStringJsonConverter : JsonConverter<string>
         };
     }
 
+    internal static string FromElement(JsonElement value)
+    {
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => value.GetString(),
+            JsonValueKind.Number => value.TryGetInt64(out var integer)
+                ? integer.ToString(CultureInfo.InvariantCulture)
+                : value.GetDouble().ToString(CultureInfo.InvariantCulture),
+            JsonValueKind.Null => null,
+            _ => null
+        };
+    }
+
     public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
     {
         if (value is null)

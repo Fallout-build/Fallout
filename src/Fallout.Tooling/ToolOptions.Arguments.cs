@@ -58,7 +58,14 @@ partial class ToolOptions
     private const string KeyPlaceholder = "{key}";
     private const string ValuePlaceholder = "{value}";
 
-    internal partial IEnumerable<string> GetArguments()
+    /// <summary>
+    /// Changes the formatted arguments for one tool. The default keeps them as formatted.
+    /// </summary>
+    protected virtual IEnumerable<string> AdjustArguments(IEnumerable<string> arguments) => arguments;
+
+    internal partial IEnumerable<string> GetArguments() => AdjustArguments(CollectArguments());
+
+    private IEnumerable<string> CollectArguments()
     {
         var commandAttribute = GetType().GetCustomAttribute<CommandAttribute>();
         if (commandAttribute?.Arguments != null)
