@@ -10,11 +10,14 @@ namespace Fallout.Common.Tools.GitVersion;
 
 partial class GitVersionTasks
 {
+    internal static string ToolPath(GitVersionSettings settings) => new GitVersionTasks().GetToolPathInternal(settings);
+
     protected override object GetResult<T>(ToolOptions options, IReadOnlyCollection<Output> output)
     {
         try
         {
-            return output.EnsureOnlyStd().StdToJson<GitVersion>();
+            // GitVersion 7 writes warnings to stderr while the JSON stays on stdout.
+            return output.StdToJson<GitVersion>();
         }
         catch (Exception exception)
         {
@@ -24,6 +27,11 @@ partial class GitVersionTasks
     }
 }
 
+/// <summary>
+/// Version data from GitVersion JSON output.
+/// GitVersion 6 and 7 use different JSON names for the same values. Each property keeps one meaning across both versions.
+/// </summary>
+[JsonConverter(typeof(GitVersionJsonConverter))]
 public record GitVersion(
     int Major,
     int Minor,
@@ -32,11 +40,8 @@ public record GitVersion(
     string PreReleaseTagWithDash,
     string PreReleaseLabel,
     string PreReleaseLabelWithDash,
-    [property: JsonConverter(typeof(NumberToStringJsonConverter))]
     string PreReleaseNumber,
-    [property: JsonConverter(typeof(NumberToStringJsonConverter))]
     string WeightedPreReleaseNumber,
-    [property: JsonConverter(typeof(NumberToStringJsonConverter))]
     string BuildMetaData,
     string BuildMetaDataPadded,
     string FullBuildMetaData,
@@ -57,8 +62,18 @@ public record GitVersion(
     string NuGetPreReleaseTagV2,
     string NuGetPreReleaseTag,
     string VersionSourceSha,
-    [property: JsonConverter(typeof(NumberToStringJsonConverter))]
     string CommitsSinceVersionSource,
     string CommitsSinceVersionSourcePadded,
     int? UncommittedChanges,
-    string CommitDate);
+    string CommitDate,
+    string VersionSourceSemVer,
+    string VersionSourceIncrement,
+    string VersionSourceDistance,
+    string PreReleaseLabelName,
+    string PreReleaseLabelNameWithDash,
+    string SemVerSourceSha,
+    string SemVerSourceSemVer,
+    string SemVerSourceIncrement,
+    string CommitCountSourceSha,
+    string CommitCountSourceDistance,
+    string CustomVersion);
