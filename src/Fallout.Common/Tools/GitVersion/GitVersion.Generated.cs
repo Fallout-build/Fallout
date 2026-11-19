@@ -16,7 +16,7 @@ using System.Text.Json.Serialization;
 
 namespace Fallout.Common.Tools.GitVersion;
 
-/// <summary><p>GitVersion is a tool to help you achieve Semantic Versioning on your project.</p><p>For more details, visit the <a href="http://gitversion.readthedocs.io/en/stable/">official website</a>.</p></summary>
+/// <summary><p>GitVersion is a tool to help you achieve Semantic Versioning on your project.</p><p>For more details, visit the <a href="https://gitversion.net/docs/">official website</a>.</p></summary>
 [ExcludeFromCodeCoverage]
 [NuGetTool(Id = PackageId, Executable = PackageExecutable)]
 public partial class GitVersionTasks : ToolTasks, IRequireNuGetPackage
@@ -24,10 +24,10 @@ public partial class GitVersionTasks : ToolTasks, IRequireNuGetPackage
     public static string GitVersionPath { get => new GitVersionTasks().GetToolPathInternal(); set => new GitVersionTasks().SetToolPath(value); }
     public const string PackageId = "GitVersion.Tool";
     public const string PackageExecutable = "GitVersion.dll|GitVersion.exe";
-    /// <summary><p>GitVersion is a tool to help you achieve Semantic Versioning on your project.</p><p>For more details, visit the <a href="http://gitversion.readthedocs.io/en/stable/">official website</a>.</p></summary>
+    /// <summary><p>GitVersion is a tool to help you achieve Semantic Versioning on your project.</p><p>For more details, visit the <a href="https://gitversion.net/docs/">official website</a>.</p></summary>
     public static IReadOnlyCollection<Output> GitVersion(ArgumentStringHandler arguments, string workingDirectory = null, IReadOnlyDictionary<string, string> environmentVariables = null, int? timeout = null, bool? logOutput = null, bool? logInvocation = null, Action<OutputType, string> logger = null, Func<IProcess, object> exitHandler = null) => new GitVersionTasks().Run(arguments, workingDirectory, environmentVariables, timeout, logOutput, logInvocation, logger, exitHandler);
-    /// <summary><p>GitVersion is a tool to help you achieve Semantic Versioning on your project.</p><p>For more details, visit the <a href="http://gitversion.readthedocs.io/en/stable/">official website</a>.</p></summary>
-    /// <remarks><p>This is a <a href="https://github.com/Fallout-build/Fallout">CLI wrapper with fluent API</a> that allows to modify the following arguments:</p><ul><li><c>&lt;targetPath&gt;</c> via <see cref="GitVersionSettings.TargetPath"/></li><li><c>/b</c> via <see cref="GitVersionSettings.Branch"/></li><li><c>/c</c> via <see cref="GitVersionSettings.Commit"/></li><li><c>/diag</c> via <see cref="GitVersionSettings.Diagnostics"/></li><li><c>/dynamicRepoLocation</c> via <see cref="GitVersionSettings.DynamicRepositoryLocation"/></li><li><c>/ensureassemblyinfo</c> via <see cref="GitVersionSettings.EnsureAssemblyInfo"/></li><li><c>/exec</c> via <see cref="GitVersionSettings.Executable"/></li><li><c>/execargs</c> via <see cref="GitVersionSettings.ExecutableArguments"/></li><li><c>/l</c> via <see cref="GitVersionSettings.LogFile"/></li><li><c>/nocache</c> via <see cref="GitVersionSettings.NoCache"/></li><li><c>/nofetch</c> via <see cref="GitVersionSettings.NoFetch"/></li><li><c>/output</c> via <see cref="GitVersionSettings.Output"/></li><li><c>/overrideconfig</c> via <see cref="GitVersionSettings.ConfigurationOverride"/></li><li><c>/p</c> via <see cref="GitVersionSettings.Password"/></li><li><c>/proj</c> via <see cref="GitVersionSettings.MSBuildProject"/></li><li><c>/projargs</c> via <see cref="GitVersionSettings.MSBuildProjectArguments"/></li><li><c>/showconfig</c> via <see cref="GitVersionSettings.ShowConfig"/></li><li><c>/showvariable</c> via <see cref="GitVersionSettings.ShowVariable"/></li><li><c>/u</c> via <see cref="GitVersionSettings.Username"/></li><li><c>/updateassemblyinfo</c> via <see cref="GitVersionSettings.UpdateAssemblyInfo"/></li><li><c>/updateassemblyinfofilename</c> via <see cref="GitVersionSettings.UpdateAssemblyInfoFileNames"/></li><li><c>/url</c> via <see cref="GitVersionSettings.Url"/></li><li><c>/verbosity</c> via <see cref="GitVersionSettings.Verbosity"/></li><li><c>/version</c> via <see cref="GitVersionSettings.Version"/></li></ul></remarks>
+    /// <summary><p>GitVersion is a tool to help you achieve Semantic Versioning on your project.</p><p>For more details, visit the <a href="https://gitversion.net/docs/">official website</a>.</p></summary>
+    /// <remarks><p>This is a <a href="https://github.com/Fallout-build/Fallout">CLI wrapper with fluent API</a> that allows to modify the following arguments:</p><ul><li><c>&lt;targetPath&gt;</c> via <see cref="GitVersionSettings.TargetPath"/></li><li><c>--allow-shallow</c> via <see cref="GitVersionSettings.AllowShallow"/></li><li><c>--branch</c> via <see cref="GitVersionSettings.Branch"/></li><li><c>--commit</c> via <see cref="GitVersionSettings.Commit"/></li><li><c>--config</c> via <see cref="GitVersionSettings.Config"/></li><li><c>--diagnose</c> via <see cref="GitVersionSettings.Diagnostics"/></li><li><c>--dynamic-repo-location</c> via <see cref="GitVersionSettings.DynamicRepositoryLocation"/></li><li><c>--ensure-assembly-info</c> via <see cref="GitVersionSettings.EnsureAssemblyInfo"/></li><li><c>--format</c> via <see cref="GitVersionSettings.Format"/></li><li><c>--log-file</c> via <see cref="GitVersionSettings.LogFile"/></li><li><c>--no-cache</c> via <see cref="GitVersionSettings.NoCache"/></li><li><c>--no-fetch</c> via <see cref="GitVersionSettings.NoFetch"/></li><li><c>--no-normalize</c> via <see cref="GitVersionSettings.NoNormalize"/></li><li><c>--output</c> via <see cref="GitVersionSettings.Output"/></li><li><c>--output-file</c> via <see cref="GitVersionSettings.OutputFile"/></li><li><c>--override-config</c> via <see cref="GitVersionSettings.ConfigurationOverride"/></li><li><c>--password</c> via <see cref="GitVersionSettings.Password"/></li><li><c>--show-config</c> via <see cref="GitVersionSettings.ShowConfig"/></li><li><c>--show-variable</c> via <see cref="GitVersionSettings.ShowVariable"/></li><li><c>--telemetry-opt-out</c> via <see cref="GitVersionSettings.TelemetryOptOut"/></li><li><c>--update-assembly-info</c> via <see cref="GitVersionSettings.UpdateAssemblyInfo"/></li><li><c>--update-assembly-info</c> via <see cref="GitVersionSettings.UpdateAssemblyInfoFileNames"/></li><li><c>--update-project-files</c> via <see cref="GitVersionSettings.UpdateProjectFiles"/></li><li><c>--update-wix-version-file</c> via <see cref="GitVersionSettings.UpdateWixVersionFile"/></li><li><c>--url</c> via <see cref="GitVersionSettings.Url"/></li><li><c>--username</c> via <see cref="GitVersionSettings.Username"/></li><li><c>--verbosity</c> via <see cref="GitVersionSettings.Verbosity"/></li><li><c>--version</c> via <see cref="GitVersionSettings.Version"/></li></ul></remarks>
     public static (GitVersion Result, IReadOnlyCollection<Output> Output) GitVersion(GitVersionSettings options = null) => new GitVersionTasks().Run<GitVersionSettings, GitVersion>(options);
     /// <inheritdoc cref="GitVersionTasks.GitVersion(Fallout.Common.Tools.GitVersion.GitVersionSettings)"/>
     public static (GitVersion Result, IReadOnlyCollection<Output> Output) GitVersion(Configure<GitVersionSettings> configurator) => new GitVersionTasks().Run<GitVersionSettings, GitVersion>(configurator.Invoke(new GitVersionSettings()));
@@ -43,51 +43,67 @@ public partial class GitVersionSettings : ToolOptions, IToolOptionsWithFramework
     /// <summary>The directory containing .git. If not defined current directory is used. (Must be first argument).</summary>
     [Argument(Format = "{value}", Position = 1)] public string TargetPath => Get<string>(() => TargetPath);
     /// <summary>Displays the version of GitVersion.</summary>
-    [Argument(Format = "/version")] public bool? Version => Get<bool?>(() => Version);
-    /// <summary>Runs GitVersion with additional diagnostic information (requires git.exe to be installed).</summary>
-    [Argument(Format = "/diag")] public bool? Diagnostics => Get<bool?>(() => Diagnostics);
-    /// <summary>Determines the output to the console. Can be either <em>json</em> or <em>buildserver</em>, will default to <em>json</em>.</summary>
-    [Argument(Format = "/output {value}")] public GitVersionOutput Output => Get<GitVersionOutput>(() => Output);
-    /// <summary>Used in conjuntion with <c>/output</c> json, will output just a particular variable. E.g., <c>/output json /showvariable SemVer</c> - will output <c>1.2.3+beta.4</c>.</summary>
-    [Argument(Format = "/showvariable {value}")] public string ShowVariable => Get<string>(() => ShowVariable);
-    /// <summary>Path to logfile.</summary>
-    [Argument(Format = "/l {value}")] public string LogFile => Get<string>(() => LogFile);
-    /// <summary>Outputs the effective GitVersion config (defaults + custom from GitVersion.yml) in yaml format.</summary>
-    [Argument(Format = "/showconfig")] public bool? ShowConfig => Get<bool?>(() => ShowConfig);
-    /// <summary>Overrides GitVersion config values inline (semicolon-separated key value pairs e.g. <c>/overrideconfig tag-prefix=Foo</c>). Currently supported config overrides: <c>tag-prefix</c>.</summary>
-    [Argument(Format = "/overrideconfig {key}={value}")] public IReadOnlyDictionary<string, object> ConfigurationOverride => Get<Dictionary<string, object>>(() => ConfigurationOverride);
-    /// <summary>Bypasses the cache, result will not be written to the cache.</summary>
-    [Argument(Format = "/nocache")] public bool? NoCache => Get<bool?>(() => NoCache);
-    /// <summary>Will recursively search for all 'AssemblyInfo.cs' files in the git repo and update them.</summary>
-    [Argument(Format = "/updateassemblyinfo")] public bool? UpdateAssemblyInfo => Get<bool?>(() => UpdateAssemblyInfo);
-    /// <summary>Specify name of AssemblyInfo files to update.</summary>
-    [Argument(Format = "/updateassemblyinfofilename {value}", Separator = " ")] public IReadOnlyList<string> UpdateAssemblyInfoFileNames => Get<List<string>>(() => UpdateAssemblyInfoFileNames);
-    /// <summary>If the assembly info file specified with <c>/updateassemblyinfo</c> or <c>/updateassemblyinfofilename</c> is not found, it will be created with these attributes: AssemblyFileVersion, AssemblyVersion and AssemblyInformationalVersion.</summary>
-    [Argument(Format = "/ensureassemblyinfo")] public bool? EnsureAssemblyInfo => Get<bool?>(() => EnsureAssemblyInfo);
-    /// <summary>Url to remote git repository.</summary>
-    [Argument(Format = "/url {value}")] public string Url => Get<string>(() => Url);
-    /// <summary>Name of the branch to use on the remote repository, must be used in combination with <c>/url</c>.</summary>
-    [Argument(Format = "/b {value}")] public string Branch => Get<string>(() => Branch);
-    /// <summary>Username in case authentication is required.</summary>
-    [Argument(Format = "/u {value}")] public string Username => Get<string>(() => Username);
-    /// <summary>Password in case authentication is required.</summary>
-    [Argument(Format = "/p {value}", Secret = true)] public string Password => Get<string>(() => Password);
-    /// <summary>The commit id to check. If not specified, the latest available commit on the specified branch will be used.</summary>
-    [Argument(Format = "/c {value}")] public string Commit => Get<string>(() => Commit);
-    /// <summary>By default dynamic repositories will be cloned to %tmp%. Use this switch to override.</summary>
-    [Argument(Format = "/dynamicRepoLocation {value}")] public string DynamicRepositoryLocation => Get<string>(() => DynamicRepositoryLocation);
-    /// <summary>Disables <c>git fetch</c> during version calculation. Might cause GitVersion to not calculate your version as expected.</summary>
-    [Argument(Format = "/nofetch")] public bool? NoFetch => Get<bool?>(() => NoFetch);
-    /// <summary>Executes target executable making GitVersion variables available as environmental variables.</summary>
-    [Argument(Format = "/exec {value}")] public string Executable => Get<string>(() => Executable);
-    /// <summary>Arguments for the executable specified by <c>/exec</c>.</summary>
-    [Argument(Format = "/execargs {value}")] public string ExecutableArguments => Get<string>(() => ExecutableArguments);
-    /// <summary>Build an MSBuild file, GitVersion variables will be passed as MSBuild properties.</summary>
-    [Argument(Format = "/proj {value}")] public string MSBuildProject => Get<string>(() => MSBuildProject);
-    /// <summary>Additional arguments to pass to MSBuild.</summary>
-    [Argument(Format = "/projargs {value}")] public string MSBuildProjectArguments => Get<string>(() => MSBuildProjectArguments);
-    /// <summary>Set Verbosity level (<c>debug</c>, <c>info</c>, <c>warn</c>, <c>error</c>, <c>none</c>). Default is <c>info</c>.</summary>
-    [Argument(Format = "/verbosity {value}")] public GitVersionVerbosity Verbosity => Get<GitVersionVerbosity>(() => Verbosity);
+    [Argument(Format = "--version")] public bool? Version => Get<bool?>(() => Version);
+    /// <summary>Runs GitVersion with additional diagnostic information. Also needs <c>--log-file</c> (requires git.exe to be installed).</summary>
+    [Argument(Format = "--diagnose")] public bool? Diagnostics => Get<bool?>(() => Diagnostics);
+    /// <summary>Determines the output to the console. Can be <c>json</c>, <c>file</c>, <c>buildserver</c>, or <c>dotenv</c>. The default is <c>json</c>.</summary>
+    [Argument(Format = "--output {value}")] public GitVersionOutput Output => Get<GitVersionOutput>(() => Output);
+    /// <summary>Path to the output file. Used together with <c>--output file</c>.</summary>
+    [Argument(Format = "--output-file {value}")] public string OutputFile => Get<string>(() => OutputFile);
+    /// <summary>Used together with <c>--output json</c>. Prints one variable. For example, <c>--output json --show-variable SemVer</c> prints <c>1.2.3+beta.4</c>.</summary>
+    [Argument(Format = "--show-variable {value}")] public string ShowVariable => Get<string>(() => ShowVariable);
+    /// <summary>Used together with <c>--output json</c>. Prints a format string that contains version variables. For example, <c>--format {Major}.{Minor}</c> prints <c>1.2</c>.</summary>
+    [Argument(Format = "--format {value}")] public string Format => Get<string>(() => Format);
+    /// <summary>Path to the log file. Use <c>console</c> to write the log to stderr.</summary>
+    [Argument(Format = "--log-file {value}")] public string LogFile => Get<string>(() => LogFile);
+    /// <summary>Path to the config file. The default is <c>GitVersion.yml</c>, <c>GitVersion.yaml</c>, <c>.GitVersion.yml</c>, or <c>.GitVersion.yaml</c>.</summary>
+    [Argument(Format = "--config {value}")] public string Config => Get<string>(() => Config);
+    /// <summary>Prints the effective GitVersion config in YAML format.</summary>
+    [Argument(Format = "--show-config")] public bool? ShowConfig => Get<bool?>(() => ShowConfig);
+    /// <summary>Overrides GitVersion config values inline. For example, <c>--override-config workflow=GitHubFlow/v1</c>.</summary>
+    [Argument(Format = "--override-config {key}={value}")] public IReadOnlyDictionary<string, object> ConfigurationOverride => Get<Dictionary<string, object>>(() => ConfigurationOverride);
+    /// <summary>Bypasses the cache. The result is not written to the cache.</summary>
+    [Argument(Format = "--no-cache")] public bool? NoCache => Get<bool?>(() => NoCache);
+    /// <summary>Disables the normalize step on a build server.</summary>
+    [Argument(Format = "--no-normalize")] public bool? NoNormalize => Get<bool?>(() => NoNormalize);
+    /// <summary>Allows GitVersion to run on a shallow clone. The clone must still contain the history needed to calculate the version.</summary>
+    [Argument(Format = "--allow-shallow")] public bool? AllowShallow => Get<bool?>(() => AllowShallow);
+    /// <summary>Recursively searches for <c>AssemblyInfo.cs</c> files in the git repo and updates them.</summary>
+    [Argument(Format = "--update-assembly-info")] public bool? UpdateAssemblyInfo => Get<bool?>(() => UpdateAssemblyInfo);
+    /// <summary>Names of AssemblyInfo files to update.</summary>
+    [Argument(Format = "--update-assembly-info {value}", Separator = " ")] public IReadOnlyList<string> UpdateAssemblyInfoFileNames => Get<List<string>>(() => UpdateAssemblyInfoFileNames);
+    /// <summary>Creates a missing assembly info file named by <c>--update-assembly-info</c>. The file gets AssemblyFileVersion, AssemblyVersion, and AssemblyInformationalVersion.</summary>
+    [Argument(Format = "--ensure-assembly-info")] public bool? EnsureAssemblyInfo => Get<bool?>(() => EnsureAssemblyInfo);
+    /// <summary>Project files (<c>.csproj</c>, <c>.vbproj</c>, <c>.fsproj</c>, <c>.sqlproj</c>) to update. Only SDK-style projects are supported.</summary>
+    [Argument(Format = "--update-project-files {value}", Separator = " ")] public IReadOnlyList<string> UpdateProjectFiles => Get<List<string>>(() => UpdateProjectFiles);
+    /// <summary>Writes the GitVersion variables to <c>GitVersion_WixVersion.wxi</c>.</summary>
+    [Argument(Format = "--update-wix-version-file")] public bool? UpdateWixVersionFile => Get<bool?>(() => UpdateWixVersionFile);
+    /// <summary>Url to the remote git repository.</summary>
+    [Argument(Format = "--url {value}")] public string Url => Get<string>(() => Url);
+    /// <summary>Branch to version. This is used on its own for a local branch, or together with <c>--url</c> for a remote repository.</summary>
+    [Argument(Format = "--branch {value}")] public string Branch => Get<string>(() => Branch);
+    /// <summary>Username when authentication is required.</summary>
+    [Argument(Format = "--username {value}")] public string Username => Get<string>(() => Username);
+    /// <summary>Password when authentication is required.</summary>
+    [Argument(Format = "--password {value}", Secret = true)] public string Password => Get<string>(() => Password);
+    /// <summary>The commit id to check. If not specified, the latest commit on the specified branch is used.</summary>
+    [Argument(Format = "--commit {value}")] public string Commit => Get<string>(() => Commit);
+    /// <summary>Directory for dynamic repositories. The default is the temp directory.</summary>
+    [Argument(Format = "--dynamic-repo-location {value}")] public string DynamicRepositoryLocation => Get<string>(() => DynamicRepositoryLocation);
+    /// <summary>Disables <c>git fetch</c> during version calculation. GitVersion may then calculate a different version than expected.</summary>
+    [Argument(Format = "--no-fetch")] public bool? NoFetch => Get<bool?>(() => NoFetch);
+    /// <summary>Removed in GitVersion 7.</summary>
+    public string Executable => Get<string>(() => Executable);
+    /// <summary>Removed in GitVersion 7.</summary>
+    public string ExecutableArguments => Get<string>(() => ExecutableArguments);
+    /// <summary>Removed in GitVersion 7.</summary>
+    public string MSBuildProject => Get<string>(() => MSBuildProject);
+    /// <summary>Removed in GitVersion 7.</summary>
+    public string MSBuildProjectArguments => Get<string>(() => MSBuildProjectArguments);
+    /// <summary>Disables optional sampled usage telemetry.</summary>
+    [Argument(Format = "--telemetry-opt-out")] public bool? TelemetryOptOut => Get<bool?>(() => TelemetryOptOut);
+    /// <summary>Amount of information to display (<c>Quiet</c>, <c>Minimal</c>, <c>Normal</c>, <c>Verbose</c>, <c>Diagnostic</c>). The default is <c>Normal</c>.</summary>
+    [Argument(Format = "--verbosity {value}")] public GitVersionVerbosity Verbosity => Get<GitVersionVerbosity>(() => Verbosity);
 }
 #endregion
 #region GitVersionSettingsExtensions
@@ -145,6 +161,14 @@ public static partial class GitVersionSettingsExtensions
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.Output))]
     public static T ResetOutput<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Remove(() => o.Output));
     #endregion
+    #region OutputFile
+    /// <inheritdoc cref="GitVersionSettings.OutputFile"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.OutputFile))]
+    public static T SetOutputFile<T>(this T o, string v) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.OutputFile, v));
+    /// <inheritdoc cref="GitVersionSettings.OutputFile"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.OutputFile))]
+    public static T ResetOutputFile<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Remove(() => o.OutputFile));
+    #endregion
     #region ShowVariable
     /// <inheritdoc cref="GitVersionSettings.ShowVariable"/>
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.ShowVariable))]
@@ -153,6 +177,14 @@ public static partial class GitVersionSettingsExtensions
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.ShowVariable))]
     public static T ResetShowVariable<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Remove(() => o.ShowVariable));
     #endregion
+    #region Format
+    /// <inheritdoc cref="GitVersionSettings.Format"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.Format))]
+    public static T SetFormat<T>(this T o, string v) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.Format, v));
+    /// <inheritdoc cref="GitVersionSettings.Format"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.Format))]
+    public static T ResetFormat<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Remove(() => o.Format));
+    #endregion
     #region LogFile
     /// <inheritdoc cref="GitVersionSettings.LogFile"/>
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.LogFile))]
@@ -160,6 +192,14 @@ public static partial class GitVersionSettingsExtensions
     /// <inheritdoc cref="GitVersionSettings.LogFile"/>
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.LogFile))]
     public static T ResetLogFile<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Remove(() => o.LogFile));
+    #endregion
+    #region Config
+    /// <inheritdoc cref="GitVersionSettings.Config"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.Config))]
+    public static T SetConfig<T>(this T o, string v) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.Config, v));
+    /// <inheritdoc cref="GitVersionSettings.Config"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.Config))]
+    public static T ResetConfig<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Remove(() => o.Config));
     #endregion
     #region ShowConfig
     /// <inheritdoc cref="GitVersionSettings.ShowConfig"/>
@@ -211,6 +251,40 @@ public static partial class GitVersionSettingsExtensions
     /// <inheritdoc cref="GitVersionSettings.NoCache"/>
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.NoCache))]
     public static T ToggleNoCache<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.NoCache, !o.NoCache));
+    #endregion
+    #region NoNormalize
+    /// <inheritdoc cref="GitVersionSettings.NoNormalize"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.NoNormalize))]
+    public static T SetNoNormalize<T>(this T o, bool? v) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.NoNormalize, v));
+    /// <inheritdoc cref="GitVersionSettings.NoNormalize"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.NoNormalize))]
+    public static T ResetNoNormalize<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Remove(() => o.NoNormalize));
+    /// <inheritdoc cref="GitVersionSettings.NoNormalize"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.NoNormalize))]
+    public static T EnableNoNormalize<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.NoNormalize, true));
+    /// <inheritdoc cref="GitVersionSettings.NoNormalize"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.NoNormalize))]
+    public static T DisableNoNormalize<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.NoNormalize, false));
+    /// <inheritdoc cref="GitVersionSettings.NoNormalize"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.NoNormalize))]
+    public static T ToggleNoNormalize<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.NoNormalize, !o.NoNormalize));
+    #endregion
+    #region AllowShallow
+    /// <inheritdoc cref="GitVersionSettings.AllowShallow"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.AllowShallow))]
+    public static T SetAllowShallow<T>(this T o, bool? v) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.AllowShallow, v));
+    /// <inheritdoc cref="GitVersionSettings.AllowShallow"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.AllowShallow))]
+    public static T ResetAllowShallow<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Remove(() => o.AllowShallow));
+    /// <inheritdoc cref="GitVersionSettings.AllowShallow"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.AllowShallow))]
+    public static T EnableAllowShallow<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.AllowShallow, true));
+    /// <inheritdoc cref="GitVersionSettings.AllowShallow"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.AllowShallow))]
+    public static T DisableAllowShallow<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.AllowShallow, false));
+    /// <inheritdoc cref="GitVersionSettings.AllowShallow"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.AllowShallow))]
+    public static T ToggleAllowShallow<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.AllowShallow, !o.AllowShallow));
     #endregion
     #region UpdateAssemblyInfo
     /// <inheritdoc cref="GitVersionSettings.UpdateAssemblyInfo"/>
@@ -268,6 +342,46 @@ public static partial class GitVersionSettingsExtensions
     /// <inheritdoc cref="GitVersionSettings.EnsureAssemblyInfo"/>
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.EnsureAssemblyInfo))]
     public static T ToggleEnsureAssemblyInfo<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.EnsureAssemblyInfo, !o.EnsureAssemblyInfo));
+    #endregion
+    #region UpdateProjectFiles
+    /// <inheritdoc cref="GitVersionSettings.UpdateProjectFiles"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.UpdateProjectFiles))]
+    public static T SetUpdateProjectFiles<T>(this T o, params string[] v) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.UpdateProjectFiles, v));
+    /// <inheritdoc cref="GitVersionSettings.UpdateProjectFiles"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.UpdateProjectFiles))]
+    public static T SetUpdateProjectFiles<T>(this T o, IEnumerable<string> v) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.UpdateProjectFiles, v));
+    /// <inheritdoc cref="GitVersionSettings.UpdateProjectFiles"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.UpdateProjectFiles))]
+    public static T AddUpdateProjectFiles<T>(this T o, params string[] v) where T : GitVersionSettings => o.Modify(b => b.AddCollection(() => o.UpdateProjectFiles, v));
+    /// <inheritdoc cref="GitVersionSettings.UpdateProjectFiles"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.UpdateProjectFiles))]
+    public static T AddUpdateProjectFiles<T>(this T o, IEnumerable<string> v) where T : GitVersionSettings => o.Modify(b => b.AddCollection(() => o.UpdateProjectFiles, v));
+    /// <inheritdoc cref="GitVersionSettings.UpdateProjectFiles"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.UpdateProjectFiles))]
+    public static T RemoveUpdateProjectFiles<T>(this T o, params string[] v) where T : GitVersionSettings => o.Modify(b => b.RemoveCollection(() => o.UpdateProjectFiles, v));
+    /// <inheritdoc cref="GitVersionSettings.UpdateProjectFiles"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.UpdateProjectFiles))]
+    public static T RemoveUpdateProjectFiles<T>(this T o, IEnumerable<string> v) where T : GitVersionSettings => o.Modify(b => b.RemoveCollection(() => o.UpdateProjectFiles, v));
+    /// <inheritdoc cref="GitVersionSettings.UpdateProjectFiles"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.UpdateProjectFiles))]
+    public static T ClearUpdateProjectFiles<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.ClearCollection(() => o.UpdateProjectFiles));
+    #endregion
+    #region UpdateWixVersionFile
+    /// <inheritdoc cref="GitVersionSettings.UpdateWixVersionFile"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.UpdateWixVersionFile))]
+    public static T SetUpdateWixVersionFile<T>(this T o, bool? v) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.UpdateWixVersionFile, v));
+    /// <inheritdoc cref="GitVersionSettings.UpdateWixVersionFile"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.UpdateWixVersionFile))]
+    public static T ResetUpdateWixVersionFile<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Remove(() => o.UpdateWixVersionFile));
+    /// <inheritdoc cref="GitVersionSettings.UpdateWixVersionFile"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.UpdateWixVersionFile))]
+    public static T EnableUpdateWixVersionFile<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.UpdateWixVersionFile, true));
+    /// <inheritdoc cref="GitVersionSettings.UpdateWixVersionFile"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.UpdateWixVersionFile))]
+    public static T DisableUpdateWixVersionFile<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.UpdateWixVersionFile, false));
+    /// <inheritdoc cref="GitVersionSettings.UpdateWixVersionFile"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.UpdateWixVersionFile))]
+    public static T ToggleUpdateWixVersionFile<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.UpdateWixVersionFile, !o.UpdateWixVersionFile));
     #endregion
     #region Url
     /// <inheritdoc cref="GitVersionSettings.Url"/>
@@ -337,34 +451,59 @@ public static partial class GitVersionSettingsExtensions
     #region Executable
     /// <inheritdoc cref="GitVersionSettings.Executable"/>
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.Executable))]
+    [Obsolete("Removed in GitVersion 7.")]
     public static T SetExecutable<T>(this T o, string v) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.Executable, v));
     /// <inheritdoc cref="GitVersionSettings.Executable"/>
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.Executable))]
+    [Obsolete("Removed in GitVersion 7.")]
     public static T ResetExecutable<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Remove(() => o.Executable));
     #endregion
     #region ExecutableArguments
     /// <inheritdoc cref="GitVersionSettings.ExecutableArguments"/>
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.ExecutableArguments))]
+    [Obsolete("Removed in GitVersion 7.")]
     public static T SetExecutableArguments<T>(this T o, string v) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.ExecutableArguments, v));
     /// <inheritdoc cref="GitVersionSettings.ExecutableArguments"/>
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.ExecutableArguments))]
+    [Obsolete("Removed in GitVersion 7.")]
     public static T ResetExecutableArguments<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Remove(() => o.ExecutableArguments));
     #endregion
     #region MSBuildProject
     /// <inheritdoc cref="GitVersionSettings.MSBuildProject"/>
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.MSBuildProject))]
+    [Obsolete("Removed in GitVersion 7.")]
     public static T SetMSBuildProject<T>(this T o, string v) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.MSBuildProject, v));
     /// <inheritdoc cref="GitVersionSettings.MSBuildProject"/>
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.MSBuildProject))]
+    [Obsolete("Removed in GitVersion 7.")]
     public static T ResetMSBuildProject<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Remove(() => o.MSBuildProject));
     #endregion
     #region MSBuildProjectArguments
     /// <inheritdoc cref="GitVersionSettings.MSBuildProjectArguments"/>
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.MSBuildProjectArguments))]
+    [Obsolete("Removed in GitVersion 7.")]
     public static T SetMSBuildProjectArguments<T>(this T o, string v) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.MSBuildProjectArguments, v));
     /// <inheritdoc cref="GitVersionSettings.MSBuildProjectArguments"/>
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.MSBuildProjectArguments))]
+    [Obsolete("Removed in GitVersion 7.")]
     public static T ResetMSBuildProjectArguments<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Remove(() => o.MSBuildProjectArguments));
+    #endregion
+    #region TelemetryOptOut
+    /// <inheritdoc cref="GitVersionSettings.TelemetryOptOut"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.TelemetryOptOut))]
+    public static T SetTelemetryOptOut<T>(this T o, bool? v) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.TelemetryOptOut, v));
+    /// <inheritdoc cref="GitVersionSettings.TelemetryOptOut"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.TelemetryOptOut))]
+    public static T ResetTelemetryOptOut<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Remove(() => o.TelemetryOptOut));
+    /// <inheritdoc cref="GitVersionSettings.TelemetryOptOut"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.TelemetryOptOut))]
+    public static T EnableTelemetryOptOut<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.TelemetryOptOut, true));
+    /// <inheritdoc cref="GitVersionSettings.TelemetryOptOut"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.TelemetryOptOut))]
+    public static T DisableTelemetryOptOut<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.TelemetryOptOut, false));
+    /// <inheritdoc cref="GitVersionSettings.TelemetryOptOut"/>
+    [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.TelemetryOptOut))]
+    public static T ToggleTelemetryOptOut<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.TelemetryOptOut, !o.TelemetryOptOut));
     #endregion
     #region Verbosity
     /// <inheritdoc cref="GitVersionSettings.Verbosity"/>
@@ -384,7 +523,9 @@ public static partial class GitVersionSettingsExtensions
 public partial class GitVersionOutput : Enumeration
 {
     public static GitVersionOutput json = (GitVersionOutput) "json";
+    public static GitVersionOutput file = (GitVersionOutput) "file";
     public static GitVersionOutput buildserver = (GitVersionOutput) "buildserver";
+    public static GitVersionOutput dotenv = (GitVersionOutput) "dotenv";
     public static implicit operator GitVersionOutput(string value)
     {
         return new GitVersionOutput { Value = value };
@@ -398,11 +539,11 @@ public partial class GitVersionOutput : Enumeration
 [TypeConverter(typeof(TypeConverter<GitVersionVerbosity>))]
 public partial class GitVersionVerbosity : Enumeration
 {
-    public static GitVersionVerbosity debug = (GitVersionVerbosity) "debug";
-    public static GitVersionVerbosity info = (GitVersionVerbosity) "info";
-    public static GitVersionVerbosity warn = (GitVersionVerbosity) "warn";
-    public static GitVersionVerbosity error = (GitVersionVerbosity) "error";
-    public static GitVersionVerbosity none = (GitVersionVerbosity) "none";
+    public static GitVersionVerbosity Quiet = (GitVersionVerbosity) "Quiet";
+    public static GitVersionVerbosity Minimal = (GitVersionVerbosity) "Minimal";
+    public static GitVersionVerbosity Normal = (GitVersionVerbosity) "Normal";
+    public static GitVersionVerbosity Verbose = (GitVersionVerbosity) "Verbose";
+    public static GitVersionVerbosity Diagnostic = (GitVersionVerbosity) "Diagnostic";
     public static implicit operator GitVersionVerbosity(string value)
     {
         return new GitVersionVerbosity { Value = value };

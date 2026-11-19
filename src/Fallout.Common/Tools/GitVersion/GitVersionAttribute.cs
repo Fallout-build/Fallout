@@ -46,9 +46,10 @@ public class GitVersionAttribute : ValueInjectionAttributeBase
         }
 
         var gitVersion = GitVersionTasks.GitVersion(s => s
-                .SetFramework(Framework)
+                .SetFramework(Framework ?? "net10.0")
                 .SetNoFetch(NoFetch)
                 .SetNoCache(NoCache)
+                .SetVerbosity(GitVersionVerbosity.Quiet)
                 .DisableProcessOutputLogging()
                 .SetUpdateAssemblyInfo(UpdateAssemblyInfo)
                 .When(TeamCity.Instance is { IsPullRequest: true } && !EnvironmentInfo.Variables.ContainsKey("Git_Branch"), _ => _
