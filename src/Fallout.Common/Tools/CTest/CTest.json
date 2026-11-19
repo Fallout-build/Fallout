@@ -1,0 +1,255 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Fallout-build/Fallout/main/src/Fallout.Tooling.Generator/schema.json",
+  "references": [
+    "https://cmake.org/cmake/help/latest/manual/ctest.1.html"
+  ],
+  "imports": [
+    "Fallout.Common.Tools.CMake"
+  ],
+  "name": "CTest",
+  "officialUrl": "https://cmake.org/cmake/help/latest/manual/ctest.1.html",
+  "help": "The ctest executable is the CMake test driver program. It runs the tests of a build tree that CMake generated.",
+  "pathExecutable": "ctest",
+  "tasks": [
+    {
+      "help": "Runs the tests of a CMake build tree.",
+      "settingsClass": {
+        "properties": [
+          {
+            "name": "Preset",
+            "type": "string",
+            "format": "--preset {value}",
+            "help": "Specify a test preset. CTest reads it from <c>CMakePresets.json</c> and <c>CMakeUserPresets.json</c> in the working directory, and takes the test directory from the configure preset of the test preset. Values set on the command line override the values from the preset."
+          },
+          {
+            "name": "PresetsFile",
+            "type": "string",
+            "format": "--presets-file {value}",
+            "help": "Read presets from the given file instead of <c>CMakePresets.json</c> and <c>CMakeUserPresets.json</c>. Requires CMake 4.4 or later."
+          },
+          {
+            "name": "TestDirectory",
+            "type": "string",
+            "format": "--test-dir {value}",
+            "help": "Specify the project binary directory in which to look for tests. When not set, CTest uses the binary directory of the preset, or the working directory."
+          },
+          {
+            "name": "Configuration",
+            "type": "CMakeConfiguration",
+            "format": "--build-config {value}",
+            "help": "Specify the configuration to test, for multi-config generators."
+          },
+          {
+            "name": "Parallel",
+            "type": "int",
+            "format": "--parallel {value}",
+            "help": "Run tests in parallel, using at most the given number of processes."
+          },
+          {
+            "name": "TestLoad",
+            "type": "int",
+            "format": "--test-load {value}",
+            "help": "Do not start new parallel tests while the CPU load is above the given threshold."
+          },
+          {
+            "name": "OutputOnFailure",
+            "type": "bool",
+            "format": "--output-on-failure",
+            "help": "Print the output of the test program if the test fails."
+          },
+          {
+            "name": "StopOnFailure",
+            "type": "bool",
+            "format": "--stop-on-failure",
+            "help": "Stop running the tests after one has failed."
+          },
+          {
+            "name": "Progress",
+            "type": "bool",
+            "format": "--progress",
+            "help": "Enable short progress output from tests."
+          },
+          {
+            "name": "Verbose",
+            "type": "bool",
+            "format": "--verbose",
+            "help": "Enable verbose output from tests."
+          },
+          {
+            "name": "ExtraVerbose",
+            "type": "bool",
+            "format": "--extra-verbose",
+            "help": "Enable more verbose output from tests."
+          },
+          {
+            "name": "Debug",
+            "type": "bool",
+            "format": "--debug",
+            "help": "Print more verbose internals of CTest."
+          },
+          {
+            "name": "Quiet",
+            "type": "bool",
+            "format": "--quiet",
+            "help": "Make CTest quiet."
+          },
+          {
+            "name": "OutputLog",
+            "type": "string",
+            "format": "--output-log {value}",
+            "help": "Write all output to the given log file."
+          },
+          {
+            "name": "OutputJunit",
+            "type": "string",
+            "format": "--output-junit {value}",
+            "help": "Write the test results to the given JUnit XML file."
+          },
+          {
+            "name": "TestOutputSizePassed",
+            "type": "int",
+            "format": "--test-output-size-passed {value}",
+            "help": "Limit the output of passed tests to the given number of bytes."
+          },
+          {
+            "name": "TestOutputSizeFailed",
+            "type": "int",
+            "format": "--test-output-size-failed {value}",
+            "help": "Limit the output of failed tests to the given number of bytes."
+          },
+          {
+            "name": "TestOutputTruncation",
+            "type": "CTestOutputTruncation",
+            "format": "--test-output-truncation {value}",
+            "help": "Specify which part of the test output to drop once the output size limit is reached."
+          },
+          {
+            "name": "TestsRegex",
+            "type": "string",
+            "format": "--tests-regex {value}",
+            "help": "Run only the tests whose names match the given regular expression."
+          },
+          {
+            "name": "ExcludeRegex",
+            "type": "string",
+            "format": "--exclude-regex {value}",
+            "help": "Exclude the tests whose names match the given regular expression."
+          },
+          {
+            "name": "LabelRegexes",
+            "type": "List<string>",
+            "format": "--label-regex {value}",
+            "help": "Run only the tests with a label that matches the given regular expression. With several expressions, a test runs only if each expression matches at least one of its labels."
+          },
+          {
+            "name": "LabelExcludeRegexes",
+            "type": "List<string>",
+            "format": "--label-exclude {value}",
+            "help": "Exclude the tests with a label that matches the given regular expression. With several expressions, a test is excluded only if each expression matches at least one of its labels."
+          },
+          {
+            "name": "FixtureExcludeAny",
+            "type": "string",
+            "format": "--fixture-exclude-any {value}",
+            "help": "Do not automatically add any tests for fixtures that match the given regular expression."
+          },
+          {
+            "name": "FixtureExcludeSetup",
+            "type": "string",
+            "format": "--fixture-exclude-setup {value}",
+            "help": "Do not automatically add setup tests for fixtures that match the given regular expression."
+          },
+          {
+            "name": "FixtureExcludeCleanup",
+            "type": "string",
+            "format": "--fixture-exclude-cleanup {value}",
+            "help": "Do not automatically add cleanup tests for fixtures that match the given regular expression."
+          },
+          {
+            "name": "TestsFromFile",
+            "type": "string",
+            "format": "--tests-from-file {value}",
+            "help": "Run only the tests listed in the given file, one test name per line."
+          },
+          {
+            "name": "ExcludeFromFile",
+            "type": "string",
+            "format": "--exclude-from-file {value}",
+            "help": "Exclude the tests listed in the given file, one test name per line."
+          },
+          {
+            "name": "RerunFailed",
+            "type": "bool",
+            "format": "--rerun-failed",
+            "help": "Run only the tests that failed in the previous run."
+          },
+          {
+            "name": "Repeat",
+            "type": "string",
+            "format": "--repeat {value}",
+            "help": "Repeat tests according to the given mode.<para/><ul><li><c>until-fail:&lt;n&gt;</c> runs each test <c>n</c> times and fails on the first failure.</li><li><c>until-pass:&lt;n&gt;</c> runs each test up to <c>n</c> times until it passes.</li><li><c>after-timeout:&lt;n&gt;</c> runs each test up to <c>n</c> times while it times out.</li></ul>"
+          },
+          {
+            "name": "Timeout",
+            "type": "int",
+            "format": "--timeout {value}",
+            "help": "Set the default timeout for each test, in seconds."
+          },
+          {
+            "name": "StopTime",
+            "type": "string",
+            "format": "--stop-time {value}",
+            "help": "Set a time of day at which all tests stop running."
+          },
+          {
+            "name": "ScheduleRandom",
+            "type": "bool",
+            "format": "--schedule-random",
+            "help": "Run the tests in a random order."
+          },
+          {
+            "name": "NoTests",
+            "type": "CTestNoTestsAction",
+            "format": "--no-tests={value}",
+            "help": "Specify whether finding no tests is an error or is ignored."
+          },
+          {
+            "name": "ResourceSpecFile",
+            "type": "string",
+            "format": "--resource-spec-file {value}",
+            "help": "Specify the resource specification file to use for resource allocation."
+          },
+          {
+            "name": "NoLabelSummary",
+            "type": "bool",
+            "format": "--no-label-summary",
+            "help": "Do not print the timing summary for labels."
+          },
+          {
+            "name": "NoSubprojectSummary",
+            "type": "bool",
+            "format": "--no-subproject-summary",
+            "help": "Do not print the timing summary for subprojects."
+          }
+        ]
+      }
+    }
+  ],
+  "enumerations": [
+    {
+      "name": "CTestOutputTruncation",
+      "values": [
+        "tail",
+        "middle",
+        "head"
+      ]
+    },
+    {
+      "name": "CTestNoTestsAction",
+      "values": [
+        "error",
+        "ignore"
+      ]
+    }
+  ]
+}

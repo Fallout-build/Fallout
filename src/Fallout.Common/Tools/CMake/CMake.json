@@ -14,32 +14,40 @@
       "settingsClass": {
         "properties": [
           {
+            "name": "Preset",
+            "type": "string",
+            "format": "--preset {value}",
+            "help": "Specify a configure preset. CMake reads it from <c>CMakePresets.json</c> and <c>CMakeUserPresets.json</c> in the source directory. Values set on the command line, such as the generator, the binary directory or cache entries, override the values from the preset."
+          },
+          {
+            "name": "PresetsFile",
+            "type": "string",
+            "format": "--presets-file {value}",
+            "help": "Read presets from the given file instead of <c>CMakePresets.json</c> and <c>CMakeUserPresets.json</c>. Requires CMake 4.4 or later."
+          },
+          {
             "name": "Generator",
             "type": "CMakeGenerator",
             "format": "-G {value}",
-            "default": "CMakeGenerator.Visual_Studio_16_2019",
-            "help": "Specify the build system to generate."
+            "help": "Specify the build system to generate. When not set, CMake uses the generator of the preset, the <c>CMAKE_GENERATOR</c> environment variable, or the default generator of the platform."
           },
           {
             "name": "Platform",
             "type": "CMakePlatform",
             "format": "-A {value}",
-            "default": "CMakePlatform.x64",
-            "help": "Specify the platform to build for."
+            "help": "Specify the platform to build for, if supported by the generator."
           },
           {
             "name": "RootDirectory",
             "type": "string",
             "format": "-S {value}",
-            "default": "\".\"",
-            "help": "Specify the root directory of the 'CMakeLists.txt' file."
+            "help": "Specify the source directory, which contains the top-level <c>CMakeLists.txt</c> file."
           },
           {
             "name": "OutputDirectory",
             "type": "string",
             "format": "-B {value}",
-            "default": "\"./out\"",
-            "help": "Specify the configuration to use when running the install script."
+            "help": "Specify the project binary directory."
           },
           {
             "name": "ToolChain",
@@ -63,7 +71,7 @@
             "name": "Define",
             "type": "List<string>",
             "format": "-D {value}",
-            "help": "Create or update a CMake cache entry, in the form <var>[:<type>]=<value>."
+            "help": "Create or update a CMake cache entry, in the form <c>&lt;var&gt;[:&lt;type&gt;]=&lt;value&gt;</c>."
           },
           {
             "name": "Undefine",
@@ -138,14 +146,25 @@
             "name": "OutputDirectory",
             "type": "string",
             "format": "{value}",
-            "default": "\"./out\"",
-            "help": "Specify the project binary directory to build."
+            "position": 1,
+            "help": "Specify the project binary directory to build. Do not combine it with <c>Preset</c>."
+          },
+          {
+            "name": "Preset",
+            "type": "string",
+            "format": "--preset {value}",
+            "help": "Specify a build preset. CMake reads it from <c>CMakePresets.json</c> and <c>CMakeUserPresets.json</c> in the working directory, and takes the binary directory from the configure preset of the build preset. Do not combine it with <c>OutputDirectory</c>. Values set on the command line, such as the configuration or the targets, override the values from the preset."
+          },
+          {
+            "name": "PresetsFile",
+            "type": "string",
+            "format": "--presets-file {value}",
+            "help": "Read presets from the given file instead of <c>CMakePresets.json</c> and <c>CMakeUserPresets.json</c>. Requires CMake 4.4 or later."
           },
           {
             "name": "Configuration",
             "type": "CMakeConfiguration",
             "format": "--config {value}",
-            "default": "CMakeConfiguration.Debug",
             "help": "Specify the build configuration for multi-config generators."
           },
           {
@@ -193,15 +212,14 @@
             "name": "RootDirectory",
             "type": "string",
             "format": "{value}",
-            "default": "\".\"",
-            "help": "Specify the root directory of the cmake install script."
+            "position": 1,
+            "help": "Specify the project binary directory to install from."
           },
           {
             "name": "Configuration",
             "type": "CMakeConfiguration",
             "format": "--config {value}",
-            "default": "CMakeConfiguration.Debug",
-            "help": "Specify the root directory of the 'CMakeLists.txt' file."
+            "help": "Specify the build configuration to install, for multi-config generators."
           },
           {
             "name": "OutputDirectory",
@@ -229,6 +247,33 @@
           }
         ]
       }
+    },
+    {
+      "help": "Runs the <c>cmake --workflow</c> command, which runs the steps of a workflow preset in order.",
+      "postfix": "Workflow",
+      "definiteArgument": "--workflow",
+      "settingsClass": {
+        "properties": [
+          {
+            "name": "Preset",
+            "type": "string",
+            "format": "--preset {value}",
+            "help": "Specify the workflow preset to run. CMake reads it from <c>CMakePresets.json</c> and <c>CMakeUserPresets.json</c> in the working directory."
+          },
+          {
+            "name": "PresetsFile",
+            "type": "string",
+            "format": "--presets-file {value}",
+            "help": "Read presets from the given file instead of <c>CMakePresets.json</c> and <c>CMakeUserPresets.json</c>. Requires CMake 4.4 or later."
+          },
+          {
+            "name": "Fresh",
+            "type": "bool",
+            "format": "--fresh",
+            "help": "Configure a fresh build tree, removing any existing cache file."
+          }
+        ]
+      }
     }
   ],
   "enumerations": [
@@ -240,6 +285,10 @@
         "Visual Studio 17 2022",
         "Visual Studio 18 2026",
         "Ninja",
+        "Ninja Multi-Config",
+        "Unix Makefiles",
+        "NMake Makefiles",
+        "MinGW Makefiles",
         "Xcode"
       ]
     },
