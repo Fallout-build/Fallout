@@ -28,7 +28,7 @@ internal class HandlePlanRequestsAttribute : BuildExtensionAttributeBase, IOnBui
         }
     }
 
-    public void ShowPlan()
+    private void ShowPlan()
     {
         var resourceText = ResourceUtility.GetResourceAllText<HandlePlanRequestsAttribute>(HtmlFileName);
         var contents = resourceText
@@ -38,12 +38,21 @@ internal class HandlePlanRequestsAttribute : BuildExtensionAttributeBase, IOnBui
 
         HtmlFile.WriteAllText(contents);
 
-        // Workaround for https://github.com/dotnet/corefx/issues/10361
-        Process.Start(new ProcessStartInfo
+        // IDE integrations pass --plan-no-open and show the file themselves
+        if (ShouldOpenBrowser(ParameterService.Instance))
         {
-            FileName = HtmlFile,
-            UseShellExecute = true
-        });
+            // Workaround for https://github.com/dotnet/corefx/issues/10361
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = HtmlFile,
+                UseShellExecute = true
+            });
+        }
+    }
+
+    internal static bool ShouldOpenBrowser(ParameterService parameters)
+    {
+        return !(bool) parameters.GetParameter(Constants.PlanNoOpenParameterName, typeof(bool), separator: null);
     }
 
     // ReSharper disable once CognitiveComplexity

@@ -74,18 +74,18 @@ public interface ITest : ICompile, IHasArtifacts
         TestResultDirectory.GlobFiles("coverage.cobertura.*.xml").DeleteFiles();
 
         List<string> failedProjects = new();
+        string noBuild = SucceededTargets.Contains(Compile) ? " --no-build" : string.Empty;
+        string coverage = CollectCoverage
+            ? " --coverlet --coverlet-output-format cobertura --coverlet-exclude-by-file **/*.Generated.cs"
+            : string.Empty;
 
         foreach (Project project in TestProjects)
         {
             try
             {
-                DotNet(TestingPlatformArguments.Create(
-                    project.Path,
-                    project.Name,
-                    Configuration,
-                    TestResultDirectory,
-                    SucceededTargets.Contains(Compile),
-                    CollectCoverage));
+                DotNet($"test --project {project.Path} --configuration {Configuration}" +
+                       $" --results-directory {TestResultDirectory} --report-trx --report-trx-filename {project.Name}.trx" +
+                       $"{noBuild:nq}{coverage:nq}");
             }
             catch (ProcessException)
             {

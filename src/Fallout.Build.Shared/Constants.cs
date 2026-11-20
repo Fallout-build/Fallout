@@ -32,6 +32,12 @@ internal static class Constants
 
     public const string VisualStudioDebugParameterName = "visual-studio-debug";
     internal const string CompletionParameterName = "shell-completion";
+
+    /// <summary>
+    /// Marks that the plan should be generated but not opened in the browser.
+    /// </summary>
+    internal const string PlanNoOpenParameterName = "plan-no-open";
+
     internal const string ParametersFilePrefix = "parameters";
     internal const string DefaultProfileName = "$default";
 
