@@ -263,3 +263,14 @@ CheckoutAction = "releases/v1"      // error: ambiguous, names neither form
 :::note
 `actions/cache@v5` and later run on the node24 runtime and require a self-hosted runner of at least `2.327.1`. Set `CacheAction = "v4"` if your runners are older.
 :::
+
+### Pinning the .NET SDK
+
+By default the setup step reads the SDK from `global.json` at the repo root (`global-json-file: global.json`). Set `SetupDotNetVersions` to emit `dotnet-version` instead. That covers a `global.json` kept in a subfolder, and pinning an exact SDK stops self-hosted runners that share one dotnet directory from all installing each new patch at the same time. One value is written inline, several as a `|` block; `global-json-file` is dropped. Left empty, the output is unchanged.
+
+```csharp title="Build.cs"
+[GitHubActions(
+    // ...
+    SetupDotNetVersions = new[] { "8.0.x", "10.0.103" })]
+class Build : FalloutBuild { /* ... */ }
+```
