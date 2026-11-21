@@ -59,7 +59,6 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
 <!--    <PackageReference Include="TeamCity.VSTest.TestAdapter" />-->
     <PackageReference Include="Verify.XunitV3"  />
-    <PackageReference Include="Verify.DiffPlex"  />
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
     <PackageReference Include="coverlet.MTP" />

@@ -11,6 +11,5 @@ public static class VerifyTestsInitializer
     {
         Environment.SetEnvironmentVariable("DiffEngine_Disabled", "true");
         Environment.SetEnvironmentVariable("Verify_DisableClipboard", "true");
-        VerifyDiffPlex.Initialize();
     }
 }
