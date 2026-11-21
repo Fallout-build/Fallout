@@ -70,6 +70,11 @@ internal static class BuildManager
             ToolRequirementService.EnsureToolRequirements(build, build.ExecutionPlan);
             build.ExecuteExtension<IOnBuildInitialized>(x => x.OnBuildInitialized(build.ExecutableTargets, build.ExecutionPlan));
 
+            if (build.ExitRequested)
+            {
+                return build.ExitCode ?? 0;
+            }
+
             CancellationHandler += Finish;
             BuildExecutor.Execute(
                 build,

@@ -11,11 +11,31 @@ using Fallout.Common.Utilities.Collections;
 
 namespace Fallout.Build.Execution.Extensions;
 
-internal class HandlePlanRequestsAttribute : BuildExtensionAttributeBase, IOnBuildInitialized
+internal interface IFileOpener
+{
+    void Open(AbsolutePath file);
+}
+
+internal class ShellFileOpener : IFileOpener
+{
+    public void Open(AbsolutePath file)
+    {
+        // Workaround for https://github.com/dotnet/corefx/issues/10361
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = file,
+            UseShellExecute = true
+        });
+    }
+}
+
+internal class HandlePlanRequestsAttribute :BuildExtensionAttributeBase, IOnBuildInitialized
 {
     private const string HtmlFileName = "execution-plan.html";
 
     private AbsolutePath HtmlFile => Build.TemporaryDirectory / HtmlFileName;
+
+    internal IFileOpener FileOpener { get; init; } = new ShellFileOpener();
 
     public void OnBuildInitialized(
         IReadOnlyCollection<ExecutableTarget> executableTargets,
@@ -24,7 +44,7 @@ internal class HandlePlanRequestsAttribute : BuildExtensionAttributeBase, IOnBui
         if (Build.Plan)
         {
             ShowPlan();
-            Environment.Exit(exitCode: 0);
+            Build.Exit(exitCode: 0);
         }
     }
 
@@ -39,20 +59,10 @@ internal class HandlePlanRequestsAttribute : BuildExtensionAttributeBase, IOnBui
         HtmlFile.WriteAllText(contents);
 
         // IDE integrations pass --plan-no-open and show the file themselves
-        if (ShouldOpenBrowser(ParameterService.Instance))
+        if (!Build.GetParameter<bool>(Constants.PlanNoOpenParameterName))
         {
-            // Workaround for https://github.com/dotnet/corefx/issues/10361
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = HtmlFile,
-                UseShellExecute = true
-            });
+            FileOpener.Open(HtmlFile);
         }
-    }
-
-    internal static bool ShouldOpenBrowser(ParameterService parameters)
-    {
-        return !(bool) parameters.GetParameter(Constants.PlanNoOpenParameterName, typeof(bool), separator: null);
     }
 
     // ReSharper disable once CognitiveComplexity

@@ -18,6 +18,9 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Fallout.Utilities.IO.Globbing")]
 [assembly: InternalsVisibleTo("Fallout.Utilities.Specs")]
 
+// Lets FakeItEasy (Castle DynamicProxy) fake interfaces with internal members, such as IFalloutBuild.
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
+
 // External extensions — kept as Nuke.* until those projects rebrand independently.
 [assembly: InternalsVisibleTo("Nuke.VisualStudio")]
 [assembly: InternalsVisibleTo("ReSharper.Nuke")]

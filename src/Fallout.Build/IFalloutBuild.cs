@@ -22,6 +22,12 @@ public interface IFalloutBuild
 
     internal bool IsOutputEnabled(DefaultOutput output);
 
+    /// <summary>Reads a parameter by its CLI/environment name, without needing a declared member.</summary>
+    internal T GetParameter<T>(string name);
+
+    /// <summary>Stops the build after the current extension event. No target runs and the build returns <paramref name="exitCode"/>.</summary>
+    internal void Exit(int exitCode);
+
     IReadOnlyCollection<ExecutableTarget> ExecutionPlan { get; }
 
     IReadOnlyCollection<ExecutableTarget> InvokedTargets { get; }
