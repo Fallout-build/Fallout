@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using DiffPlex.DiffBuilder;
@@ -32,7 +33,7 @@ internal static class Snapshot
         [CallerMemberName] string member = "")
     {
         var name = fileName ?? BaseName(sourcePath, member) + (parameters is null ? "" : "_" + parameters);
-        var folder = Path.Combine(Path.GetDirectoryName(sourcePath)!, directory ?? string.Empty);
+        var folder = Path.Combine(ResolveSourceDirectory(sourcePath), directory ?? string.Empty);
         var verifiedPath = Path.Combine(folder, $"{name}.verified.{extension}");
         var receivedPath = Path.Combine(folder, $"{name}.received.{extension}");
 
@@ -48,6 +49,29 @@ internal static class Snapshot
 
         File.WriteAllText(receivedPath, actual + "\n", new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
         throw new InvalidOperationException($"Snapshot {Path.GetFileName(verifiedPath)} differs. Accept the change by replacing it with {Path.GetFileName(receivedPath)}.{Environment.NewLine}{Stringify(diff)}");
+    }
+
+    /// <summary>
+    /// Deterministic CI builds rewrite <c>[CallerFilePath]</c> to a <c>/_/...</c> path, so the directory is
+    /// located from the project folder (the first parent of the test assembly with a *.csproj) instead.
+    /// </summary>
+    private static string ResolveSourceDirectory(string sourcePath)
+    {
+        var project = new DirectoryInfo(AppContext.BaseDirectory);
+        while (project != null && project.GetFiles("*.csproj").Length == 0)
+        {
+            project = project.Parent;
+        }
+
+        var segments = sourcePath.Split('/', Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var index = project is null ? -1 : Array.LastIndexOf(segments, project.Name);
+        if (index < 0)
+        {
+            return Path.GetDirectoryName(sourcePath)!;
+        }
+
+        var relative = segments.Skip(index + 1).Take(segments.Length - index - 2);
+        return Path.Combine(new[] { project!.FullName }.Concat(relative).ToArray());
     }
 
     private static string Normalize(string text)
