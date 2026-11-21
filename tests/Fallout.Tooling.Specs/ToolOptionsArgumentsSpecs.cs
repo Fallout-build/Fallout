@@ -431,10 +431,10 @@ public class ToolOptionsArgumentsSpecs
         [Argument(Format = "--string {value}")]
         public string String => Get<string>(() => String);
 
-        [Argument(Format = "--forwarded {value}", Forwarded = true)]
+        [Argument(Format = "--forwarded {value}", IsForwarded = true)]
         public string ForwardedString => Get<string>(() => ForwardedString);
 
-        [Argument(Format = "--flag", Forwarded = true)]
+        [Argument(Format = "--flag", IsForwarded = true)]
         public bool? ForwardedFlag => Get<bool>(() => ForwardedFlag);
     }
 

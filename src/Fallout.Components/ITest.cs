@@ -23,11 +23,14 @@ public interface ITest : ICompile, IHasArtifacts
     int TestDegreeOfParallelism => 1;
 
     /// <summary>
-    ///     Runs the test projects on Microsoft.Testing.Platform with <see cref="DotNetTasks.DotNetTestMtp(DotNetTestMtpSettings)" />
-    ///     instead of VSTest. The default follows the test runner of <c>dotnet test</c>: the <c>test.runner</c> of the
-    ///     nearest <c>global.json</c> (<c>"test": { "runner": "Microsoft.Testing.Platform" }</c>), or the
-    ///     <c>DOTNET_TEST_RUNNER</c> environment variable with the .NET 11 SDK and later. See <see cref="DotNetTasks.GetTestRunner" />.
+    ///     Runs the test projects on Microsoft.Testing.Platform with
+    ///     <see cref="DotNetTasks.DotNetTestMtp(DotNetTestMtpSettings)" /> instead of VSTest.
     /// </summary>
+    /// <remarks>
+    ///     The default follows the test runner of <c>dotnet test</c> (<see cref="DotNetTasks.GetTestRunner" />): the
+    ///     <c>DOTNET_TEST_RUNNER</c> environment variable of the .NET 11 SDK, or the <c>test.runner</c> of the nearest
+    ///     <c>global.json</c>, such as <c>"test": { "runner": "Microsoft.Testing.Platform" }</c>.
+    /// </remarks>
     bool UseTestingPlatform => GetTestRunner(RootDirectory) == DotNetTestRunner.MicrosoftTestingPlatform;
 
     Target Test => _ => _
@@ -71,11 +74,20 @@ public interface ITest : ICompile, IHasArtifacts
         // coverlet.MTP adds a timestamp to its file names, so remove the files of earlier runs.
         TestResultDirectory.GlobFiles("*coverage.cobertura.*.xml").DeleteFiles();
 
+        TestingPlatformRun run = new(
+            CollectCoverage,
+            OnGitHubActions: GitHubActions.Instance is not null,
+            OnTeamCity: TeamCity.Instance is not null,
+            OnAzurePipelines: AzurePipelines.Instance is not null);
+
         DotNetTestMtp(_ => _
-                .Apply(TestMtpSettingsBase)
+                .SetConfiguration(Configuration)
+                .SetNoBuild(SucceededTargets.Contains(Compile))
+                .ResetVerbosity()
+                .SetResultsDirectory(TestResultDirectory)
                 .Apply(TestMtpSettings)
-                .CombineWith(TestProjects, (_, v) => _
-                    .Apply(TestMtpProjectSettingsBase, v)
+                .CombineWith(TestProjects, (_, v) => TestingPlatform
+                    .ApplyProject(_.SetProjectFile(v), v.Name, TestingPlatform.GetExtensions(v), run)
                     .Apply(TestMtpProjectSettings, v)),
             completeOnFailure: true,
             degreeOfParallelism: TestDegreeOfParallelism);
@@ -160,27 +172,14 @@ public interface ITest : ICompile, IHasArtifacts
 
     Configure<DotNetTestSettings, Project> TestProjectSettings => (_, v) => _;
 
-    sealed Configure<DotNetTestMtpSettings> TestMtpSettingsBase => _ => _
-        .SetConfiguration(Configuration)
-        .SetNoBuild(SucceededTargets.Contains(Compile))
-        .ResetVerbosity()
-        .SetResultsDirectory(TestResultDirectory);
-
-    // Writes <Project>.trx, adds the CI reporters and collects coverage, each only with the extension that provides it.
-    sealed Configure<DotNetTestMtpSettings, Project> TestMtpProjectSettingsBase => (_, v) => TestingPlatform.ApplyProject(
-        _.SetProjectFile(v),
-        v.Name,
-        TestingPlatform.GetExtensions(v),
-        new TestingPlatformRun(
-            CollectCoverage,
-            OnGitHubActions: GitHubActions.Instance is not null,
-            OnTeamCity: TeamCity.Instance is not null,
-            OnAzurePipelines: AzurePipelines.Instance is not null));
-
-    /// <summary>Settings for all test projects when <see cref="UseTestingPlatform" /> is on.</summary>
+    /// <summary>
+    ///     Settings for all test projects when <see cref="UseTestingPlatform" /> is on.
+    /// </summary>
     Configure<DotNetTestMtpSettings> TestMtpSettings => _ => _;
 
-    /// <summary>Settings for one test project when <see cref="UseTestingPlatform" /> is on.</summary>
+    /// <summary>
+    ///     Settings for one test project when <see cref="UseTestingPlatform" /> is on.
+    /// </summary>
     Configure<DotNetTestMtpSettings, Project> TestMtpProjectSettings => (_, v) => _;
 
     IEnumerable<Project> TestProjects { get; }

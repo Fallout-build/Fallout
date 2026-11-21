@@ -120,7 +120,7 @@
           "description": "Custom implementation of value presentation.",
           "type": "boolean"
         },
-        "forwarded": {
+        "isForwarded": {
           "description": "Passes the argument on to the program that the tool runs. Forwarded arguments come last, after a single '--'.",
           "type": "boolean"
         },

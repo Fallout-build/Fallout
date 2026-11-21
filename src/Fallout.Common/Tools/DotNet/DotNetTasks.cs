@@ -1,9 +1,7 @@
 using System;
-using System.Linq;
 using System.Text.Json;
 using Fallout.Common.IO;
 using Fallout.Common.Tooling;
-using Fallout.Common.Utilities;
 using Serilog.Events;
 
 namespace Fallout.Common.Tools.DotNet;
@@ -26,49 +24,29 @@ partial class DotNetTasks;
 
 public partial class DotNetTasks
 {
-    private const string TestRunnerVariable = "DOTNET_TEST_RUNNER";
-
     /// <summary>
-    /// Returns the test runner that <c>dotnet test</c> uses in <paramref name="directory"/>: the <c>test.runner</c> of the
-    /// nearest <c>global.json</c>, or the <c>DOTNET_TEST_RUNNER</c> environment variable, which overrides it with the
-    /// .NET 11 SDK and later. Without either, the runner is <see cref="DotNetTestRunner.VSTest"/>.
+    /// Returns the test runner that <c>dotnet test</c> uses in <paramref name="directory"/>, so a build can choose between
+    /// <see cref="DotNetTest(DotNetTestSettings)"/> and <see cref="DotNetTestMtp(DotNetTestMtpSettings)"/>.
     /// </summary>
+    /// <remarks>
+    /// The <c>DOTNET_TEST_RUNNER</c> environment variable wins, as with the .NET 11 SDK and later, which read it.
+    /// Otherwise the <c>test.runner</c> of the nearest <c>global.json</c> decides. Without either, the runner is
+    /// <see cref="DotNetTestRunner.VSTest"/>.
+    /// </remarks>
     public static DotNetTestRunner GetTestRunner(AbsolutePath directory)
     {
-        // The .NET 10 SDK ignores the variable, so check the SDK version only when the variable is set.
-        var variableRunner = ParseTestRunner(EnvironmentInfo.GetVariable(TestRunnerVariable));
-        if (variableRunner != null && GetSdkMajorVersion(directory) >= 11)
-        {
-            return variableRunner.Value;
-        }
-
-        return GetGlobalJsonTestRunner(directory) ?? DotNetTestRunner.VSTest;
+        DotNetTestRunner? variableRunner = ParseTestRunner(EnvironmentInfo.GetVariable("DOTNET_TEST_RUNNER"));
+        return variableRunner ?? FindGlobalJsonTestRunner(directory) ?? DotNetTestRunner.VSTest;
     }
 
-    internal static DotNetTestRunner? GetGlobalJsonTestRunner(AbsolutePath directory)
-    {
-        var globalJsonFile = FindGlobalJsonFile(directory);
-        if (globalJsonFile == null)
-        {
-            return null;
-        }
-
-        using var document = JsonDocument.Parse(
-            globalJsonFile.ReadAllText(),
-            new JsonDocumentOptions
-            {
-                CommentHandling = JsonCommentHandling.Skip,
-                AllowTrailingCommas = true
-            });
-
-        var runner = GetObjectProperty(document.RootElement, "test") is { } test
-            ? GetObjectProperty(test, "runner")
-            : null;
-
-        return runner is { ValueKind: JsonValueKind.String } ? ParseTestRunner(runner.Value.GetString()) : null;
-    }
-
-    internal static DotNetTestRunner? ParseTestRunner(string value)
+    /// <summary>
+    /// Returns the test runner that a <c>test.runner</c> or <c>DOTNET_TEST_RUNNER</c> value names, or <c>null</c> for an
+    /// unknown or missing value.
+    /// </summary>
+    /// <remarks>
+    /// The names are case-insensitive, as in <c>dotnet test</c>.
+    /// </remarks>
+    private static DotNetTestRunner? ParseTestRunner(string value)
     {
         if (string.Equals(value, "Microsoft.Testing.Platform", StringComparison.OrdinalIgnoreCase))
         {
@@ -83,12 +61,55 @@ public partial class DotNetTasks
         return null;
     }
 
-    // dotnet reads only the nearest global.json, even when it has no test section.
+    /// <summary>
+    /// Returns the <c>test.runner</c> of the nearest <c>global.json</c> in or above <paramref name="directory"/>, or
+    /// <c>null</c> when that file selects no runner.
+    /// </summary>
+    /// <remarks>
+    /// This reads the file the way <c>dotnet test</c> does. Only the nearest <c>global.json</c> counts, even when a file
+    /// further up has a runner. The property names are case-sensitive, and comments are allowed. A file that isn't valid
+    /// JSON, such as one with a trailing comma, selects no runner, because <c>dotnet test</c> then uses VSTest.
+    /// </remarks>
+    private static DotNetTestRunner? FindGlobalJsonTestRunner(AbsolutePath directory)
+    {
+        AbsolutePath globalJsonFile = FindGlobalJsonFile(directory);
+        if (globalJsonFile is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            using JsonDocument document = JsonDocument.Parse(
+                globalJsonFile.ReadAllText(),
+                new JsonDocumentOptions
+                {
+                    CommentHandling = JsonCommentHandling.Skip
+                });
+
+            JsonElement root = document.RootElement;
+            return root.ValueKind is JsonValueKind.Object
+                   && root.TryGetProperty("test", out JsonElement test)
+                   && test.ValueKind is JsonValueKind.Object
+                   && test.TryGetProperty("runner", out JsonElement runner)
+                   && runner.ValueKind is JsonValueKind.String
+                ? ParseTestRunner(runner.GetString())
+                : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Returns the nearest <c>global.json</c> in or above <paramref name="directory"/>, or <c>null</c> when there is none.
+    /// </summary>
     private static AbsolutePath FindGlobalJsonFile(AbsolutePath directory)
     {
-        for (var current = directory; current != null; current = current.Parent)
+        for (AbsolutePath current = directory; current is not null; current = current.Parent)
         {
-            var file = current / "global.json";
+            AbsolutePath file = current / "global.json";
             if (file.FileExists())
             {
                 return file;
@@ -96,25 +117,6 @@ public partial class DotNetTasks
         }
 
         return null;
-    }
-
-    private static JsonElement? GetObjectProperty(JsonElement element, string name)
-    {
-        if (element.ValueKind != JsonValueKind.Object)
-        {
-            return null;
-        }
-
-        return element.EnumerateObject()
-            .Where(x => x.Name.EqualsOrdinalIgnoreCase(name))
-            .Select(x => (JsonElement?)x.Value)
-            .FirstOrDefault();
-    }
-
-    private static int GetSdkMajorVersion(AbsolutePath directory)
-    {
-        var version = DotNet("--version", directory, logOutput: false, logInvocation: false).StdToText();
-        return int.TryParse(version.Split('.').First(), out var major) ? major : 0;
     }
 
     public static string EscapeMSBuild(string str)

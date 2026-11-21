@@ -358,75 +358,75 @@ public partial class DotNetTestMtpSettings : ToolOptions
     /// <summary>The verbosity of the test output. <c>Minimal</c> needs Microsoft.Testing.Platform 2.4 or later.</summary>
     [Argument(Format = "--output {value}")] public DotNetTestOutputVerbosity OutputVerbosity => Get<DotNetTestOutputVerbosity>(() => OutputVerbosity);
     /// <summary>Runs the tests that match the expression. The syntax belongs to the test framework. MSTest, NUnit and xunit.v3 take the <a href="https://learn.microsoft.com/dotnet/core/testing/selective-unit-tests">VSTest filter syntax</a>.</summary>
-    [Argument(Format = "--filter {value}", Forwarded = true)] public string Filter => Get<string>(() => Filter);
+    [Argument(Format = "--filter {value}", IsForwarded = true)] public string Filter => Get<string>(() => Filter);
     /// <summary>Runs the tests that match the tree filter expression, for test frameworks that support it, such as TUnit.</summary>
-    [Argument(Format = "--treenode-filter {value}", Forwarded = true)] public string TreenodeFilter => Get<string>(() => TreenodeFilter);
+    [Argument(Format = "--treenode-filter {value}", IsForwarded = true)] public string TreenodeFilter => Get<string>(() => TreenodeFilter);
     /// <summary>Runs the tests with these test node UIDs.</summary>
-    [Argument(Format = "--filter-uid {value}", Separator = " ", Forwarded = true)] public IReadOnlyList<string> FilterUids => Get<List<string>>(() => FilterUids);
+    [Argument(Format = "--filter-uid {value}", Separator = " ", IsForwarded = true)] public IReadOnlyList<string> FilterUids => Get<List<string>>(() => FilterUids);
     /// <summary>The minimum number of tests of each test application. Skipped tests don't count. A test application fails with exit code 9 when fewer tests run.</summary>
-    [Argument(Format = "--minimum-expected-tests {value}", Forwarded = true)] public int? MinimumExpectedTestsPerModule => Get<int?>(() => MinimumExpectedTestsPerModule);
+    [Argument(Format = "--minimum-expected-tests {value}", IsForwarded = true)] public int? MinimumExpectedTestsPerModule => Get<int?>(() => MinimumExpectedTestsPerModule);
     /// <summary>Whether a test application that skipped all its tests fails. <c>allow-skipped</c> (the default) lets it pass. <c>strict</c> fails it with exit code 8. Needs Microsoft.Testing.Platform 2.3 or later.</summary>
-    [Argument(Format = "--zero-tests-policy {value}", Forwarded = true)] public DotNetTestZeroTestsPolicy ZeroTestsPolicy => Get<DotNetTestZeroTestsPolicy>(() => ZeroTestsPolicy);
+    [Argument(Format = "--zero-tests-policy {value}", IsForwarded = true)] public DotNetTestZeroTestsPolicy ZeroTestsPolicy => Get<DotNetTestZeroTestsPolicy>(() => ZeroTestsPolicy);
     /// <summary>Exit codes of the test applications that count as success, such as <c>8</c> for a test application without tests. See <a href="https://aka.ms/testingplatform/exitcodes">the exit codes</a>.</summary>
-    [Argument(Format = "--ignore-exit-code {value}", Separator = ";", Forwarded = true)] public IReadOnlyList<int> IgnoreExitCodes => Get<List<int>>(() => IgnoreExitCodes);
+    [Argument(Format = "--ignore-exit-code {value}", Separator = ";", IsForwarded = true)] public IReadOnlyList<int> IgnoreExitCodes => Get<List<int>>(() => IgnoreExitCodes);
     /// <summary>Writes a diagnostic log for each test application.</summary>
-    [Argument(Format = "--diagnostic", Forwarded = true)] public bool? Diagnostic => Get<bool?>(() => Diagnostic);
+    [Argument(Format = "--diagnostic", IsForwarded = true)] public bool? Diagnostic => Get<bool?>(() => Diagnostic);
     /// <summary>The level of the diagnostic log. The default is <c>Trace</c>.</summary>
-    [Argument(Format = "--diagnostic-verbosity {value}", Forwarded = true)] public DotNetTestDiagnosticVerbosity DiagnosticVerbosity => Get<DotNetTestDiagnosticVerbosity>(() => DiagnosticVerbosity);
+    [Argument(Format = "--diagnostic-verbosity {value}", IsForwarded = true)] public DotNetTestDiagnosticVerbosity DiagnosticVerbosity => Get<DotNetTestDiagnosticVerbosity>(() => DiagnosticVerbosity);
     /// <summary>The prefix of the diagnostic log file names.</summary>
-    [Argument(Format = "--diagnostic-file-prefix {value}", Forwarded = true)] public string DiagnosticFilePrefix => Get<string>(() => DiagnosticFilePrefix);
+    [Argument(Format = "--diagnostic-file-prefix {value}", IsForwarded = true)] public string DiagnosticFilePrefix => Get<string>(() => DiagnosticFilePrefix);
     /// <summary>Writes a TRX report. Needs the <c>Microsoft.Testing.Extensions.TrxReport</c> package.</summary>
-    [Argument(Format = "--report-trx", Forwarded = true)] public bool? ReportTrx => Get<bool?>(() => ReportTrx);
+    [Argument(Format = "--report-trx", IsForwarded = true)] public bool? ReportTrx => Get<bool?>(() => ReportTrx);
     /// <summary>The file name of the TRX report, relative to the results directory. Needs <c>ReportTrx</c>.</summary>
-    [Argument(Format = "--report-trx-filename {value}", Forwarded = true)] public string ReportTrxFileName => Get<string>(() => ReportTrxFileName);
+    [Argument(Format = "--report-trx-filename {value}", IsForwarded = true)] public string ReportTrxFileName => Get<string>(() => ReportTrxFileName);
     /// <summary>Collects code coverage. Needs the <c>Microsoft.Testing.Extensions.CodeCoverage</c> package.</summary>
-    [Argument(Format = "--coverage", Forwarded = true)] public bool? Coverage => Get<bool?>(() => Coverage);
+    [Argument(Format = "--coverage", IsForwarded = true)] public bool? Coverage => Get<bool?>(() => Coverage);
     /// <summary>The file name of the coverage report, relative to the results directory. Give each test application its own name, or the reports overwrite each other.</summary>
-    [Argument(Format = "--coverage-output {value}", Forwarded = true)] public string CoverageOutput => Get<string>(() => CoverageOutput);
+    [Argument(Format = "--coverage-output {value}", IsForwarded = true)] public string CoverageOutput => Get<string>(() => CoverageOutput);
     /// <summary>The format of the coverage report. The default is <c>coverage</c>.</summary>
-    [Argument(Format = "--coverage-output-format {value}", Forwarded = true)] public DotNetTestCoverageOutputFormat CoverageOutputFormat => Get<DotNetTestCoverageOutputFormat>(() => CoverageOutputFormat);
+    [Argument(Format = "--coverage-output-format {value}", IsForwarded = true)] public DotNetTestCoverageOutputFormat CoverageOutputFormat => Get<DotNetTestCoverageOutputFormat>(() => CoverageOutputFormat);
     /// <summary>An XML file with <a href="https://learn.microsoft.com/dotnet/core/additional-tools/dotnet-coverage#settings">code coverage settings</a>.</summary>
-    [Argument(Format = "--coverage-settings {value}", Forwarded = true)] public string CoverageSettings => Get<string>(() => CoverageSettings);
+    [Argument(Format = "--coverage-settings {value}", IsForwarded = true)] public string CoverageSettings => Get<string>(() => CoverageSettings);
     /// <summary>Collects code coverage with Coverlet. Needs the <c>coverlet.MTP</c> package.</summary>
-    [Argument(Format = "--coverlet", Forwarded = true)] public bool? Coverlet => Get<bool?>(() => Coverlet);
+    [Argument(Format = "--coverlet", IsForwarded = true)] public bool? Coverlet => Get<bool?>(() => Coverlet);
     /// <summary>The formats of the Coverlet reports. The default is <c>json</c> and <c>cobertura</c>.</summary>
-    [Argument(Format = "--coverlet-output-format {value}", Forwarded = true)] public IReadOnlyList<DotNetTestCoverletOutputFormat> CoverletOutputFormats => Get<List<DotNetTestCoverletOutputFormat>>(() => CoverletOutputFormats);
+    [Argument(Format = "--coverlet-output-format {value}", IsForwarded = true)] public IReadOnlyList<DotNetTestCoverletOutputFormat> CoverletOutputFormats => Get<List<DotNetTestCoverletOutputFormat>>(() => CoverletOutputFormats);
     /// <summary>The prefix of the Coverlet report file names. Give each test application its own prefix, or the reports overwrite each other.</summary>
-    [Argument(Format = "--coverlet-file-prefix {value}", Forwarded = true)] public string CoverletFilePrefix => Get<string>(() => CoverletFilePrefix);
+    [Argument(Format = "--coverlet-file-prefix {value}", IsForwarded = true)] public string CoverletFilePrefix => Get<string>(() => CoverletFilePrefix);
     /// <summary>Includes the assemblies and types that match the filters, such as <c>[MyAssembly]MyNamespace.*</c>.</summary>
-    [Argument(Format = "--coverlet-include {value}", Forwarded = true)] public IReadOnlyList<string> CoverletIncludeFilters => Get<List<string>>(() => CoverletIncludeFilters);
+    [Argument(Format = "--coverlet-include {value}", IsForwarded = true)] public IReadOnlyList<string> CoverletIncludeFilters => Get<List<string>>(() => CoverletIncludeFilters);
     /// <summary>Excludes the assemblies and types that match the filters, such as <c>[*.Tests]*</c>.</summary>
-    [Argument(Format = "--coverlet-exclude {value}", Forwarded = true)] public IReadOnlyList<string> CoverletExcludeFilters => Get<List<string>>(() => CoverletExcludeFilters);
+    [Argument(Format = "--coverlet-exclude {value}", IsForwarded = true)] public IReadOnlyList<string> CoverletExcludeFilters => Get<List<string>>(() => CoverletExcludeFilters);
     /// <summary>Excludes the source files that match the glob patterns, such as <c>**/*.Generated.cs</c>.</summary>
-    [Argument(Format = "--coverlet-exclude-by-file {value}", Forwarded = true)] public IReadOnlyList<string> CoverletExcludeByFiles => Get<List<string>>(() => CoverletExcludeByFiles);
+    [Argument(Format = "--coverlet-exclude-by-file {value}", IsForwarded = true)] public IReadOnlyList<string> CoverletExcludeByFiles => Get<List<string>>(() => CoverletExcludeByFiles);
     /// <summary>Excludes the methods and classes that have these attributes.</summary>
-    [Argument(Format = "--coverlet-exclude-by-attribute {value}", Forwarded = true)] public IReadOnlyList<string> CoverletExcludeByAttributes => Get<List<string>>(() => CoverletExcludeByAttributes);
+    [Argument(Format = "--coverlet-exclude-by-attribute {value}", IsForwarded = true)] public IReadOnlyList<string> CoverletExcludeByAttributes => Get<List<string>>(() => CoverletExcludeByAttributes);
     /// <summary>Includes the test assembly in the coverage report.</summary>
-    [Argument(Format = "--coverlet-include-test-assembly", Forwarded = true)] public bool? CoverletIncludeTestAssembly => Get<bool?>(() => CoverletIncludeTestAssembly);
+    [Argument(Format = "--coverlet-include-test-assembly", IsForwarded = true)] public bool? CoverletIncludeTestAssembly => Get<bool?>(() => CoverletIncludeTestAssembly);
     /// <summary>Counts at most one hit for each location in the code.</summary>
-    [Argument(Format = "--coverlet-single-hit", Forwarded = true)] public bool? CoverletSingleHit => Get<bool?>(() => CoverletSingleHit);
+    [Argument(Format = "--coverlet-single-hit", IsForwarded = true)] public bool? CoverletSingleHit => Get<bool?>(() => CoverletSingleHit);
     /// <summary>Skips auto-implemented properties.</summary>
-    [Argument(Format = "--coverlet-skip-auto-props", Forwarded = true)] public bool? CoverletSkipAutoProps => Get<bool?>(() => CoverletSkipAutoProps);
+    [Argument(Format = "--coverlet-skip-auto-props", IsForwarded = true)] public bool? CoverletSkipAutoProps => Get<bool?>(() => CoverletSkipAutoProps);
     /// <summary>Fails the test application when the coverage percentage is lower.</summary>
-    [Argument(Format = "--coverlet-threshold {value}", Forwarded = true)] public int? CoverletThreshold => Get<int?>(() => CoverletThreshold);
+    [Argument(Format = "--coverlet-threshold {value}", IsForwarded = true)] public int? CoverletThreshold => Get<int?>(() => CoverletThreshold);
     /// <summary>Writes a dump file when a test application crashes. Needs the <c>Microsoft.Testing.Extensions.CrashDump</c> package.</summary>
-    [Argument(Format = "--crashdump", Forwarded = true)] public bool? CrashDump => Get<bool?>(() => CrashDump);
+    [Argument(Format = "--crashdump", IsForwarded = true)] public bool? CrashDump => Get<bool?>(() => CrashDump);
     /// <summary>The type of the crash dump. The default is <c>Full</c>.</summary>
-    [Argument(Format = "--crashdump-type {value}", Forwarded = true)] public DotNetTestDumpType CrashDumpType => Get<DotNetTestDumpType>(() => CrashDumpType);
+    [Argument(Format = "--crashdump-type {value}", IsForwarded = true)] public DotNetTestDumpType CrashDumpType => Get<DotNetTestDumpType>(() => CrashDumpType);
     /// <summary>Writes a dump file and stops the test application when it runs longer than <c>HangDumpTimeout</c>. Needs the <c>Microsoft.Testing.Extensions.HangDump</c> package.</summary>
-    [Argument(Format = "--hangdump", Forwarded = true)] public bool? HangDump => Get<bool?>(() => HangDump);
+    [Argument(Format = "--hangdump", IsForwarded = true)] public bool? HangDump => Get<bool?>(() => HangDump);
     /// <summary>The time after which the hang dump is written, such as <c>90s</c> or <c>10m</c>. The default is <c>30m</c>.</summary>
-    [Argument(Format = "--hangdump-timeout {value}", Forwarded = true)] public string HangDumpTimeout => Get<string>(() => HangDumpTimeout);
+    [Argument(Format = "--hangdump-timeout {value}", IsForwarded = true)] public string HangDumpTimeout => Get<string>(() => HangDumpTimeout);
     /// <summary>The type of the hang dump. The default is <c>Full</c>. <c>None</c> stops the test application without a dump.</summary>
-    [Argument(Format = "--hangdump-type {value}", Forwarded = true)] public DotNetTestDumpType HangDumpType => Get<DotNetTestDumpType>(() => HangDumpType);
+    [Argument(Format = "--hangdump-type {value}", IsForwarded = true)] public DotNetTestDumpType HangDumpType => Get<DotNetTestDumpType>(() => HangDumpType);
     /// <summary>Runs failed tests again, at most this number of times. Needs the <c>Microsoft.Testing.Extensions.Retry</c> package.</summary>
-    [Argument(Format = "--retry-failed-tests {value}", Forwarded = true)] public int? RetryFailedTests => Get<int?>(() => RetryFailedTests);
+    [Argument(Format = "--retry-failed-tests {value}", IsForwarded = true)] public int? RetryFailedTests => Get<int?>(() => RetryFailedTests);
     /// <summary>Writes log groups, annotations and a job summary on GitHub Actions. Needs the <c>Microsoft.Testing.Extensions.GitHubActionsReport</c> package.</summary>
-    [Argument(Format = "--report-gh", Forwarded = true)] public bool? ReportGitHubActions => Get<bool?>(() => ReportGitHubActions);
+    [Argument(Format = "--report-gh", IsForwarded = true)] public bool? ReportGitHubActions => Get<bool?>(() => ReportGitHubActions);
     /// <summary>Writes errors, warnings and annotations in the format of Azure Pipelines. Needs the <c>Microsoft.Testing.Extensions.AzureDevOpsReport</c> package.</summary>
-    [Argument(Format = "--report-azdo", Forwarded = true)] public bool? ReportAzureDevOps => Get<bool?>(() => ReportAzureDevOps);
+    [Argument(Format = "--report-azdo", IsForwarded = true)] public bool? ReportAzureDevOps => Get<bool?>(() => ReportAzureDevOps);
     /// <summary>Other arguments for the test applications, such as the options of the test framework (for example <c>--report-xunit-trx</c> of xunit.v3) or of other extensions.</summary>
-    [Argument(Format = "{value}", Position = -1, Forwarded = true)] public IReadOnlyList<string> TestApplicationArguments => Get<List<string>>(() => TestApplicationArguments);
+    [Argument(Format = "{value}", Position = -1, IsForwarded = true)] public IReadOnlyList<string> TestApplicationArguments => Get<List<string>>(() => TestApplicationArguments);
 }
 #endregion
 #region DotNetRunSettings

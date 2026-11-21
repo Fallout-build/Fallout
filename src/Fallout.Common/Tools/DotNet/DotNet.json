@@ -409,14 +409,14 @@
             "name": "Filter",
             "type": "string",
             "format": "--filter {value}",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "Runs the tests that match the expression. The syntax belongs to the test framework. MSTest, NUnit and xunit.v3 take the <a href=\"https://learn.microsoft.com/dotnet/core/testing/selective-unit-tests\">VSTest filter syntax</a>."
           },
           {
             "name": "TreenodeFilter",
             "type": "string",
             "format": "--treenode-filter {value}",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "Runs the tests that match the tree filter expression, for test frameworks that support it, such as TUnit."
           },
           {
@@ -424,21 +424,21 @@
             "type": "List<string>",
             "format": "--filter-uid {value}",
             "separator": " ",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "Runs the tests with these test node UIDs."
           },
           {
             "name": "MinimumExpectedTestsPerModule",
             "type": "int",
             "format": "--minimum-expected-tests {value}",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "The minimum number of tests of each test application. Skipped tests don't count. A test application fails with exit code 9 when fewer tests run."
           },
           {
             "name": "ZeroTestsPolicy",
             "type": "DotNetTestZeroTestsPolicy",
             "format": "--zero-tests-policy {value}",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "Whether a test application that skipped all its tests fails. <c>allow-skipped</c> (the default) lets it pass. <c>strict</c> fails it with exit code 8. Needs Microsoft.Testing.Platform 2.3 or later."
           },
           {
@@ -446,203 +446,203 @@
             "type": "List<int>",
             "format": "--ignore-exit-code {value}",
             "separator": ";",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "Exit codes of the test applications that count as success, such as <c>8</c> for a test application without tests. See <a href=\"https://aka.ms/testingplatform/exitcodes\">the exit codes</a>."
           },
           {
             "name": "Diagnostic",
             "type": "bool",
             "format": "--diagnostic",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "Writes a diagnostic log for each test application."
           },
           {
             "name": "DiagnosticVerbosity",
             "type": "DotNetTestDiagnosticVerbosity",
             "format": "--diagnostic-verbosity {value}",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "The level of the diagnostic log. The default is <c>Trace</c>."
           },
           {
             "name": "DiagnosticFilePrefix",
             "type": "string",
             "format": "--diagnostic-file-prefix {value}",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "The prefix of the diagnostic log file names."
           },
           {
             "name": "ReportTrx",
             "type": "bool",
             "format": "--report-trx",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "Writes a TRX report. Needs the <c>Microsoft.Testing.Extensions.TrxReport</c> package."
           },
           {
             "name": "ReportTrxFileName",
             "type": "string",
             "format": "--report-trx-filename {value}",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "The file name of the TRX report, relative to the results directory. Needs <c>ReportTrx</c>."
           },
           {
             "name": "Coverage",
             "type": "bool",
             "format": "--coverage",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "Collects code coverage. Needs the <c>Microsoft.Testing.Extensions.CodeCoverage</c> package."
           },
           {
             "name": "CoverageOutput",
             "type": "string",
             "format": "--coverage-output {value}",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "The file name of the coverage report, relative to the results directory. Give each test application its own name, or the reports overwrite each other."
           },
           {
             "name": "CoverageOutputFormat",
             "type": "DotNetTestCoverageOutputFormat",
             "format": "--coverage-output-format {value}",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "The format of the coverage report. The default is <c>coverage</c>."
           },
           {
             "name": "CoverageSettings",
             "type": "string",
             "format": "--coverage-settings {value}",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "An XML file with <a href=\"https://learn.microsoft.com/dotnet/core/additional-tools/dotnet-coverage#settings\">code coverage settings</a>."
           },
           {
             "name": "Coverlet",
             "type": "bool",
             "format": "--coverlet",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "Collects code coverage with Coverlet. Needs the <c>coverlet.MTP</c> package."
           },
           {
             "name": "CoverletOutputFormats",
             "type": "List<DotNetTestCoverletOutputFormat>",
             "format": "--coverlet-output-format {value}",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "The formats of the Coverlet reports. The default is <c>json</c> and <c>cobertura</c>."
           },
           {
             "name": "CoverletFilePrefix",
             "type": "string",
             "format": "--coverlet-file-prefix {value}",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "The prefix of the Coverlet report file names. Give each test application its own prefix, or the reports overwrite each other."
           },
           {
             "name": "CoverletIncludeFilters",
             "type": "List<string>",
             "format": "--coverlet-include {value}",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "Includes the assemblies and types that match the filters, such as <c>[MyAssembly]MyNamespace.*</c>."
           },
           {
             "name": "CoverletExcludeFilters",
             "type": "List<string>",
             "format": "--coverlet-exclude {value}",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "Excludes the assemblies and types that match the filters, such as <c>[*.Tests]*</c>."
           },
           {
             "name": "CoverletExcludeByFiles",
             "type": "List<string>",
             "format": "--coverlet-exclude-by-file {value}",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "Excludes the source files that match the glob patterns, such as <c>**/*.Generated.cs</c>."
           },
           {
             "name": "CoverletExcludeByAttributes",
             "type": "List<string>",
             "format": "--coverlet-exclude-by-attribute {value}",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "Excludes the methods and classes that have these attributes."
           },
           {
             "name": "CoverletIncludeTestAssembly",
             "type": "bool",
             "format": "--coverlet-include-test-assembly",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "Includes the test assembly in the coverage report."
           },
           {
             "name": "CoverletSingleHit",
             "type": "bool",
             "format": "--coverlet-single-hit",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "Counts at most one hit for each location in the code."
           },
           {
             "name": "CoverletSkipAutoProps",
             "type": "bool",
             "format": "--coverlet-skip-auto-props",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "Skips auto-implemented properties."
           },
           {
             "name": "CoverletThreshold",
             "type": "int",
             "format": "--coverlet-threshold {value}",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "Fails the test application when the coverage percentage is lower."
           },
           {
             "name": "CrashDump",
             "type": "bool",
             "format": "--crashdump",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "Writes a dump file when a test application crashes. Needs the <c>Microsoft.Testing.Extensions.CrashDump</c> package."
           },
           {
             "name": "CrashDumpType",
             "type": "DotNetTestDumpType",
             "format": "--crashdump-type {value}",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "The type of the crash dump. The default is <c>Full</c>."
           },
           {
             "name": "HangDump",
             "type": "bool",
             "format": "--hangdump",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "Writes a dump file and stops the test application when it runs longer than <c>HangDumpTimeout</c>. Needs the <c>Microsoft.Testing.Extensions.HangDump</c> package."
           },
           {
             "name": "HangDumpTimeout",
             "type": "string",
             "format": "--hangdump-timeout {value}",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "The time after which the hang dump is written, such as <c>90s</c> or <c>10m</c>. The default is <c>30m</c>."
           },
           {
             "name": "HangDumpType",
             "type": "DotNetTestDumpType",
             "format": "--hangdump-type {value}",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "The type of the hang dump. The default is <c>Full</c>. <c>None</c> stops the test application without a dump."
           },
           {
             "name": "RetryFailedTests",
             "type": "int",
             "format": "--retry-failed-tests {value}",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "Runs failed tests again, at most this number of times. Needs the <c>Microsoft.Testing.Extensions.Retry</c> package."
           },
           {
             "name": "ReportGitHubActions",
             "type": "bool",
             "format": "--report-gh",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "Writes log groups, annotations and a job summary on GitHub Actions. Needs the <c>Microsoft.Testing.Extensions.GitHubActionsReport</c> package."
           },
           {
             "name": "ReportAzureDevOps",
             "type": "bool",
             "format": "--report-azdo",
-            "forwarded": true,
+            "isForwarded": true,
             "help": "Writes errors, warnings and annotations in the format of Azure Pipelines. Needs the <c>Microsoft.Testing.Extensions.AzureDevOpsReport</c> package."
           },
           {
@@ -650,7 +650,7 @@
             "type": "List<string>",
             "format": "{value}",
             "position": -1,
-            "forwarded": true,
+            "isForwarded": true,
             "help": "Other arguments for the test applications, such as the options of the test framework (for example <c>--report-xunit-trx</c> of xunit.v3) or of other extensions."
           }
         ]

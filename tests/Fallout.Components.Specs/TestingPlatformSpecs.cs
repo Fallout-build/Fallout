@@ -14,7 +14,7 @@ public class TestingPlatformSpecs
     public void Extensions_are_found_from_the_builder_hooks_of_their_packages()
     {
         // Act
-        var extensions = TestingPlatform.GetExtensions(
+        TestingPlatformExtensions extensions = TestingPlatform.GetExtensions(
             [
                 "Microsoft.Testing.Extensions.TrxReport.TestingPlatformBuilderHook",
                 "Coverlet.MTP.TestingPlatformBuilderHook",
@@ -35,7 +35,7 @@ public class TestingPlatformSpecs
     public void The_trx_report_extension_writes_a_trx_file_named_after_the_project()
     {
         // Act
-        var settings = Apply(TestingPlatformExtensions.TrxReport | TestingPlatformExtensions.Xunit, LocalRun);
+        DotNetTestMtpSettings settings = Apply(TestingPlatformExtensions.TrxReport | TestingPlatformExtensions.Xunit, LocalRun);
 
         // Assert
         settings.GetArguments().Should().Equal("test", "--", "--report-trx", "--report-trx-filename", "A.Specs.trx");
@@ -45,7 +45,7 @@ public class TestingPlatformSpecs
     public void An_xunit_project_without_the_trx_report_extension_writes_its_own_trx_file()
     {
         // Act
-        var settings = Apply(TestingPlatformExtensions.Xunit, LocalRun);
+        DotNetTestMtpSettings settings = Apply(TestingPlatformExtensions.Xunit, LocalRun);
 
         // Assert
         settings.GetArguments().Should().Equal("test", "--", "--report-xunit-trx", "--report-xunit-trx-filename", "A.Specs.trx");
@@ -55,7 +55,7 @@ public class TestingPlatformSpecs
     public void A_project_without_a_trx_report_gets_no_trx_option()
     {
         // Act
-        var settings = Apply(TestingPlatformExtensions.None, LocalRun);
+        DotNetTestMtpSettings settings = Apply(TestingPlatformExtensions.None, LocalRun);
 
         // Assert
         settings.GetArguments().Should().Equal("test");
@@ -65,7 +65,9 @@ public class TestingPlatformSpecs
     public void Coverlet_writes_cobertura_files_named_after_the_project()
     {
         // Act
-        var settings = Apply(TestingPlatformExtensions.Coverlet | TestingPlatformExtensions.CodeCoverage, LocalRun with { CollectCoverage = true });
+        DotNetTestMtpSettings settings = Apply(
+            TestingPlatformExtensions.Coverlet | TestingPlatformExtensions.CodeCoverage,
+            LocalRun with { CollectCoverage = true });
 
         // Assert
         settings.GetArguments().Should().Equal(
@@ -77,17 +79,21 @@ public class TestingPlatformSpecs
     public void Coverlet_also_writes_the_teamcity_format_on_teamcity()
     {
         // Act
-        var settings = Apply(TestingPlatformExtensions.Coverlet, LocalRun with { CollectCoverage = true, OnTeamCity = true });
+        DotNetTestMtpSettings settings = Apply(
+            TestingPlatformExtensions.Coverlet,
+            LocalRun with { CollectCoverage = true, OnTeamCity = true });
 
         // Assert
-        settings.CoverletOutputFormats.Should().Equal(DotNetTestCoverletOutputFormat.cobertura, DotNetTestCoverletOutputFormat.teamcity);
+        settings.CoverletOutputFormats.Should().Equal(
+            DotNetTestCoverletOutputFormat.cobertura,
+            DotNetTestCoverletOutputFormat.teamcity);
     }
 
     [Fact]
     public void Microsoft_code_coverage_writes_a_cobertura_file_named_after_the_project()
     {
         // Act
-        var settings = Apply(TestingPlatformExtensions.CodeCoverage, LocalRun with { CollectCoverage = true });
+        DotNetTestMtpSettings settings = Apply(TestingPlatformExtensions.CodeCoverage, LocalRun with { CollectCoverage = true });
 
         // Assert
         settings.GetArguments().Should().Equal(
@@ -98,7 +104,7 @@ public class TestingPlatformSpecs
     public void Coverage_is_collected_only_when_asked()
     {
         // Act
-        var settings = Apply(TestingPlatformExtensions.Coverlet, LocalRun);
+        DotNetTestMtpSettings settings = Apply(TestingPlatformExtensions.Coverlet, LocalRun);
 
         // Assert
         settings.Coverlet.Should().BeNull();
@@ -108,8 +114,10 @@ public class TestingPlatformSpecs
     public void The_github_reporter_is_added_only_on_github_actions()
     {
         // Act
-        var local = Apply(TestingPlatformExtensions.GitHubActionsTestLogger, LocalRun);
-        var onGitHub = Apply(TestingPlatformExtensions.GitHubActionsTestLogger, LocalRun with { OnGitHubActions = true });
+        DotNetTestMtpSettings local = Apply(TestingPlatformExtensions.GitHubActionsTestLogger, LocalRun);
+        DotNetTestMtpSettings onGitHub = Apply(
+            TestingPlatformExtensions.GitHubActionsTestLogger,
+            LocalRun with { OnGitHubActions = true });
 
         // Assert
         local.TestApplicationArguments.Should().BeNull();
@@ -120,7 +128,7 @@ public class TestingPlatformSpecs
     public void The_microsoft_github_report_is_preferred_over_the_test_logger()
     {
         // Act
-        var settings = Apply(
+        DotNetTestMtpSettings settings = Apply(
             TestingPlatformExtensions.GitHubActionsReport | TestingPlatformExtensions.GitHubActionsTestLogger,
             LocalRun with { OnGitHubActions = true });
 
@@ -132,8 +140,10 @@ public class TestingPlatformSpecs
     public void The_azure_devops_report_is_added_only_on_azure_pipelines()
     {
         // Act
-        var local = Apply(TestingPlatformExtensions.AzureDevOpsReport, LocalRun);
-        var onAzure = Apply(TestingPlatformExtensions.AzureDevOpsReport, LocalRun with { OnAzurePipelines = true });
+        DotNetTestMtpSettings local = Apply(TestingPlatformExtensions.AzureDevOpsReport, LocalRun);
+        DotNetTestMtpSettings onAzure = Apply(
+            TestingPlatformExtensions.AzureDevOpsReport,
+            LocalRun with { OnAzurePipelines = true });
 
         // Assert
         local.ReportAzureDevOps.Should().BeNull();

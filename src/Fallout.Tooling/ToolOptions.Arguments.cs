@@ -49,7 +49,7 @@ public class ArgumentAttribute : Attribute
     /// Passes the argument on to the program that the tool runs, such as a test application of <c>dotnet test</c>.
     /// Forwarded arguments come last, after a single <c>--</c>.
     /// </summary>
-    public bool Forwarded { get; set; }
+    public bool IsForwarded { get; set; }
 }
 
 public class BuilderAttribute : Attribute
@@ -80,17 +80,19 @@ partial class ToolOptions
             .Where(x => x.Attribute != null)
             .OrderByDescending(x => x.Attribute.Position.CompareTo(0))
             .ThenBy(x => x.Attribute.Position)
-            .Select(x => (x.Attribute.Forwarded, Values: GetArgument(x.Node, x.Property, x.Attribute, escapeMethod).WhereNotNull()))
+            .Select(x => (
+                x.Attribute.IsForwarded,
+                Values: GetArgument(x.Node, x.Property, x.Attribute, escapeMethod).WhereNotNull()))
             .ToList();
 
-        var ownArguments = arguments.Where(x => !x.Forwarded).SelectMany(x => x.Values)
+        IEnumerable<string> ownArguments = arguments.Where(x => !x.IsForwarded).SelectMany(x => x.Values)
             .Concat(ProcessAdditionalArguments ?? []);
         foreach (var argument in ownArguments)
         {
             yield return argument;
         }
 
-        var forwardedArguments = arguments.Where(x => x.Forwarded).SelectMany(x => x.Values).ToList();
+        List<string> forwardedArguments = arguments.Where(x => x.IsForwarded).SelectMany(x => x.Values).ToList();
         if (forwardedArguments.Count > 0)
         {
             yield return ForwardedArgumentsSeparator;

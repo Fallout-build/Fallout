@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Fallout.Common.IO;
 using Fallout.Common.Tooling;
@@ -8,26 +9,13 @@ using Xunit;
 
 namespace Fallout.Common.Specs;
 
-public class DotNetTestMtpSpecs : IDisposable
+public class DotNetTestMtpSpecs
 {
-    private readonly AbsolutePath _directory =
-        AbsolutePath.Create(Path.GetTempPath()) / $"fallout-test-runner-{Guid.NewGuid():N}";
-
-    public DotNetTestMtpSpecs()
-    {
-        _directory.CreateDirectory();
-    }
-
-    public void Dispose()
-    {
-        _directory.DeleteDirectory();
-    }
-
     [Fact]
     public void Options_of_the_test_applications_come_after_one_separator()
     {
         // Arrange
-        var settings = new DotNetTestMtpSettings()
+        DotNetTestMtpSettings settings = new DotNetTestMtpSettings()
             .SetProjectFile("A.Specs.csproj")
             .EnableReportTrx()
             .SetConfiguration("Release")
@@ -36,7 +24,7 @@ public class DotNetTestMtpSpecs : IDisposable
             .SetReportTrxFileName("A.Specs.trx");
 
         // Act
-        var arguments = settings.GetArguments();
+        IEnumerable<string> arguments = settings.GetArguments();
 
         // Assert
         arguments.Should().Equal(
@@ -48,12 +36,12 @@ public class DotNetTestMtpSpecs : IDisposable
     public void Without_options_of_the_test_applications_there_is_no_separator()
     {
         // Arrange
-        var settings = new DotNetTestMtpSettings()
+        DotNetTestMtpSettings settings = new DotNetTestMtpSettings()
             .SetSolutionFile("All.slnx")
             .EnableNoBuild();
 
         // Act
-        var arguments = settings.GetArguments();
+        IEnumerable<string> arguments = settings.GetArguments();
 
         // Assert
         arguments.Should().Equal("test", "--solution", "All.slnx", "--no-build");
@@ -63,11 +51,11 @@ public class DotNetTestMtpSpecs : IDisposable
     public void Exit_codes_to_ignore_are_one_argument()
     {
         // Arrange
-        var settings = new DotNetTestMtpSettings()
+        DotNetTestMtpSettings settings = new DotNetTestMtpSettings()
             .SetIgnoreExitCodes(8, 9);
 
         // Act
-        var arguments = settings.GetArguments();
+        IEnumerable<string> arguments = settings.GetArguments();
 
         // Assert
         arguments.Should().Equal("test", "--", "--ignore-exit-code", "8;9");
@@ -77,77 +65,108 @@ public class DotNetTestMtpSpecs : IDisposable
     public void The_test_runner_comes_from_the_nearest_global_json()
     {
         // Arrange
-        WriteGlobalJson(_directory, """{ "test": { "runner": "Microsoft.Testing.Platform" } }""");
-        var projectDirectory = (_directory / "src" / "A").CreateDirectory();
+        AbsolutePath directory = (AbsolutePath.Create(Path.GetTempPath()) / $"fallout-{Guid.NewGuid():N}").CreateDirectory();
+        try
+        {
+            (directory / "global.json").WriteAllText("""{ "test": { "runner": "microsoft.testing.platform" } }""");
+            AbsolutePath projectDirectory = (directory / "src" / "A").CreateDirectory();
 
-        // Act
-        var runner = DotNetTasks.GetGlobalJsonTestRunner(projectDirectory);
+            // Act
+            DotNetTestRunner runner = GetTestRunner(projectDirectory, variable: null);
 
-        // Assert
-        runner.Should().Be(DotNetTestRunner.MicrosoftTestingPlatform);
+            // Assert
+            runner.Should().Be(DotNetTestRunner.MicrosoftTestingPlatform);
+        }
+        finally
+        {
+            directory.DeleteDirectory();
+        }
     }
 
     [Fact]
-    public void A_nearer_global_json_without_a_test_runner_hides_the_one_above()
+    public void A_nearer_global_json_without_a_test_runner_selects_vstest()
     {
         // Arrange
-        WriteGlobalJson(_directory, """{ "test": { "runner": "Microsoft.Testing.Platform" } }""");
-        var subDirectory = (_directory / "sub").CreateDirectory();
-        WriteGlobalJson(subDirectory, """{ "sdk": { "version": "10.0.100" } }""");
+        AbsolutePath directory = (AbsolutePath.Create(Path.GetTempPath()) / $"fallout-{Guid.NewGuid():N}").CreateDirectory();
+        try
+        {
+            (directory / "global.json").WriteAllText("""{ "test": { "runner": "Microsoft.Testing.Platform" } }""");
+            AbsolutePath subDirectory = (directory / "sub").CreateDirectory();
+            (subDirectory / "global.json").WriteAllText("""{ "sdk": { "version": "10.0.100" } }""");
 
-        // Act
-        var runner = DotNetTasks.GetGlobalJsonTestRunner(subDirectory);
+            // Act
+            DotNetTestRunner runner = GetTestRunner(subDirectory, variable: null);
 
-        // Assert
-        runner.Should().BeNull();
-    }
-
-    [Fact]
-    public void A_global_json_can_have_comments_and_trailing_commas()
-    {
-        // Arrange
-        WriteGlobalJson(_directory, """
-            {
-              // Run the tests on Microsoft.Testing.Platform.
-              "test": { "runner": "microsoft.testing.platform", },
-            }
-            """);
-
-        // Act
-        var runner = DotNetTasks.GetGlobalJsonTestRunner(_directory);
-
-        // Assert
-        runner.Should().Be(DotNetTestRunner.MicrosoftTestingPlatform);
+            // Assert
+            runner.Should().Be(DotNetTestRunner.VSTest);
+        }
+        finally
+        {
+            directory.DeleteDirectory();
+        }
     }
 
     [Theory]
-    [InlineData("Microsoft.Testing.Platform", DotNetTestRunner.MicrosoftTestingPlatform)]
-    [InlineData("VSTest", DotNetTestRunner.VSTest)]
+    [InlineData("""{ /* a comment */ "test": { "runner": "Microsoft.Testing.Platform" } }""",
+        DotNetTestRunner.MicrosoftTestingPlatform)]
+    [InlineData("""{ "Test": { "Runner": "Microsoft.Testing.Platform" } }""", DotNetTestRunner.VSTest)]
+    [InlineData("""{ "test": { "runner": "Microsoft.Testing.Platform", } }""", DotNetTestRunner.VSTest)]
+    public void A_global_json_is_read_like_dotnet_test_reads_it(string content, DotNetTestRunner expected)
+    {
+        // Arrange
+        AbsolutePath directory = (AbsolutePath.Create(Path.GetTempPath()) / $"fallout-{Guid.NewGuid():N}").CreateDirectory();
+        try
+        {
+            (directory / "global.json").WriteAllText(content);
+
+            // Act
+            DotNetTestRunner runner = GetTestRunner(directory, variable: null);
+
+            // Assert
+            runner.Should().Be(expected);
+        }
+        finally
+        {
+            directory.DeleteDirectory();
+        }
+    }
+
+    [Theory]
     [InlineData("vstest", DotNetTestRunner.VSTest)]
-    public void Known_test_runner_names_are_recognized(string value, DotNetTestRunner expected)
+    [InlineData("NUnit", DotNetTestRunner.MicrosoftTestingPlatform)]
+    public void The_environment_variable_overrides_global_json_only_with_a_known_runner(
+        string variable,
+        DotNetTestRunner expected)
     {
-        // Act
-        var runner = DotNetTasks.ParseTestRunner(value);
+        // Arrange
+        AbsolutePath directory = (AbsolutePath.Create(Path.GetTempPath()) / $"fallout-{Guid.NewGuid():N}").CreateDirectory();
+        try
+        {
+            (directory / "global.json").WriteAllText("""{ "test": { "runner": "Microsoft.Testing.Platform" } }""");
 
-        // Assert
-        runner.Should().Be(expected);
+            // Act
+            DotNetTestRunner runner = GetTestRunner(directory, variable);
+
+            // Assert
+            runner.Should().Be(expected);
+        }
+        finally
+        {
+            directory.DeleteDirectory();
+        }
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("NUnit")]
-    public void Unknown_test_runner_names_are_ignored(string value)
+    private static DotNetTestRunner GetTestRunner(AbsolutePath directory, string variable)
     {
-        // Act
-        var runner = DotNetTasks.ParseTestRunner(value);
-
-        // Assert
-        runner.Should().BeNull();
-    }
-
-    private static void WriteGlobalJson(AbsolutePath directory, string content)
-    {
-        (directory / "global.json").WriteAllText(content);
+        string previousValue = EnvironmentInfo.GetVariable("DOTNET_TEST_RUNNER");
+        EnvironmentInfo.SetVariable("DOTNET_TEST_RUNNER", variable);
+        try
+        {
+            return DotNetTasks.GetTestRunner(directory);
+        }
+        finally
+        {
+            EnvironmentInfo.SetVariable("DOTNET_TEST_RUNNER", previousValue);
+        }
     }
 }
