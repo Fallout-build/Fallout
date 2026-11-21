@@ -26,14 +26,14 @@ public partial class CMakeTasks : ToolTasks, IRequirePathTool
     /// <summary><p>The cmake executable is the command-line interface of the cross-platform build system generator CMake.</p><p>For more details, visit the <a href="https://cmake.org/cmake/help/latest/manual/cmake.1.html">official website</a>.</p></summary>
     public static IReadOnlyCollection<Output> CMake(ArgumentStringHandler arguments, string workingDirectory = null, IReadOnlyDictionary<string, string> environmentVariables = null, int? timeout = null, bool? logOutput = null, bool? logInvocation = null, Action<OutputType, string> logger = null, Func<IProcess, object> exitHandler = null) => new CMakeTasks().Run(arguments, workingDirectory, environmentVariables, timeout, logOutput, logInvocation, logger, exitHandler);
     /// <summary><p>Generates a build project using cmake.</p><p>For more details, visit the <a href="https://cmake.org/cmake/help/latest/manual/cmake.1.html">official website</a>.</p></summary>
-    /// <remarks><p>This is a <a href="https://github.com/Fallout-build/Fallout">CLI wrapper with fluent API</a> that allows to modify the following arguments:</p><ul><li><c>--debug-output</c> via <see cref="CMakeGenerateSettings.Debug"/></li><li><c>--fresh</c> via <see cref="CMakeGenerateSettings.Fresh"/></li><li><c>--install-prefix</c> via <see cref="CMakeGenerateSettings.InstallPrefix"/></li><li><c>--log-level</c> via <see cref="CMakeGenerateSettings.LogLevel"/></li><li><c>--trace</c> via <see cref="CMakeGenerateSettings.Trace"/></li><li><c>--trace-expand</c> via <see cref="CMakeGenerateSettings.TraceExpand"/></li><li><c>--warn-uninitialized</c> via <see cref="CMakeGenerateSettings.WarnUninitialized"/></li><li><c>--warn-unused-vars</c> via <see cref="CMakeGenerateSettings.WarnUnusedVars"/></li><li><c>-A</c> via <see cref="CMakeGenerateSettings.Platform"/></li><li><c>-B</c> via <see cref="CMakeGenerateSettings.OutputDirectory"/></li><li><c>-D</c> via <see cref="CMakeGenerateSettings.Define"/></li><li><c>-DCMAKE_TOOLCHAIN_FILE:FILEPATH</c> via <see cref="CMakeGenerateSettings.ToolChain"/></li><li><c>-G</c> via <see cref="CMakeGenerateSettings.Generator"/></li><li><c>-S</c> via <see cref="CMakeGenerateSettings.RootDirectory"/></li><li><c>-T</c> via <see cref="CMakeGenerateSettings.ToolsetSpec"/></li><li><c>-U</c> via <see cref="CMakeGenerateSettings.Undefine"/></li><li><c>-Wdev</c> via <see cref="CMakeGenerateSettings.WarnDev"/></li><li><c>-Wno-dev</c> via <see cref="CMakeGenerateSettings.NoWarnDev"/></li></ul></remarks>
+    /// <remarks><p>This is a <a href="https://github.com/Fallout-build/Fallout">CLI wrapper with fluent API</a> that allows to modify the following arguments:</p><ul><li><c>--debug-output</c> via <see cref="CMakeGenerateSettings.Debug"/></li><li><c>--fresh</c> via <see cref="CMakeGenerateSettings.Fresh"/></li><li><c>--install-prefix</c> via <see cref="CMakeGenerateSettings.InstallPrefix"/></li><li><c>--log-level</c> via <see cref="CMakeGenerateSettings.LogLevel"/></li><li><c>--preset</c> via <see cref="CMakeGenerateSettings.Preset"/></li><li><c>--presets-file</c> via <see cref="CMakeGenerateSettings.PresetsFile"/></li><li><c>--trace</c> via <see cref="CMakeGenerateSettings.Trace"/></li><li><c>--trace-expand</c> via <see cref="CMakeGenerateSettings.TraceExpand"/></li><li><c>--warn-uninitialized</c> via <see cref="CMakeGenerateSettings.WarnUninitialized"/></li><li><c>--warn-unused-vars</c> via <see cref="CMakeGenerateSettings.WarnUnusedVars"/></li><li><c>-A</c> via <see cref="CMakeGenerateSettings.Platform"/></li><li><c>-B</c> via <see cref="CMakeGenerateSettings.OutputDirectory"/></li><li><c>-D</c> via <see cref="CMakeGenerateSettings.Define"/></li><li><c>-DCMAKE_TOOLCHAIN_FILE:FILEPATH</c> via <see cref="CMakeGenerateSettings.ToolChain"/></li><li><c>-G</c> via <see cref="CMakeGenerateSettings.Generator"/></li><li><c>-S</c> via <see cref="CMakeGenerateSettings.RootDirectory"/></li><li><c>-T</c> via <see cref="CMakeGenerateSettings.ToolsetSpec"/></li><li><c>-U</c> via <see cref="CMakeGenerateSettings.Undefine"/></li><li><c>-Wdev</c> via <see cref="CMakeGenerateSettings.WarnDev"/></li><li><c>-Wno-dev</c> via <see cref="CMakeGenerateSettings.NoWarnDev"/></li></ul></remarks>
     public static IReadOnlyCollection<Output> CMakeGenerate(CMakeGenerateSettings options = null) => new CMakeTasks().Run<CMakeGenerateSettings>(options);
     /// <inheritdoc cref="CMakeTasks.CMakeGenerate(Fallout.Common.Tools.CMake.CMakeGenerateSettings)"/>
     public static IReadOnlyCollection<Output> CMakeGenerate(Configure<CMakeGenerateSettings> configurator) => new CMakeTasks().Run<CMakeGenerateSettings>(configurator.Invoke(new CMakeGenerateSettings()));
     /// <inheritdoc cref="CMakeTasks.CMakeGenerate(Fallout.Common.Tools.CMake.CMakeGenerateSettings)"/>
     public static IEnumerable<(CMakeGenerateSettings Settings, IReadOnlyCollection<Output> Output)> CMakeGenerate(CombinatorialConfigure<CMakeGenerateSettings> configurator, int degreeOfParallelism = 1, bool completeOnFailure = false) => configurator.Invoke(CMakeGenerate, degreeOfParallelism, completeOnFailure);
     /// <summary><p>Runs the `cmake --build` command on a project generated with cmake.</p><p>For more details, visit the <a href="https://cmake.org/cmake/help/latest/manual/cmake.1.html">official website</a>.</p></summary>
-    /// <remarks><p>This is a <a href="https://github.com/Fallout-build/Fallout">CLI wrapper with fluent API</a> that allows to modify the following arguments:</p><ul><li><c>&lt;outputDirectory&gt;</c> via <see cref="CMakeBuildSettings.OutputDirectory"/></li><li><c>--</c> via <see cref="CMakeBuildSettings.NativeToolOptions"/></li><li><c>--clean-first</c> via <see cref="CMakeBuildSettings.CleanFirst"/></li><li><c>--config</c> via <see cref="CMakeBuildSettings.Configuration"/></li><li><c>--parallel</c> via <see cref="CMakeBuildSettings.Parallel"/></li><li><c>--target</c> via <see cref="CMakeBuildSettings.Target"/></li><li><c>--verbose</c> via <see cref="CMakeBuildSettings.Verbose"/></li></ul></remarks>
+    /// <remarks><p>This is a <a href="https://github.com/Fallout-build/Fallout">CLI wrapper with fluent API</a> that allows to modify the following arguments:</p><ul><li><c>&lt;outputDirectory&gt;</c> via <see cref="CMakeBuildSettings.OutputDirectory"/></li><li><c>--</c> via <see cref="CMakeBuildSettings.NativeToolOptions"/></li><li><c>--clean-first</c> via <see cref="CMakeBuildSettings.CleanFirst"/></li><li><c>--config</c> via <see cref="CMakeBuildSettings.Configuration"/></li><li><c>--parallel</c> via <see cref="CMakeBuildSettings.Parallel"/></li><li><c>--preset</c> via <see cref="CMakeBuildSettings.Preset"/></li><li><c>--presets-file</c> via <see cref="CMakeBuildSettings.PresetsFile"/></li><li><c>--target</c> via <see cref="CMakeBuildSettings.Target"/></li><li><c>--verbose</c> via <see cref="CMakeBuildSettings.Verbose"/></li></ul></remarks>
     public static IReadOnlyCollection<Output> CMakeBuild(CMakeBuildSettings options = null) => new CMakeTasks().Run<CMakeBuildSettings>(options);
     /// <inheritdoc cref="CMakeTasks.CMakeBuild(Fallout.Common.Tools.CMake.CMakeBuildSettings)"/>
     public static IReadOnlyCollection<Output> CMakeBuild(Configure<CMakeBuildSettings> configurator) => new CMakeTasks().Run<CMakeBuildSettings>(configurator.Invoke(new CMakeBuildSettings()));
@@ -46,6 +46,13 @@ public partial class CMakeTasks : ToolTasks, IRequirePathTool
     public static IReadOnlyCollection<Output> CMakeInstall(Configure<CMakeInstallSettings> configurator) => new CMakeTasks().Run<CMakeInstallSettings>(configurator.Invoke(new CMakeInstallSettings()));
     /// <inheritdoc cref="CMakeTasks.CMakeInstall(Fallout.Common.Tools.CMake.CMakeInstallSettings)"/>
     public static IEnumerable<(CMakeInstallSettings Settings, IReadOnlyCollection<Output> Output)> CMakeInstall(CombinatorialConfigure<CMakeInstallSettings> configurator, int degreeOfParallelism = 1, bool completeOnFailure = false) => configurator.Invoke(CMakeInstall, degreeOfParallelism, completeOnFailure);
+    /// <summary><p>Runs the <c>cmake --workflow</c> command, which runs the steps of a workflow preset in order.</p><p>For more details, visit the <a href="https://cmake.org/cmake/help/latest/manual/cmake.1.html">official website</a>.</p></summary>
+    /// <remarks><p>This is a <a href="https://github.com/Fallout-build/Fallout">CLI wrapper with fluent API</a> that allows to modify the following arguments:</p><ul><li><c>--fresh</c> via <see cref="CMakeWorkflowSettings.Fresh"/></li><li><c>--preset</c> via <see cref="CMakeWorkflowSettings.Preset"/></li><li><c>--presets-file</c> via <see cref="CMakeWorkflowSettings.PresetsFile"/></li></ul></remarks>
+    public static IReadOnlyCollection<Output> CMakeWorkflow(CMakeWorkflowSettings options = null) => new CMakeTasks().Run<CMakeWorkflowSettings>(options);
+    /// <inheritdoc cref="CMakeTasks.CMakeWorkflow(Fallout.Common.Tools.CMake.CMakeWorkflowSettings)"/>
+    public static IReadOnlyCollection<Output> CMakeWorkflow(Configure<CMakeWorkflowSettings> configurator) => new CMakeTasks().Run<CMakeWorkflowSettings>(configurator.Invoke(new CMakeWorkflowSettings()));
+    /// <inheritdoc cref="CMakeTasks.CMakeWorkflow(Fallout.Common.Tools.CMake.CMakeWorkflowSettings)"/>
+    public static IEnumerable<(CMakeWorkflowSettings Settings, IReadOnlyCollection<Output> Output)> CMakeWorkflow(CombinatorialConfigure<CMakeWorkflowSettings> configurator, int degreeOfParallelism = 1, bool completeOnFailure = false) => configurator.Invoke(CMakeWorkflow, degreeOfParallelism, completeOnFailure);
 }
 #region CMakeGenerateSettings
 /// <inheritdoc cref="CMakeTasks.CMakeGenerate(Fallout.Common.Tools.CMake.CMakeGenerateSettings)"/>
@@ -53,13 +60,17 @@ public partial class CMakeTasks : ToolTasks, IRequirePathTool
 [Command(Type = typeof(CMakeTasks), Command = nameof(CMakeTasks.CMakeGenerate))]
 public partial class CMakeGenerateSettings : ToolOptions
 {
-    /// <summary>Specify the build system to generate.</summary>
+    /// <summary>Specify a configure preset. CMake reads it from <c>CMakePresets.json</c> and <c>CMakeUserPresets.json</c> in the source directory. Values set on the command line, such as the generator, the binary directory or cache entries, override the values from the preset.</summary>
+    [Argument(Format = "--preset {value}")] public string Preset => Get<string>(() => Preset);
+    /// <summary>Read presets from the given file instead of <c>CMakePresets.json</c> and <c>CMakeUserPresets.json</c>. Requires CMake 4.4 or later.</summary>
+    [Argument(Format = "--presets-file {value}")] public string PresetsFile => Get<string>(() => PresetsFile);
+    /// <summary>Specify the build system to generate. When not set, CMake uses the generator of the preset, the <c>CMAKE_GENERATOR</c> environment variable, or the default generator of the platform.</summary>
     [Argument(Format = "-G {value}")] public CMakeGenerator Generator => Get<CMakeGenerator>(() => Generator);
-    /// <summary>Specify the platform to build for.</summary>
+    /// <summary>Specify the platform to build for, if supported by the generator.</summary>
     [Argument(Format = "-A {value}")] public CMakePlatform Platform => Get<CMakePlatform>(() => Platform);
-    /// <summary>Specify the root directory of the 'CMakeLists.txt' file.</summary>
+    /// <summary>Specify the source directory, which contains the top-level <c>CMakeLists.txt</c> file.</summary>
     [Argument(Format = "-S {value}")] public string RootDirectory => Get<string>(() => RootDirectory);
-    /// <summary>Specify the configuration to use when running the install script.</summary>
+    /// <summary>Specify the project binary directory.</summary>
     [Argument(Format = "-B {value}")] public string OutputDirectory => Get<string>(() => OutputDirectory);
     /// <summary>Specify the path to a toolchain file to use.</summary>
     [Argument(Format = "-DCMAKE_TOOLCHAIN_FILE:FILEPATH={value}")] public string ToolChain => Get<string>(() => ToolChain);
@@ -67,7 +78,7 @@ public partial class CMakeGenerateSettings : ToolOptions
     [Argument(Format = "-T {value}")] public string ToolsetSpec => Get<string>(() => ToolsetSpec);
     /// <summary>Specify the installation prefix to be used in the generated project.</summary>
     [Argument(Format = "--install-prefix {value}")] public string InstallPrefix => Get<string>(() => InstallPrefix);
-    /// <summary>Create or update a CMake cache entry, in the form <var>[:<type>]=<value>.</summary>
+    /// <summary>Create or update a CMake cache entry, in the form <c>&lt;var&gt;[:&lt;type&gt;]=&lt;value&gt;</c>.</summary>
     [Argument(Format = "-D {value}")] public IReadOnlyList<string> Define => Get<List<string>>(() => Define);
     /// <summary>Remove matching entries from the CMake cache, given a globbing expression.</summary>
     [Argument(Format = "-U {value}")] public IReadOnlyList<string> Undefine => Get<List<string>>(() => Undefine);
@@ -97,8 +108,12 @@ public partial class CMakeGenerateSettings : ToolOptions
 [Command(Type = typeof(CMakeTasks), Command = nameof(CMakeTasks.CMakeBuild), Arguments = "--build")]
 public partial class CMakeBuildSettings : ToolOptions
 {
-    /// <summary>Specify the project binary directory to build.</summary>
-    [Argument(Format = "{value}")] public string OutputDirectory => Get<string>(() => OutputDirectory);
+    /// <summary>Specify the project binary directory to build. Do not combine it with <c>Preset</c>.</summary>
+    [Argument(Format = "{value}", Position = 1)] public string OutputDirectory => Get<string>(() => OutputDirectory);
+    /// <summary>Specify a build preset. CMake reads it from <c>CMakePresets.json</c> and <c>CMakeUserPresets.json</c> in the working directory, and takes the binary directory from the configure preset of the build preset. Do not combine it with <c>OutputDirectory</c>. Values set on the command line, such as the configuration or the targets, override the values from the preset.</summary>
+    [Argument(Format = "--preset {value}")] public string Preset => Get<string>(() => Preset);
+    /// <summary>Read presets from the given file instead of <c>CMakePresets.json</c> and <c>CMakeUserPresets.json</c>. Requires CMake 4.4 or later.</summary>
+    [Argument(Format = "--presets-file {value}")] public string PresetsFile => Get<string>(() => PresetsFile);
     /// <summary>Specify the build configuration for multi-config generators.</summary>
     [Argument(Format = "--config {value}")] public CMakeConfiguration Configuration => Get<CMakeConfiguration>(() => Configuration);
     /// <summary>Specify the targets to build instead of the default target.</summary>
@@ -119,9 +134,9 @@ public partial class CMakeBuildSettings : ToolOptions
 [Command(Type = typeof(CMakeTasks), Command = nameof(CMakeTasks.CMakeInstall), Arguments = "--install")]
 public partial class CMakeInstallSettings : ToolOptions
 {
-    /// <summary>Specify the root directory of the cmake install script.</summary>
-    [Argument(Format = "{value}")] public string RootDirectory => Get<string>(() => RootDirectory);
-    /// <summary>Specify the root directory of the 'CMakeLists.txt' file.</summary>
+    /// <summary>Specify the project binary directory to install from.</summary>
+    [Argument(Format = "{value}", Position = 1)] public string RootDirectory => Get<string>(() => RootDirectory);
+    /// <summary>Specify the build configuration to install, for multi-config generators.</summary>
     [Argument(Format = "--config {value}")] public CMakeConfiguration Configuration => Get<CMakeConfiguration>(() => Configuration);
     /// <summary>Specify the output directory of the install script.</summary>
     [Argument(Format = "--prefix {value}")] public string OutputDirectory => Get<string>(() => OutputDirectory);
@@ -133,11 +148,41 @@ public partial class CMakeInstallSettings : ToolOptions
     [Argument(Format = "--verbose")] public bool? Verbose => Get<bool?>(() => Verbose);
 }
 #endregion
+#region CMakeWorkflowSettings
+/// <inheritdoc cref="CMakeTasks.CMakeWorkflow(Fallout.Common.Tools.CMake.CMakeWorkflowSettings)"/>
+[ExcludeFromCodeCoverage]
+[Command(Type = typeof(CMakeTasks), Command = nameof(CMakeTasks.CMakeWorkflow), Arguments = "--workflow")]
+public partial class CMakeWorkflowSettings : ToolOptions
+{
+    /// <summary>Specify the workflow preset to run. CMake reads it from <c>CMakePresets.json</c> and <c>CMakeUserPresets.json</c> in the working directory.</summary>
+    [Argument(Format = "--preset {value}")] public string Preset => Get<string>(() => Preset);
+    /// <summary>Read presets from the given file instead of <c>CMakePresets.json</c> and <c>CMakeUserPresets.json</c>. Requires CMake 4.4 or later.</summary>
+    [Argument(Format = "--presets-file {value}")] public string PresetsFile => Get<string>(() => PresetsFile);
+    /// <summary>Configure a fresh build tree, removing any existing cache file.</summary>
+    [Argument(Format = "--fresh")] public bool? Fresh => Get<bool?>(() => Fresh);
+}
+#endregion
 #region CMakeGenerateSettingsExtensions
 /// <inheritdoc cref="CMakeTasks.CMakeGenerate(Fallout.Common.Tools.CMake.CMakeGenerateSettings)"/>
 [ExcludeFromCodeCoverage]
 public static partial class CMakeGenerateSettingsExtensions
 {
+    #region Preset
+    /// <inheritdoc cref="CMakeGenerateSettings.Preset"/>
+    [Builder(Type = typeof(CMakeGenerateSettings), Property = nameof(CMakeGenerateSettings.Preset))]
+    public static T SetPreset<T>(this T o, string v) where T : CMakeGenerateSettings => o.Modify(b => b.Set(() => o.Preset, v));
+    /// <inheritdoc cref="CMakeGenerateSettings.Preset"/>
+    [Builder(Type = typeof(CMakeGenerateSettings), Property = nameof(CMakeGenerateSettings.Preset))]
+    public static T ResetPreset<T>(this T o) where T : CMakeGenerateSettings => o.Modify(b => b.Remove(() => o.Preset));
+    #endregion
+    #region PresetsFile
+    /// <inheritdoc cref="CMakeGenerateSettings.PresetsFile"/>
+    [Builder(Type = typeof(CMakeGenerateSettings), Property = nameof(CMakeGenerateSettings.PresetsFile))]
+    public static T SetPresetsFile<T>(this T o, string v) where T : CMakeGenerateSettings => o.Modify(b => b.Set(() => o.PresetsFile, v));
+    /// <inheritdoc cref="CMakeGenerateSettings.PresetsFile"/>
+    [Builder(Type = typeof(CMakeGenerateSettings), Property = nameof(CMakeGenerateSettings.PresetsFile))]
+    public static T ResetPresetsFile<T>(this T o) where T : CMakeGenerateSettings => o.Modify(b => b.Remove(() => o.PresetsFile));
+    #endregion
     #region Generator
     /// <inheritdoc cref="CMakeGenerateSettings.Generator"/>
     [Builder(Type = typeof(CMakeGenerateSettings), Property = nameof(CMakeGenerateSettings.Generator))]
@@ -399,6 +444,22 @@ public static partial class CMakeBuildSettingsExtensions
     [Builder(Type = typeof(CMakeBuildSettings), Property = nameof(CMakeBuildSettings.OutputDirectory))]
     public static T ResetOutputDirectory<T>(this T o) where T : CMakeBuildSettings => o.Modify(b => b.Remove(() => o.OutputDirectory));
     #endregion
+    #region Preset
+    /// <inheritdoc cref="CMakeBuildSettings.Preset"/>
+    [Builder(Type = typeof(CMakeBuildSettings), Property = nameof(CMakeBuildSettings.Preset))]
+    public static T SetPreset<T>(this T o, string v) where T : CMakeBuildSettings => o.Modify(b => b.Set(() => o.Preset, v));
+    /// <inheritdoc cref="CMakeBuildSettings.Preset"/>
+    [Builder(Type = typeof(CMakeBuildSettings), Property = nameof(CMakeBuildSettings.Preset))]
+    public static T ResetPreset<T>(this T o) where T : CMakeBuildSettings => o.Modify(b => b.Remove(() => o.Preset));
+    #endregion
+    #region PresetsFile
+    /// <inheritdoc cref="CMakeBuildSettings.PresetsFile"/>
+    [Builder(Type = typeof(CMakeBuildSettings), Property = nameof(CMakeBuildSettings.PresetsFile))]
+    public static T SetPresetsFile<T>(this T o, string v) where T : CMakeBuildSettings => o.Modify(b => b.Set(() => o.PresetsFile, v));
+    /// <inheritdoc cref="CMakeBuildSettings.PresetsFile"/>
+    [Builder(Type = typeof(CMakeBuildSettings), Property = nameof(CMakeBuildSettings.PresetsFile))]
+    public static T ResetPresetsFile<T>(this T o) where T : CMakeBuildSettings => o.Modify(b => b.Remove(() => o.PresetsFile));
+    #endregion
     #region Configuration
     /// <inheritdoc cref="CMakeBuildSettings.Configuration"/>
     [Builder(Type = typeof(CMakeBuildSettings), Property = nameof(CMakeBuildSettings.Configuration))]
@@ -570,6 +631,46 @@ public static partial class CMakeInstallSettingsExtensions
     #endregion
 }
 #endregion
+#region CMakeWorkflowSettingsExtensions
+/// <inheritdoc cref="CMakeTasks.CMakeWorkflow(Fallout.Common.Tools.CMake.CMakeWorkflowSettings)"/>
+[ExcludeFromCodeCoverage]
+public static partial class CMakeWorkflowSettingsExtensions
+{
+    #region Preset
+    /// <inheritdoc cref="CMakeWorkflowSettings.Preset"/>
+    [Builder(Type = typeof(CMakeWorkflowSettings), Property = nameof(CMakeWorkflowSettings.Preset))]
+    public static T SetPreset<T>(this T o, string v) where T : CMakeWorkflowSettings => o.Modify(b => b.Set(() => o.Preset, v));
+    /// <inheritdoc cref="CMakeWorkflowSettings.Preset"/>
+    [Builder(Type = typeof(CMakeWorkflowSettings), Property = nameof(CMakeWorkflowSettings.Preset))]
+    public static T ResetPreset<T>(this T o) where T : CMakeWorkflowSettings => o.Modify(b => b.Remove(() => o.Preset));
+    #endregion
+    #region PresetsFile
+    /// <inheritdoc cref="CMakeWorkflowSettings.PresetsFile"/>
+    [Builder(Type = typeof(CMakeWorkflowSettings), Property = nameof(CMakeWorkflowSettings.PresetsFile))]
+    public static T SetPresetsFile<T>(this T o, string v) where T : CMakeWorkflowSettings => o.Modify(b => b.Set(() => o.PresetsFile, v));
+    /// <inheritdoc cref="CMakeWorkflowSettings.PresetsFile"/>
+    [Builder(Type = typeof(CMakeWorkflowSettings), Property = nameof(CMakeWorkflowSettings.PresetsFile))]
+    public static T ResetPresetsFile<T>(this T o) where T : CMakeWorkflowSettings => o.Modify(b => b.Remove(() => o.PresetsFile));
+    #endregion
+    #region Fresh
+    /// <inheritdoc cref="CMakeWorkflowSettings.Fresh"/>
+    [Builder(Type = typeof(CMakeWorkflowSettings), Property = nameof(CMakeWorkflowSettings.Fresh))]
+    public static T SetFresh<T>(this T o, bool? v) where T : CMakeWorkflowSettings => o.Modify(b => b.Set(() => o.Fresh, v));
+    /// <inheritdoc cref="CMakeWorkflowSettings.Fresh"/>
+    [Builder(Type = typeof(CMakeWorkflowSettings), Property = nameof(CMakeWorkflowSettings.Fresh))]
+    public static T ResetFresh<T>(this T o) where T : CMakeWorkflowSettings => o.Modify(b => b.Remove(() => o.Fresh));
+    /// <inheritdoc cref="CMakeWorkflowSettings.Fresh"/>
+    [Builder(Type = typeof(CMakeWorkflowSettings), Property = nameof(CMakeWorkflowSettings.Fresh))]
+    public static T EnableFresh<T>(this T o) where T : CMakeWorkflowSettings => o.Modify(b => b.Set(() => o.Fresh, true));
+    /// <inheritdoc cref="CMakeWorkflowSettings.Fresh"/>
+    [Builder(Type = typeof(CMakeWorkflowSettings), Property = nameof(CMakeWorkflowSettings.Fresh))]
+    public static T DisableFresh<T>(this T o) where T : CMakeWorkflowSettings => o.Modify(b => b.Set(() => o.Fresh, false));
+    /// <inheritdoc cref="CMakeWorkflowSettings.Fresh"/>
+    [Builder(Type = typeof(CMakeWorkflowSettings), Property = nameof(CMakeWorkflowSettings.Fresh))]
+    public static T ToggleFresh<T>(this T o) where T : CMakeWorkflowSettings => o.Modify(b => b.Set(() => o.Fresh, !o.Fresh));
+    #endregion
+}
+#endregion
 #region CMakeGenerator
 /// <summary>Used within <see cref="CMakeTasks"/>.</summary>
 [Serializable]
@@ -582,6 +683,10 @@ public partial class CMakeGenerator : Enumeration
     public static CMakeGenerator Visual_Studio_17_2022 = (CMakeGenerator) "Visual Studio 17 2022";
     public static CMakeGenerator Visual_Studio_18_2026 = (CMakeGenerator) "Visual Studio 18 2026";
     public static CMakeGenerator Ninja = (CMakeGenerator) "Ninja";
+    public static CMakeGenerator Ninja_Multi_Config = (CMakeGenerator) "Ninja Multi-Config";
+    public static CMakeGenerator Unix_Makefiles = (CMakeGenerator) "Unix Makefiles";
+    public static CMakeGenerator NMake_Makefiles = (CMakeGenerator) "NMake Makefiles";
+    public static CMakeGenerator MinGW_Makefiles = (CMakeGenerator) "MinGW Makefiles";
     public static CMakeGenerator Xcode = (CMakeGenerator) "Xcode";
     public static implicit operator CMakeGenerator(string value)
     {
