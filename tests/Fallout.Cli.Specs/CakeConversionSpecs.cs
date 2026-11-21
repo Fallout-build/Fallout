@@ -5,7 +5,7 @@ using Fallout.Common;
 using Fallout.Common.IO;
 using FluentAssertions;
 using NuGet.Versioning;
-using VerifyXunit;
+using Fallout.Testing;
 using Xunit;
 
 namespace Fallout.Cli.Specs;
@@ -16,12 +16,10 @@ public class CakeConversionSpecs
 
     [Theory]
     [MemberData(nameof(CakeFileNames))]
-    public Task Test(AbsolutePath file)
+    public void Test(AbsolutePath file)
     {
         var converted = CakeConverter.GetConvertedContent(file.ReadAllText());
-        return Verifier.Verify(converted, extension: "cs")
-            .UseDirectory(CakeScriptsDirectory)
-            .UseFileName(file.NameWithoutExtension);
+        Snapshot.Verify(converted, extension: "cs", fileName: file.NameWithoutExtension, directory: CakeScriptsDirectory);
     }
 
     [Fact]

@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using Fallout.Common.Utilities;
-using VerifyXunit;
+using Fallout.Testing;
 using Xunit;
 
 namespace Fallout.Cli.Specs;
@@ -65,13 +65,12 @@ public class UpdateSolutionFileContentSpecs
         	EndGlobalSection
         EndGlobal
         """)]
-    public Task Test(int number, string input)
+    public void Test(int number, string input)
     {
         var content = input.SplitLineBreaks().ToList();
         new BuildScaffolder().UpdateSolutionFileContent(content, "RELATIVE", "GUID", "NAME");
 
-        return Verifier.Verify(string.Join(Environment.NewLine, content))
-            .UseParameters(number);
+        Snapshot.Verify(string.Join(Environment.NewLine, content), parameters: $"number={number}");
     }
 
     [Theory]
@@ -82,7 +81,7 @@ public class UpdateSolutionFileContentSpecs
           <Project Path="TestProject1/TestProject1.csproj" />
         </Solution>
         """)]
-    public Task TestXml(int number, string input)
+    public void TestXml(int number, string input)
     {
         var content = XDocument.Load(new StringReader(input));
         new BuildScaffolder().UpdateSolutionXmlFileContent(content, "RELATIVE");
@@ -98,7 +97,6 @@ public class UpdateSolutionFileContentSpecs
         content.Save(writer);
         writer.Flush();
 
-        return Verifier.Verify(stringStream.ToString())
-            .UseParameters(number);
+        Snapshot.Verify(stringStream.ToString(), parameters: $"number={number}");
     }
 }

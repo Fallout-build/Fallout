@@ -6,7 +6,7 @@ using Basic.Reference.Assemblies;
 using FluentAssertions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using VerifyXunit;
+using Fallout.Testing;
 using Xunit;
 
 namespace Fallout.SourceGenerators.Specs;
@@ -19,7 +19,7 @@ public class TransitionShimGeneratorSpecs
     // no public/protected ctor) emit SHIM001 diagnostics instead. Captures both
     // as a Verify snapshot.
     [Fact]
-    public Task EmitsShimsForEachKindAndSkipsHardTier()
+    public void EmitsShimsForEachKindAndSkipsHardTier()
     {
         var canonical = CompileCanonicalAssembly("""
                                                  namespace Fallout.Common
@@ -72,7 +72,7 @@ public class TransitionShimGeneratorSpecs
 
         var driver = CSharpGeneratorDriver.Create(new TransitionShimGenerator());
         var result = driver.RunGenerators(shimCompilation);
-        return Verifier.Verify(result);
+        GeneratorSnapshot.Verify(result);
     }
 
     // Hand-bridge suppression: when the consuming compilation declares a type at

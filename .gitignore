@@ -55,7 +55,7 @@ _dotTrace*
 .DS_Store
 
 # Tests
-*.received.txt
+*.received.*
 
 # Local-only, by convention: anything named *.local.* is this-machine state and never
 # committed. Covers CLAUDE.local.md (personal agent directives), .claude/settings.local.json,
