@@ -21,6 +21,7 @@ updates:
     allow:
       # Test-only
       - dependency-name: "coverlet.msbuild"
+      - dependency-name: "FakeItEasy"
       - dependency-name: "FluentAssertions"
       - dependency-name: "GitHubActionsTestLogger"
       - dependency-name: "Microsoft.NET.Test.Sdk"
@@ -49,6 +50,7 @@ updates:
       test-dependencies:
         patterns:
           - "coverlet.*"
+          - "FakeItEasy"
           - "FluentAssertions"
           - "GitHubActionsTestLogger"
           - "Microsoft.NET.Test.Sdk"

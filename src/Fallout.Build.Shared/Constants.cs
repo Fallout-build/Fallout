@@ -32,6 +32,7 @@ internal static class Constants
 
     public const string VisualStudioDebugParameterName = "visual-studio-debug";
     internal const string CompletionParameterName = "shell-completion";
+    internal const string PlanNoOpenParameterName = "plan-no-open";
     internal const string ParametersFilePrefix = "parameters";
     internal const string DefaultProfileName = "$default";
 

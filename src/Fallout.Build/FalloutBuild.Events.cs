@@ -26,11 +26,17 @@ public abstract partial class FalloutBuild
             .OrderByDescending(x => x.Priority).ToList();
     }
 
+    /// <summary>
+    /// Set by <see cref="IFalloutBuild.Exit"/>. The engine then skips the remaining extensions and all targets.
+    /// </summary>
+    internal bool ExitRequested { get; private set; }
+
     internal void ExecuteExtension<TExtension>(Expression<Action<TExtension>> action)
         where TExtension : IBuildExtension
     {
         BuildExtensions
             .OfType<TExtension>()
+            .TakeWhile(_ => !ExitRequested)
             .ForEachLazy(x => Log.Verbose("{Type}.{Method} ({Priority})", x.GetType().Name.TrimEnd(nameof(Attribute)),
                 action.GetMemberInfo().Name, x.Priority))
             .ForEach(action.Compile());
