@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using Fallout.Build.Execution;
 using Fallout.Common.Execution;
 using Fallout.Common.IO;
 using Fallout.Common.ValueInjection;
@@ -16,6 +17,14 @@ public abstract partial class FalloutBuild
     string[] IFalloutBuild.LoadedLocalProfiles => LoadedLocalProfiles;
 
     bool IFalloutBuild.IsOutputEnabled(DefaultOutput output) => IsOutputEnabled(output);
+
+    T IFalloutBuild.GetParameter<T>(string name) => ParameterService.GetParameter<T>(name);
+
+    void IFalloutBuild.Exit(int exitCode)
+    {
+        ExitCode = exitCode;
+        ExitRequested = true;
+    }
 
     AbsolutePath IFalloutBuild.RootDirectory => RootDirectory;
 
