@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Fallout.Common.Tooling;
@@ -35,14 +36,13 @@ internal static class TestingPlatform
     /// </summary>
     /// <remarks>
     /// These items include the extensions that come from a package reference, a transitive package or a test SDK profile.
+    /// The project is read through <see cref="ProjectExtensions" />, which loads MSBuild before it uses an MSBuild type.
     /// </remarks>
     public static TestingPlatformExtensions GetExtensions(Project project)
     {
-        Microsoft.Build.Evaluation.Project msbuildProject = project.GetMSBuildProject();
-        IEnumerable<string> hookTypeNames = msbuildProject.GetItems("TestingPlatformBuilderHook")
-            .Select(x => x.GetMetadataValue("TypeFullName"));
-
-        bool isXunitProject = msbuildProject.GetPropertyValue("XunitTestProject").EqualsOrdinalIgnoreCase(bool.TrueString);
+        IEnumerable<string> hookTypeNames = project.GetItemMetadata("TestingPlatformBuilderHook", "TypeFullName");
+        string xunitTestProject = project.GetProperty("XunitTestProject");
+        bool isXunitProject = string.Equals(xunitTestProject, bool.TrueString, StringComparison.OrdinalIgnoreCase);
         return GetExtensions(hookTypeNames, isXunitProject);
     }
 

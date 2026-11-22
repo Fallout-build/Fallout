@@ -1,0 +1,3 @@
+<Project>
+  <!-- Stops the Directory.Build.props of the repository, which adds its test packages to every *.Specs project. -->
+</Project>
