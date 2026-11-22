@@ -70,6 +70,11 @@ internal static class BuildManager
             ToolRequirementService.EnsureToolRequirements(build, build.ExecutionPlan);
             build.ExecuteExtension<IOnBuildInitialized>(x => x.OnBuildInitialized(build.ExecutableTargets, build.ExecutionPlan));
 
+            if (build.ExitRequested)
+            {
+                return build.ExitCode ?? 0;
+            }
+
             CancellationHandler += Finish;
             BuildExecutor.Execute(
                 build,
@@ -98,7 +103,8 @@ internal static class BuildManager
 
         void Finish()
         {
-            if (build.ExecutionPlan == null)
+            // An exit request ends the build before any target runs, so there is no outcome to report.
+            if (build.ExecutionPlan == null || build.ExitRequested)
             {
                 return;
             }

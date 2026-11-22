@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using Fallout.Build.Utilities;
 using Fallout.Common;
 using Fallout.Common.Execution;
 using Fallout.Common.IO;
@@ -11,12 +11,23 @@ using Fallout.Common.Utilities.Collections;
 
 namespace Fallout.Build.Execution.Extensions;
 
+/// <summary>
+/// Handles the <c>--plan</c> switch. Writes the execution plan as an HTML file, opens it, and stops the build.
+/// </summary>
 internal class HandlePlanRequestsAttribute : BuildExtensionAttributeBase, IOnBuildInitialized
 {
     private const string HtmlFileName = "execution-plan.html";
 
     private AbsolutePath HtmlFile => Build.TemporaryDirectory / HtmlFileName;
 
+    /// <summary>
+    /// Opens the plan file.
+    /// </summary>
+    internal IFileOpener FileOpener { get; init; } = new ShellFileOpener();
+
+    /// <summary>
+    /// Shows the plan when <c>--plan</c> is set, then stops the build with exit code 0.
+    /// </summary>
     public void OnBuildInitialized(
         IReadOnlyCollection<ExecutableTarget> executableTargets,
         IReadOnlyCollection<ExecutableTarget> executionPlan)
@@ -24,10 +35,13 @@ internal class HandlePlanRequestsAttribute : BuildExtensionAttributeBase, IOnBui
         if (Build.Plan)
         {
             ShowPlan();
-            Environment.Exit(exitCode: 0);
+            Build.Exit(exitCode: 0);
         }
     }
 
+    /// <summary>
+    /// Writes the plan file to the temporary directory. Opens it unless <c>--plan-no-open</c> is set.
+    /// </summary>
     public void ShowPlan()
     {
         var resourceText = ResourceUtility.GetResourceAllText<HandlePlanRequestsAttribute>(HtmlFileName);
@@ -38,12 +52,11 @@ internal class HandlePlanRequestsAttribute : BuildExtensionAttributeBase, IOnBui
 
         HtmlFile.WriteAllText(contents);
 
-        // Workaround for https://github.com/dotnet/corefx/issues/10361
-        Process.Start(new ProcessStartInfo
+        // IDE integrations pass --plan-no-open and show the file themselves
+        if (!Build.GetParameter<bool>(Constants.PlanNoOpenParameterName))
         {
-            FileName = HtmlFile,
-            UseShellExecute = true
-        });
+            FileOpener.Open(HtmlFile);
+        }
     }
 
     // ReSharper disable once CognitiveComplexity

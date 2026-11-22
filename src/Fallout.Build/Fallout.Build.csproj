@@ -29,4 +29,9 @@
     <EmbeddedResource Include="Execution\Extensions\execution-plan.html" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Lets FakeItEasy (Castle DynamicProxy) fake this assembly's internal types, such as IFalloutBuild. -->
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+  </ItemGroup>
+
 </Project>
