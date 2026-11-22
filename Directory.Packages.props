@@ -45,7 +45,7 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.12.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.Common" Version="4.12.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.12.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="5.12.0" />
     <!-- Fallout.SourceGenerators (analyzers/ folder) -->
     <PackageVersion Include="Scriban" Version="7.4.0" />
     <!-- Fallout.Tooling.Generator, bundled with Fallout.MSBuildTasks (build/ folder) -->
@@ -81,33 +81,33 @@
        .github/dependabot.yml, which updates these packages monthly. -->
   <ItemGroup>
     <!-- Tests -->
-    <PackageVersion Include="coverlet.msbuild" Version="10.1.0" />
-    <PackageVersion Include="FakeItEasy" Version="9.0.0" />
+    <PackageVersion Include="coverlet.msbuild" Version="10.1.1" />
+    <PackageVersion Include="FakeItEasy" Version="9.0.1" />
     <PackageVersion Include="FluentAssertions" Version="8.11.0" />
     <PackageVersion Include="GitHubActionsTestLogger" Version="3.0.5" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />
     <PackageVersion Include="NetArchTest.Rules" Version="1.3.2" />
     <!--    <PackageVersion Include="TeamCity.VSTest.TestAdapter" Version="1.0.41" />-->
-    <PackageVersion Include="Verify.XunitV3" Version="31.12.5" />
+    <PackageVersion Include="Verify.XunitV3" Version="33.6.0" />
     <!-- Upper bound: 3.4.0 is deprecated and pulls in Verify 33, which fails the build (SponsorCheck SC021). -->
-    <PackageVersion Include="Verify.DiffPlex" Version="[3.1.2,3.4.0)" />
+    <PackageVersion Include="Verify.DiffPlex" Version="[3.3.1, 3.4.0)" />
     <PackageVersion Include="Verify.SourceGenerators" Version="2.5.0" />
     <PackageVersion Include="xunit.v3" Version="4.0.3" />
     <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.5.2" />
     <PackageVersion Include="coverlet.MTP" Version="10.1.0" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />
-    <PackageVersion Include="Basic.Reference.Assemblies.NetStandard20" Version="1.8.12" />
-    <PackageVersion Include="BenchmarkDotNet" Version="0.14.0" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />
+    <PackageVersion Include="Basic.Reference.Assemblies.NetStandard20" Version="1.8.15" />
+    <PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing.XUnit" Version="1.1.2" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing.XUnit" Version="1.1.2" />
     <!-- Build-time only (PrivateAssets="all") -->
-    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.401" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="11.0.100" />
     <PackageVersion Include="IsExternalInit" Version="1.0.3" />
-    <PackageVersion Include="PolySharp" Version="1.16.0" />
+    <PackageVersion Include="PolySharp" Version="1.17.1" />
     <!-- Fallout.Cli / Fallout.Migrate only -->
     <PackageVersion Include="Spectre.Console" Version="0.57.2" />
     <PackageVersion Include="Spectre.Console.Cli" Version="0.57.2" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0" />
     <PackageVersion Include="JetBrains.Annotations" Version="2026.2.0" />
   </ItemGroup>
 
