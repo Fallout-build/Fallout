@@ -11,7 +11,7 @@ internal class ShellFileOpener : IFileOpener
     /// <inheritdoc />
     public void Open(AbsolutePath file)
     {
-        // Workaround for https://github.com/dotnet/corefx/issues/10361
+        // UseShellExecute is false by default on .NET Core. Without it, the file is not opened by its default app.
         Process.Start(new ProcessStartInfo
         {
             FileName = file,
