@@ -5,7 +5,7 @@ using Fallout.Common.Execution;
 using Fallout.Common.IO;
 using Fallout.Common.Tooling;
 using FluentAssertions;
-using VerifyXunit;
+using Fallout.Testing;
 using Xunit;
 
 #pragma warning disable CS0169 // Field is never used
@@ -15,38 +15,38 @@ namespace Fallout.Common.Specs;
 public class SchemaUtilitySpecs
 {
     [Fact]
-    public Task TestEmptyBuild()
+    public void TestEmptyBuild()
     {
         var jsonSchema = SchemaUtility.GetJsonString(new EmptyBuild());
-        return Verifier.Verify(jsonSchema, "json");
+        Snapshot.Verify(jsonSchema, "json");
     }
 
     [Fact]
-    public Task TestTargetBuild()
+    public void TestTargetBuild()
     {
         var jsonSchema = SchemaUtility.GetJsonString(new TargetBuild());
-        return Verifier.Verify(jsonSchema, "json");
+        Snapshot.Verify(jsonSchema, "json");
     }
 
     [Fact]
-    public Task TestParameterBuild()
+    public void TestParameterBuild()
     {
         var jsonSchema = SchemaUtility.GetJsonString(new ParameterBuild());
-        return Verifier.Verify(jsonSchema, "json");
+        Snapshot.Verify(jsonSchema, "json");
     }
 
     [Fact]
-    public Task TestCustomParameterAttribute()
+    public void TestCustomParameterAttribute()
     {
         var jsonSchema = SchemaUtility.GetJsonString(new CustomParameterAttributeBuild());
-        return Verifier.Verify(jsonSchema, "json");
+        Snapshot.Verify(jsonSchema, "json");
     }
 
     [Fact]
-    public Task TestGuidBuild()
+    public void TestGuidBuild()
     {
         var jsonSchema = SchemaUtility.GetJsonString(new GuidBuild());
-        return Verifier.Verify(jsonSchema, "json");
+        Snapshot.Verify(jsonSchema, "json");
     }
 
     [Fact]

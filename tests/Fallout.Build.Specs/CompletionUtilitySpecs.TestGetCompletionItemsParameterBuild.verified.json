@@ -1,0 +1,40 @@
+{
+  "Continue": [],
+  "Help": [],
+  "Host": [
+    "Rider",
+    "Terminal",
+    "VisualStudio",
+    "VSCode"
+  ],
+  "NoLogo": [],
+  "Partition": [],
+  "Plan": [],
+  "Profile": [],
+  "Root": [],
+  "Skip": [],
+  "Target": [],
+  "Verbosity": [
+    "Verbose",
+    "Normal",
+    "Minimal",
+    "Quiet",
+    "Information"
+  ],
+  "BuildProjectFile": [],
+  "BooleanParam": [],
+  "ComponentInheritedParam": [],
+  "CustomEnumerationArrayParam": [
+    "Debug",
+    "Release"
+  ],
+  "CustomEnumerationParam": [
+    "Debug",
+    "Release"
+  ],
+  "IntegerArrayParam": [],
+  "NullableBooleanParam": [],
+  "RegularParam": [],
+  "SecretParam": [],
+  "StringArrayParam": []
+}

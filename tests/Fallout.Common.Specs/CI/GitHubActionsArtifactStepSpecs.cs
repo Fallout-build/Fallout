@@ -7,7 +7,7 @@ namespace Fallout.Common.Specs.CI;
 public class GitHubActionsArtifactStepSpecs
 {
     [Fact]
-    public Task Name_with_an_apostrophe_is_yaml_escaped()
+    public void Name_with_an_apostrophe_is_yaml_escaped()
         => ConfigurationEntityVerifier.Verify(new GitHubActionsArtifactStep
         {
             Name = "Bob's Build",

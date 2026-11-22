@@ -1,14 +1,17 @@
-﻿using System.IO;
-using System.Threading.Tasks;
+using System.IO;
+using System.Runtime.CompilerServices;
 using Fallout.Common.CI;
 using Fallout.Common.Utilities;
-using VerifyXunit;
+using Fallout.Testing;
 
 namespace Fallout.Common.Specs.CI;
 
 public static class ConfigurationEntityVerifier
 {
-    public static Task Verify(ConfigurationEntity entity)
+    public static void Verify(
+        ConfigurationEntity entity,
+        [CallerFilePath] string sourcePath = "",
+        [CallerMemberName] string member = "")
     {
         var stream = new MemoryStream();
         var writer = new StreamWriter(stream, leaveOpen: true);
@@ -16,6 +19,6 @@ public static class ConfigurationEntityVerifier
         writer.Flush();
 
         stream.Seek(offset: 0, SeekOrigin.Begin);
-        return Verifier.Verify(new StreamReader(stream).ReadToEnd());
+        Snapshot.Verify(new StreamReader(stream).ReadToEnd(), sourcePath: sourcePath, member: member);
     }
 }

@@ -1,31 +1,29 @@
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Fallout.Common.IO;
 using Fallout.Common.Utilities;
 using FluentAssertions;
-using VerifyTests;
-using VerifyXunit;
+using Fallout.Testing;
 using Xunit;
 
 namespace Fallout.Common.Specs;
 
 public class CompletionUtilitySpecs
 {
-    private readonly VerifySettings _verifySettings;
-
     private static AbsolutePath RootDirectory => Constants.TryGetRootDirectoryFrom(EnvironmentInfo.WorkingDirectory).NotNull();
 
     private static AbsolutePath TestDirectory => RootDirectory / "tests" / "Fallout.Build.Specs";
 
-    public CompletionUtilitySpecs()
-    {
-        _verifySettings = new VerifySettings();
-        _verifySettings.DontIgnoreEmptyCollections();
-    }
+    private static void VerifyItems(
+        object items,
+        [CallerFilePath] string sourcePath = "",
+        [CallerMemberName] string member = "")
+        => Snapshot.Verify(JsonSerializer.Serialize(items, new JsonSerializerOptions { WriteIndented = true }), "json", sourcePath: sourcePath, member: member);
 
     [Fact]
-    public async Task TestGetCompletionItemsTargetBuild()
+    public void TestGetCompletionItemsTargetBuild()
     {
         var file = TestDirectory / "SchemaUtilitySpecs.TestTargetBuild.verified.json";
         var schema = JsonDocument.Parse(file.ReadAllText());
@@ -34,20 +32,20 @@ public class CompletionUtilitySpecs
             "dev"
         });
 
-        await Verifier.Verify(items, _verifySettings);
+        VerifyItems(items);
     }
 
     [Fact]
-    public async Task TestGetCompletionItemsParameterBuild()
+    public void TestGetCompletionItemsParameterBuild()
     {
         var file = TestDirectory / "SchemaUtilitySpecs.TestParameterBuild.verified.json";
         var schema = JsonDocument.Parse(file.ReadAllText());
         var items = CompletionUtility.GetItemsFromSchema(schema, []);
-        await Verifier.Verify(items, _verifySettings);
+        VerifyItems(items);
     }
 
     [Fact]
-    public async Task TestGetCompletionItemsFromSchema()
+    public void TestGetCompletionItemsFromSchema()
     {
         var schema = JsonDocument.Parse("""
                                         {
@@ -99,7 +97,7 @@ public class CompletionUtilitySpecs
         };
 
         var items = CompletionUtility.GetItemsFromSchema(schema, profileNames);
-        await Verifier.Verify(items, _verifySettings);
+        VerifyItems(items);
     }
 
     [Theory]

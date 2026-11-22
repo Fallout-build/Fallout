@@ -11,7 +11,7 @@ using Fallout.Common.CI.TeamCity;
 using Fallout.Common.Execution;
 using Fallout.Common.IO;
 using Fallout.Common.Tooling;
-using VerifyXunit;
+using Fallout.Testing;
 using Xunit;
 
 namespace Fallout.Common.Specs.CI;
@@ -20,7 +20,7 @@ public class ConfigurationGenerationSpecs
 {
     [Theory]
     [MemberData(nameof(GetAttributes))]
-    public Task Test(string testName, ITestConfigurationGenerator attribute)
+    public void Test(string testName, ITestConfigurationGenerator attribute)
     {
         var build = new TestBuild();
         var relevantTargets = ExecutableTargetFactory.CreateAll(build, x => x.Compile);
@@ -34,8 +34,7 @@ public class ConfigurationGenerationSpecs
         var reader = new StreamReader(stream);
         var str = reader.ReadToEnd();
 
-        return Verifier.Verify(str)
-            .UseParameters(testName, attribute.GetType().BaseType.NotNull().Name);
+        Snapshot.Verify(str, parameters: $"testName={testName ?? "null"}_attribute={attribute.GetType().BaseType.NotNull().Name}");
     }
 
     public static IEnumerable<object[]> GetAttributes()

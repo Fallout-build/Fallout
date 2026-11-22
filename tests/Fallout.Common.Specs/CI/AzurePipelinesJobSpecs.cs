@@ -8,7 +8,7 @@ namespace Fallout.Common.Specs.CI;
 public class AzurePipelinesJobSpecs
 {
     [Fact]
-    public Task DisplayName_with_an_apostrophe_is_yaml_escaped()
+    public void DisplayName_with_an_apostrophe_is_yaml_escaped()
         => ConfigurationEntityVerifier.Verify(new AzurePipelinesJob
         {
             Name = "Compile",
@@ -18,7 +18,7 @@ public class AzurePipelinesJobSpecs
         });
 
     [Fact]
-    public Task VmImage_is_quoted_correctly_without_double_wrapping_quirk()
+    public void VmImage_is_quoted_correctly_without_double_wrapping_quirk()
         => ConfigurationEntityVerifier.Verify(new AzurePipelinesJob
         {
             Name = "Compile",

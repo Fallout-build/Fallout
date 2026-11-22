@@ -1,0 +1,14 @@
+{
+  "NoLogo": [],
+  "Configuration": [
+    "Debug",
+    "Release"
+  ],
+  "Profile": [
+    "dev"
+  ],
+  "Target": [
+    "Restore",
+    "Compile"
+  ]
+}

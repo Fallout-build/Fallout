@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Fallout.Build.Execution.Extensions;
 using Fallout.Common.Execution;
 using FluentAssertions;
-using VerifyXunit;
+using Fallout.Testing;
 using Xunit;
 
 namespace Fallout.Common.Specs.Execution;
@@ -68,12 +68,12 @@ public class BuildGraphUtilitySpecs
     }
 
     [Fact]
-    public Task Sample_graph_matches_the_contract_snapshot()
-        => Verifier.Verify(BuildGraphUtility.GetJsonString(SampleGraph(), SampleVersion), "json");
+    public void Sample_graph_matches_the_contract_snapshot()
+        => Snapshot.Verify(BuildGraphUtility.GetJsonString(SampleGraph(), SampleVersion), "json");
 
     [Fact]
-    public Task Empty_graph_matches_the_contract_snapshot()
-        => Verifier.Verify(BuildGraphUtility.GetJsonString(new ExecutableTarget[0], falloutVersion: null), "json");
+    public void Empty_graph_matches_the_contract_snapshot()
+        => Snapshot.Verify(BuildGraphUtility.GetJsonString(new ExecutableTarget[0], falloutVersion: null), "json");
 
     [Fact]
     public void Schema_version_is_1()

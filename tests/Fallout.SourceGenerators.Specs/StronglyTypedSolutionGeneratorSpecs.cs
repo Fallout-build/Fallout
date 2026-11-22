@@ -7,7 +7,7 @@ using Fallout.Solutions;
 using FluentAssertions;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using VerifyXunit;
+using Fallout.Testing;
 using Xunit;
 
 namespace Fallout.SourceGenerators.Specs;
@@ -15,7 +15,7 @@ namespace Fallout.SourceGenerators.Specs;
 public class StronglyTypedSolutionGeneratorSpecs
 {
     [Fact]
-    public Task Enabled_code_generation()
+    public void Enabled_code_generation()
     {
         var inputCompilation = CreateCompilation("""
                                                  using Fallout.Common;
@@ -30,11 +30,11 @@ public class StronglyTypedSolutionGeneratorSpecs
         var generator = new StronglyTypedSolutionGenerator();
         var driver = CSharpGeneratorDriver.Create(generator);
         var result = driver.RunGenerators(inputCompilation);
-        return Verifier.Verify(result);
+        GeneratorSnapshot.Verify(result);
     }
 
     [Fact]
-    public Task Enabled_code_generation_with_fancy_naming()
+    public void Enabled_code_generation_with_fancy_naming()
     {
         var inputCompilation = CreateCompilation("""
                                                  using Fallout.Common;
@@ -49,7 +49,7 @@ public class StronglyTypedSolutionGeneratorSpecs
         var generator = new StronglyTypedSolutionGenerator();
         var driver = CSharpGeneratorDriver.Create(generator);
         var result = driver.RunGenerators(inputCompilation);
-        return Verifier.Verify(result);
+        GeneratorSnapshot.Verify(result);
     }
 
     [Fact]

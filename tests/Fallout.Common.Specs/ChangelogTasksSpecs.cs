@@ -6,7 +6,7 @@ using Fallout.Common.ChangeLog;
 using Fallout.Common.Git;
 using Fallout.Common.IO;
 using FluentAssertions;
-using VerifyXunit;
+using Fallout.Testing;
 using Xunit;
 
 // ReSharper disable ReturnValueOfPureMethodIsNotUsed
@@ -65,13 +65,12 @@ public class ChangelogTasksSpecs
 
     [Theory]
     [InlineData("changelog_reference_1.0.0_variant_5.md", "0.2.3")]
-    public Task ExtractChangelogSectionNotes_WithTag_ReturnsSectionThatMatchesProvidedTag(string fileName, string tag)
+    public void ExtractChangelogSectionNotes_WithTag_ReturnsSectionThatMatchesProvidedTag(string fileName, string tag)
     {
         var changeLogFilePath = PathToChangelogReferenceFiles / fileName;
         var sectionNotes = ChangelogTasks.ExtractChangelogSectionNotes(changeLogFilePath, tag);
 
-        return Verifier.Verify(sectionNotes).UseDirectory(PathToChangelogReferenceFiles)
-            .UseFileName($"{changeLogFilePath.NameWithoutExtension}_section_{tag}");
+        Snapshot.Verify(string.Join(Environment.NewLine, sectionNotes), fileName: $"{changeLogFilePath.NameWithoutExtension}_section_{tag}", directory: PathToChangelogReferenceFiles);
     }
 
     [Theory]

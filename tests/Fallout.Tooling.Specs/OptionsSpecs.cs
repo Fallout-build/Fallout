@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Fallout.Common.Tooling;
 using Fallout.Common.Utilities.Collections;
 using FluentAssertions;
-using VerifyXunit;
+using Fallout.Testing;
 using Xunit;
 
 namespace Fallout.Common.Specs;
@@ -172,7 +172,7 @@ public class OptionsSpecs
     }
 
     [Fact]
-    public Task TestSerialization()
+    public void TestSerialization()
     {
         IOptions options = new Options();
         options.Set(() => ScalarValue, "scalar-value");
@@ -200,7 +200,7 @@ public class OptionsSpecs
 
         options.Set(() => NestedValue, options);
 
-        return Verifier.Verify(JsonSerializer.Serialize(options, options.GetType(), Options.SerializerOptions));
+        Snapshot.Verify(JsonSerializer.Serialize(options, options.GetType(), Options.SerializerOptions));
     }
 }
 

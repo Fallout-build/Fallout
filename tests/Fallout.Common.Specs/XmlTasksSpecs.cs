@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using Fallout.Common.IO;
 using FluentAssertions;
-using VerifyXunit;
+using Fallout.Testing;
 using Xunit;
 
 namespace Fallout.Common.Specs;
@@ -59,7 +59,7 @@ public class XmlTasksSpecs : IDisposable
         XmlTasks.XmlAdd(_tempFile, "/root", new XmlElementBuilder("new").SetValue("element"));
 
         var content = await File.ReadAllTextAsync(_tempFile);
-        await Verifier.Verify(content, "xml");
+        Snapshot.Verify(content, "xml");
     }
 
     [Fact]
@@ -70,18 +70,18 @@ public class XmlTasksSpecs : IDisposable
         XmlTasks.XmlAdd(_tempFile, "/root", "<new>element</new>");
 
         var content = await File.ReadAllTextAsync(_tempFile);
-        await Verifier.Verify(content, "xml");
+        Snapshot.Verify(content, "xml");
     }
 
     [Fact]
-    public async Task Fluent_api_builds_expected_xml_structure()
+    public void Fluent_api_builds_expected_xml_structure()
     {
         var builder = new XmlElementBuilder("root")
             .SetAttribute("attr", "val")
             .AddChild("child", c => c.SetValue("inner"));
 
         var element = builder.Build();
-        await Verifier.Verify(element);
+        Snapshot.Verify(element.ToString(), "xml");
     }
 
     [Fact]
@@ -120,7 +120,7 @@ public class XmlTasksSpecs : IDisposable
             .SetAttribute("allowInsecureConnections", "true"));
 
         var content = await File.ReadAllTextAsync(_tempFile);
-        await Verifier.Verify(content, "xml");
+        Snapshot.Verify(content, "xml");
     }
 
     private static string NugetConfig =>

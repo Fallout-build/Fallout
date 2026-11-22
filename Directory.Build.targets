@@ -38,4 +38,9 @@
     </When>
   </Choose>
 
+  <!-- Snapshot files are test data, not code. -->
+  <ItemGroup Condition="$(MSBuildProjectName.EndsWith('Tests')) Or $(MSBuildProjectName.EndsWith('Specs'))">
+    <Compile Remove="**/*.verified.cs;**/*.received.cs" />
+  </ItemGroup>
+
 </Project>

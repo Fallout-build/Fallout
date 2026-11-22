@@ -1,4 +1,2 @@
-﻿[
-  ### Fixed,
-  - Fixed something
-]
+### Fixed
+- Fixed something

@@ -7,7 +7,7 @@ using Fallout.Common.CI.GitHubActions;
 using Fallout.Common.CI.GitHubActions.Configuration;
 using Fallout.Common.Execution;
 using FluentAssertions;
-using VerifyXunit;
+using Fallout.Testing;
 using Xunit;
 
 namespace Fallout.Common.Specs.CI;
@@ -214,7 +214,7 @@ public class GitHubActionsStepInjectionSpecs
 
     // Locks the exact rendered YAML for a rich multi-position injection (uses + run + optional fields).
     [Fact]
-    public Task Rich_injection_renders_expected_yaml()
+    public void Rich_injection_renders_expected_yaml()
     {
         var yaml = Render(p =>
         {
@@ -245,6 +245,6 @@ public class GitHubActionsStepInjectionSpecs
             });
         });
 
-        return Verifier.Verify(yaml);
+        Snapshot.Verify(yaml);
     }
 }

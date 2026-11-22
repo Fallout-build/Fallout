@@ -15,7 +15,7 @@ using Fallout.Common.Tools.PackageGuard;
 using Fallout.Common.Tools.Xunit;
 using Fallout.Common.Utilities;
 using FluentAssertions;
-using VerifyXunit;
+using Fallout.Testing;
 using Xunit;
 
 namespace Fallout.Common.Specs;
@@ -167,7 +167,7 @@ public class SettingsSpecs
     }
 
     [Fact]
-    public Task TestDiscord()
+    public void TestDiscord()
     {
         var message = new DiscordMessage()
             .SetNonce("nonce")
@@ -179,7 +179,7 @@ public class SettingsSpecs
 
         var result = JsonSerializer.Serialize(message, message.GetType(), Options.SerializerOptions);
 
-        return Verifier.Verify(result);
+        Snapshot.Verify(result);
     }
 
     [Fact]

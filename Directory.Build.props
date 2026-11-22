@@ -58,8 +58,7 @@
     <PackageReference Include="GitHubActionsTestLogger" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
 <!--    <PackageReference Include="TeamCity.VSTest.TestAdapter" />-->
-    <PackageReference Include="Verify.XunitV3"  />
-    <PackageReference Include="Verify.DiffPlex"  />
+    <PackageReference Include="DiffPlex" />
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
     <PackageReference Include="coverlet.MTP" />
@@ -68,6 +67,10 @@
 
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)AssemblyInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup Condition="$(MSBuildProjectName.EndsWith('Tests')) Or $(MSBuildProjectName.EndsWith('Specs'))">
+    <Compile Include="$(MSBuildThisFileDirectory)tests/Shared/Snapshot.cs" Link="Snapshot.cs" />
   </ItemGroup>
 
 </Project>

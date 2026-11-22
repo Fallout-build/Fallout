@@ -1,18 +1,22 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Fallout.Common.CI.GitHubActions.Configuration;
 using Fallout.Common.Utilities;
-using VerifyXunit;
+using Fallout.Testing;
 using Xunit;
 
 namespace Fallout.Common.Specs.CI;
 
 // Renders a single custom step in isolation, like GitHubActionsWorkflowDispatchTriggerSpecs. Output is
-// snapshotted with Verify (line endings normalized), matching the generator testing strategy elsewhere.
+// snapshotted (line endings normalized), matching the generator testing strategy elsewhere.
 public class GitHubActionsCustomStepSpecs
 {
-    private static Task Verify(GitHubActionsCustomStep step)
+    private static void Verify(
+        GitHubActionsCustomStep step,
+        [CallerFilePath] string sourcePath = "",
+        [CallerMemberName] string member = "")
     {
         var stream = new MemoryStream();
         var writer = new StreamWriter(stream, leaveOpen: true);
@@ -20,11 +24,11 @@ public class GitHubActionsCustomStepSpecs
         writer.Flush();
 
         stream.Seek(offset: 0, SeekOrigin.Begin);
-        return Verifier.Verify(new StreamReader(stream).ReadToEnd());
+        Snapshot.Verify(new StreamReader(stream).ReadToEnd(), sourcePath: sourcePath, member: member);
     }
 
     [Fact]
-    public Task Uses_step_with_with_block()
+    public void Uses_step_with_with_block()
         => Verify(new GitHubActionsCustomStep
         {
             Name = "Setup Node",
@@ -36,14 +40,14 @@ public class GitHubActionsCustomStepSpecs
         });
 
     [Fact]
-    public Task Uses_step_without_name_starts_with_uses()
+    public void Uses_step_without_name_starts_with_uses()
         => Verify(new GitHubActionsCustomStep
         {
             Uses = "actions/checkout@v4"
         });
 
     [Fact]
-    public Task Single_line_run_renders_inline()
+    public void Single_line_run_renders_inline()
         => Verify(new GitHubActionsCustomStep
         {
             Name = "Echo",
@@ -55,7 +59,7 @@ public class GitHubActionsCustomStepSpecs
 
     // A name with a colon-space would be invalid YAML unquoted; it must be single-quoted like the built-in steps.
     [Fact]
-    public Task Name_with_a_colon_is_quoted()
+    public void Name_with_a_colon_is_quoted()
         => Verify(new GitHubActionsCustomStep
         {
             Name = "Deploy: prod",
@@ -68,7 +72,7 @@ public class GitHubActionsCustomStepSpecs
     // An embedded apostrophe must be YAML-escaped by doubling (''), not the backslash the shared
     // SingleQuote() helper would produce (which is invalid inside a YAML single-quoted scalar).
     [Fact]
-    public Task Name_with_an_apostrophe_is_yaml_escaped()
+    public void Name_with_an_apostrophe_is_yaml_escaped()
         => Verify(new GitHubActionsCustomStep
         {
             Name = "Bob's step",
@@ -80,7 +84,7 @@ public class GitHubActionsCustomStepSpecs
 
     // Multi-entry with:/env: must render in a deterministic (ordinal) order regardless of insertion order.
     [Fact]
-    public Task Multi_entry_with_renders_in_ordinal_order()
+    public void Multi_entry_with_renders_in_ordinal_order()
         => Verify(new GitHubActionsCustomStep
         {
             Uses = "some/action@v1",
@@ -92,7 +96,7 @@ public class GitHubActionsCustomStepSpecs
         });
 
     [Fact]
-    public Task Multi_line_run_renders_block_scalar()
+    public void Multi_line_run_renders_block_scalar()
         => Verify(new GitHubActionsCustomStep
         {
             Run = new[]
@@ -103,7 +107,7 @@ public class GitHubActionsCustomStepSpecs
         });
 
     [Fact]
-    public Task All_optional_fields_render_in_fixed_order()
+    public void All_optional_fields_render_in_fixed_order()
         => Verify(new GitHubActionsCustomStep
         {
             Name = "Full",
@@ -123,7 +127,7 @@ public class GitHubActionsCustomStepSpecs
         });
 
     [Fact]
-    public Task Run_step_renders_shell_when_set()
+    public void Run_step_renders_shell_when_set()
         => Verify(new GitHubActionsCustomStep
         {
             Run = new[]
