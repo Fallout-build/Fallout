@@ -44,6 +44,12 @@ public class ArgumentAttribute : Attribute
     public string InnerSeparator { get; set; }
 
     public bool QuoteMultiple { get; set; }
+
+    /// <summary>
+    /// Passes the argument on to the program that the tool runs, such as a test application of <c>dotnet test</c>.
+    /// Forwarded arguments come last, after a single <c>--</c>.
+    /// </summary>
+    public bool IsForwarded { get; set; }
 }
 
 public class BuilderAttribute : Attribute
@@ -57,6 +63,7 @@ partial class ToolOptions
 {
     private const string KeyPlaceholder = "{key}";
     private const string ValuePlaceholder = "{value}";
+    private const string ForwardedArgumentsSeparator = "--";
 
     internal partial IEnumerable<string> GetArguments()
     {
@@ -73,13 +80,26 @@ partial class ToolOptions
             .Where(x => x.Attribute != null)
             .OrderByDescending(x => x.Attribute.Position.CompareTo(0))
             .ThenBy(x => x.Attribute.Position)
-            .SelectMany(x => GetArgument(x.Node, x.Property, x.Attribute, escapeMethod))
-            .WhereNotNull()
-            .Concat(ProcessAdditionalArguments ?? []);
+            .Select(x => (
+                x.Attribute.IsForwarded,
+                Values: GetArgument(x.Node, x.Property, x.Attribute, escapeMethod).WhereNotNull()))
+            .ToList();
 
-        foreach (var argument in arguments)
+        IEnumerable<string> ownArguments = arguments.Where(x => !x.IsForwarded).SelectMany(x => x.Values)
+            .Concat(ProcessAdditionalArguments ?? []);
+        foreach (var argument in ownArguments)
         {
             yield return argument;
+        }
+
+        List<string> forwardedArguments = arguments.Where(x => x.IsForwarded).SelectMany(x => x.Values).ToList();
+        if (forwardedArguments.Count > 0)
+        {
+            yield return ForwardedArgumentsSeparator;
+            foreach (var argument in forwardedArguments)
+            {
+                yield return argument;
+            }
         }
 
         Func<string, PropertyInfo, string> CreateEscape()

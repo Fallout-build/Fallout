@@ -1,0 +1,4 @@
+.build/
+artifacts/
+**/.fallout/temp/
+**/.fallout/build.schema.json

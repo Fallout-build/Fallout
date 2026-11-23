@@ -120,6 +120,10 @@
           "description": "Custom implementation of value presentation.",
           "type": "boolean"
         },
+        "isForwarded": {
+          "description": "Passes the argument on to the program that the tool runs. Forwarded arguments come last, after a single '--'.",
+          "type": "boolean"
+        },
         "createOverload": {
           "description": "Specifies that an overload for the property should be created.",
           "type": "boolean"

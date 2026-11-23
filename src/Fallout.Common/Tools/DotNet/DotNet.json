@@ -29,7 +29,7 @@
   "customLogger": true,
   "tasks": [
     {
-      "help": "The <c>dotnet test</c> command is used to execute unit tests in a given project. Unit tests are console application projects that have dependencies on the unit test framework (for example, MSTest, NUnit, or xUnit) and the dotnet test runner for the unit testing framework. These are packaged as NuGet packages and are restored as ordinary dependencies for the project.",
+      "help": "The <c>dotnet test</c> command is used to execute unit tests in a given project. Unit tests are console application projects that have dependencies on the unit test framework (for example, MSTest, NUnit, or xUnit) and the dotnet test runner for the unit testing framework. These are packaged as NuGet packages and are restored as ordinary dependencies for the project.<para/>These are the options of the VSTest runner. When <c>global.json</c> selects Microsoft.Testing.Platform, use <c>DotNetTestMtp</c> instead.",
       "postfix": "Test",
       "commonPropertySets": [
         "restore",
@@ -196,6 +196,462 @@
             "type": "string",
             "format": "--artifacts-path {value}",
             "help": "All build output files from the executed command will go in subfolders under the specified path, separated by project. For more information see <a href=\"https://learn.microsoft.com/en-us/dotnet/core/sdk/artifacts-output\">Artifacts Output Layout</a>. Available since .NET 8 SDK."
+          }
+        ]
+      }
+    },
+    {
+      "help": "Runs tests with <a href=\"https://learn.microsoft.com/dotnet/core/testing/microsoft-testing-platform-intro\">Microsoft.Testing.Platform</a> (MTP). This is the <c>dotnet test</c> of the .NET 10 SDK and later when <c>global.json</c> selects the platform: <c>\"test\": { \"runner\": \"Microsoft.Testing.Platform\" }</c>. Its options differ from the VSTest options of <c>DotNetTest</c>.<para/>Options for <c>dotnet test</c> itself come first. Options for the test applications come after a single <c>--</c>. An option of an extension works only when every test application references the extension's package. Otherwise the run fails with exit code 5. For more details, visit the <a href=\"https://learn.microsoft.com/dotnet/core/tools/dotnet-test-mtp\">official website</a>.",
+      "postfix": "TestMtp",
+      "definiteArgument": "test",
+      "settingsClass": {
+        "properties": [
+          {
+            "name": "ProjectFile",
+            "type": "string",
+            "format": "--project {value}",
+            "help": "The test project to run, or a folder that contains it. Use only one of <c>ProjectFile</c>, <c>SolutionFile</c> and <c>TestModules</c>."
+          },
+          {
+            "name": "SolutionFile",
+            "type": "string",
+            "format": "--solution {value}",
+            "help": "The solution to run, or a folder that contains it. Use only one of <c>ProjectFile</c>, <c>SolutionFile</c> and <c>TestModules</c>."
+          },
+          {
+            "name": "TestModules",
+            "type": "string",
+            "format": "--test-modules {value}",
+            "help": "A glob of already built test applications to run, such as <c>**/bin/**/Release/net10.0/*.Tests.dll</c>. Use only one of <c>ProjectFile</c>, <c>SolutionFile</c> and <c>TestModules</c>. Can't be used with <c>Configuration</c>, <c>Framework</c>, <c>Runtime</c>, <c>Architecture</c> or <c>OperatingSystem</c>."
+          },
+          {
+            "name": "TestModulesRootDirectory",
+            "type": "string",
+            "format": "--root-directory {value}",
+            "help": "The root directory of the <c>TestModules</c> glob."
+          },
+          {
+            "name": "MaxParallelTestModules",
+            "type": "int",
+            "format": "--max-parallel-test-modules {value}",
+            "help": "The maximum number of test applications that run at the same time. The default is the number of processors."
+          },
+          {
+            "name": "ConfigFile",
+            "type": "string",
+            "format": "--config-file {value}",
+            "help": "The <a href=\"https://learn.microsoft.com/dotnet/core/testing/microsoft-testing-platform-config\"><c>testconfig.json</c></a> file to use."
+          },
+          {
+            "name": "Configuration",
+            "type": "string",
+            "format": "--configuration {value}",
+            "help": "The build configuration. The default for most projects is <c>Debug</c>."
+          },
+          {
+            "name": "Framework",
+            "type": "string",
+            "format": "--framework {value}",
+            "help": "The <a href=\"https://learn.microsoft.com/dotnet/standard/frameworks\">target framework</a> to run the tests for. The project must target it."
+          },
+          {
+            "name": "Runtime",
+            "type": "string",
+            "format": "--runtime {value}",
+            "help": "The <a href=\"https://learn.microsoft.com/dotnet/core/rid-catalog\">runtime identifier</a> to test for."
+          },
+          {
+            "name": "Architecture",
+            "type": "string",
+            "format": "--arch {value}",
+            "help": "The target architecture. It's combined with the default runtime identifier. Don't use it together with <c>Runtime</c>."
+          },
+          {
+            "name": "OperatingSystem",
+            "type": "string",
+            "format": "--os {value}",
+            "help": "The target operating system. It's combined with the default runtime identifier. Don't use it together with <c>Runtime</c>."
+          },
+          {
+            "name": "UseCurrentRuntime",
+            "type": "bool",
+            "format": "--use-current-runtime",
+            "help": "Uses the current runtime as the target runtime. Needs the .NET 11 SDK."
+          },
+          {
+            "name": "ArtifactsPath",
+            "type": "string",
+            "format": "--artifacts-path {value}",
+            "help": "Puts all build output in subfolders of this path, separated by project. For more information see <a href=\"https://learn.microsoft.com/dotnet/core/sdk/artifacts-output\">Artifacts Output Layout</a>. Needs the .NET 11 SDK."
+          },
+          {
+            "name": "NoBuild",
+            "type": "bool",
+            "format": "--no-build",
+            "help": "Doesn't build the test projects before running them. Implies <c>NoRestore</c>."
+          },
+          {
+            "name": "NoRestore",
+            "type": "bool",
+            "format": "--no-restore",
+            "help": "Doesn't run an implicit restore."
+          },
+          {
+            "name": "NoDependencies",
+            "type": "bool",
+            "format": "--no-dependencies",
+            "help": "Doesn't build the project-to-project references. Needs the .NET 11 SDK."
+          },
+          {
+            "name": "Verbosity",
+            "type": "DotNetVerbosity",
+            "format": "--verbosity {value}",
+            "help": "The MSBuild verbosity level."
+          },
+          {
+            "name": "Properties",
+            "type": "Dictionary<string, object>",
+            "format": "/property:{key}={value}",
+            "disallowedCharacter": ";",
+            "help": "Sets or overrides MSBuild properties."
+          },
+          {
+            "name": "EnvironmentVariables",
+            "type": "Dictionary<string, object>",
+            "format": "--environment {key}={value}",
+            "help": "Sets environment variables for the test applications. These override the values of a launch profile."
+          },
+          {
+            "name": "ResultsDirectory",
+            "type": "string",
+            "format": "--results-directory {value}",
+            "help": "The directory for the test results. It's created when it doesn't exist."
+          },
+          {
+            "name": "ResultsDirectoryLayout",
+            "type": "DotNetTestResultsDirectoryLayout",
+            "format": "--results-directory-layout {value}",
+            "help": "How a run of several test applications organizes the results directory. <c>flat</c> (the default) writes all results to one directory. <c>per-module</c> writes the results of each application to a subdirectory, so files with the same name don't overwrite each other. Needs the .NET SDK 10.0.402 or later."
+          },
+          {
+            "name": "DiagnosticOutputDirectory",
+            "type": "string",
+            "format": "--diagnostic-output-directory {value}",
+            "help": "The directory for the diagnostic output."
+          },
+          {
+            "name": "MinimumExpectedTests",
+            "type": "int",
+            "format": "--minimum-expected-tests {value}",
+            "help": "The minimum number of tests of the whole run, including skipped tests. The run fails with exit code 9 when fewer tests run. For a minimum per test application, use <c>MinimumExpectedTestsPerModule</c>."
+          },
+          {
+            "name": "MaximumFailedTests",
+            "type": "int",
+            "format": "--maximum-failed-tests {value}",
+            "help": "Stops the run after this number of failed tests, with exit code 13. Applies to the whole run with the .NET 11 SDK, and to each test application before."
+          },
+          {
+            "name": "Timeout",
+            "type": "string",
+            "format": "--timeout {value}",
+            "help": "Stops the run after this time, such as <c>90s</c>, <c>10m</c> or <c>2h</c>, with exit code 3. Applies to the whole run with the .NET 11 SDK, and to each test application before."
+          },
+          {
+            "name": "ListTests",
+            "type": "bool",
+            "format": "--list-tests",
+            "help": "Lists the discovered tests instead of running them."
+          },
+          {
+            "name": "NoAnsi",
+            "type": "bool",
+            "format": "--no-ansi",
+            "help": "Doesn't write ANSI escape characters to the screen."
+          },
+          {
+            "name": "NoProgress",
+            "type": "bool",
+            "format": "--no-progress",
+            "help": "Doesn't report progress to the screen."
+          },
+          {
+            "name": "NoLogo",
+            "type": "bool",
+            "format": "--nologo",
+            "help": "Hides the .NET and Microsoft.Testing.Platform banners. Needs the .NET 11 SDK."
+          },
+          {
+            "name": "NoArtifactPostProcessing",
+            "type": "bool",
+            "format": "--no-artifact-post-processing",
+            "help": "Doesn't merge compatible reports, such as TRX files, after a run of several test applications. Needs the .NET 11 SDK."
+          },
+          {
+            "name": "NoLaunchProfile",
+            "type": "bool",
+            "format": "--no-launch-profile",
+            "help": "Doesn't use <c>launchSettings.json</c> to configure the test applications."
+          },
+          {
+            "name": "NoLaunchProfileArguments",
+            "type": "bool",
+            "format": "--no-launch-profile-arguments",
+            "help": "Doesn't use the <c>commandLineArgs</c> of the launch profile."
+          },
+          {
+            "name": "OutputVerbosity",
+            "type": "DotNetTestOutputVerbosity",
+            "format": "--output {value}",
+            "help": "The verbosity of the test output. <c>Minimal</c> needs Microsoft.Testing.Platform 2.4 or later."
+          },
+          {
+            "name": "Filter",
+            "type": "string",
+            "format": "--filter {value}",
+            "isForwarded": true,
+            "help": "Runs the tests that match the expression. The syntax belongs to the test framework. MSTest, NUnit and xunit.v3 take the <a href=\"https://learn.microsoft.com/dotnet/core/testing/selective-unit-tests\">VSTest filter syntax</a>."
+          },
+          {
+            "name": "TreenodeFilter",
+            "type": "string",
+            "format": "--treenode-filter {value}",
+            "isForwarded": true,
+            "help": "Runs the tests that match the tree filter expression, for test frameworks that support it, such as TUnit."
+          },
+          {
+            "name": "FilterUids",
+            "type": "List<string>",
+            "format": "--filter-uid {value}",
+            "separator": " ",
+            "isForwarded": true,
+            "help": "Runs the tests with these test node UIDs."
+          },
+          {
+            "name": "MinimumExpectedTestsPerModule",
+            "type": "int",
+            "format": "--minimum-expected-tests {value}",
+            "isForwarded": true,
+            "help": "The minimum number of tests of each test application. Skipped tests don't count. A test application fails with exit code 9 when fewer tests run."
+          },
+          {
+            "name": "ZeroTestsPolicy",
+            "type": "DotNetTestZeroTestsPolicy",
+            "format": "--zero-tests-policy {value}",
+            "isForwarded": true,
+            "help": "Whether a test application that skipped all its tests fails. <c>allow-skipped</c> (the default) lets it pass. <c>strict</c> fails it with exit code 8. Needs Microsoft.Testing.Platform 2.3 or later."
+          },
+          {
+            "name": "IgnoreExitCodes",
+            "type": "List<int>",
+            "format": "--ignore-exit-code {value}",
+            "separator": ";",
+            "isForwarded": true,
+            "help": "Exit codes of the test applications that count as success, such as <c>8</c> for a test application without tests. See <a href=\"https://aka.ms/testingplatform/exitcodes\">the exit codes</a>."
+          },
+          {
+            "name": "Diagnostic",
+            "type": "bool",
+            "format": "--diagnostic",
+            "isForwarded": true,
+            "help": "Writes a diagnostic log for each test application."
+          },
+          {
+            "name": "DiagnosticVerbosity",
+            "type": "DotNetTestDiagnosticVerbosity",
+            "format": "--diagnostic-verbosity {value}",
+            "isForwarded": true,
+            "help": "The level of the diagnostic log. The default is <c>Trace</c>."
+          },
+          {
+            "name": "DiagnosticFilePrefix",
+            "type": "string",
+            "format": "--diagnostic-file-prefix {value}",
+            "isForwarded": true,
+            "help": "The prefix of the diagnostic log file names."
+          },
+          {
+            "name": "ReportTrx",
+            "type": "bool",
+            "format": "--report-trx",
+            "isForwarded": true,
+            "help": "Writes a TRX report. Needs the <c>Microsoft.Testing.Extensions.TrxReport</c> package."
+          },
+          {
+            "name": "ReportTrxFileName",
+            "type": "string",
+            "format": "--report-trx-filename {value}",
+            "isForwarded": true,
+            "help": "The file name of the TRX report, relative to the results directory. Needs <c>ReportTrx</c>."
+          },
+          {
+            "name": "Coverage",
+            "type": "bool",
+            "format": "--coverage",
+            "isForwarded": true,
+            "help": "Collects code coverage. Needs the <c>Microsoft.Testing.Extensions.CodeCoverage</c> package."
+          },
+          {
+            "name": "CoverageOutput",
+            "type": "string",
+            "format": "--coverage-output {value}",
+            "isForwarded": true,
+            "help": "The file name of the coverage report, relative to the results directory. Give each test application its own name, or the reports overwrite each other."
+          },
+          {
+            "name": "CoverageOutputFormat",
+            "type": "DotNetTestCoverageOutputFormat",
+            "format": "--coverage-output-format {value}",
+            "isForwarded": true,
+            "help": "The format of the coverage report. The default is <c>coverage</c>."
+          },
+          {
+            "name": "CoverageSettings",
+            "type": "string",
+            "format": "--coverage-settings {value}",
+            "isForwarded": true,
+            "help": "An XML file with <a href=\"https://learn.microsoft.com/dotnet/core/additional-tools/dotnet-coverage#settings\">code coverage settings</a>."
+          },
+          {
+            "name": "Coverlet",
+            "type": "bool",
+            "format": "--coverlet",
+            "isForwarded": true,
+            "help": "Collects code coverage with Coverlet. Needs the <c>coverlet.MTP</c> package."
+          },
+          {
+            "name": "CoverletOutputFormats",
+            "type": "List<DotNetTestCoverletOutputFormat>",
+            "format": "--coverlet-output-format {value}",
+            "isForwarded": true,
+            "help": "The formats of the Coverlet reports. The default is <c>json</c> and <c>cobertura</c>."
+          },
+          {
+            "name": "CoverletFilePrefix",
+            "type": "string",
+            "format": "--coverlet-file-prefix {value}",
+            "isForwarded": true,
+            "help": "The prefix of the Coverlet report file names. Give each test application its own prefix, or the reports overwrite each other."
+          },
+          {
+            "name": "CoverletIncludeFilters",
+            "type": "List<string>",
+            "format": "--coverlet-include {value}",
+            "isForwarded": true,
+            "help": "Includes the assemblies and types that match the filters, such as <c>[MyAssembly]MyNamespace.*</c>."
+          },
+          {
+            "name": "CoverletExcludeFilters",
+            "type": "List<string>",
+            "format": "--coverlet-exclude {value}",
+            "isForwarded": true,
+            "help": "Excludes the assemblies and types that match the filters, such as <c>[*.Tests]*</c>."
+          },
+          {
+            "name": "CoverletExcludeByFiles",
+            "type": "List<string>",
+            "format": "--coverlet-exclude-by-file {value}",
+            "isForwarded": true,
+            "help": "Excludes the source files that match the glob patterns, such as <c>**/*.Generated.cs</c>."
+          },
+          {
+            "name": "CoverletExcludeByAttributes",
+            "type": "List<string>",
+            "format": "--coverlet-exclude-by-attribute {value}",
+            "isForwarded": true,
+            "help": "Excludes the methods and classes that have these attributes."
+          },
+          {
+            "name": "CoverletIncludeTestAssembly",
+            "type": "bool",
+            "format": "--coverlet-include-test-assembly",
+            "isForwarded": true,
+            "help": "Includes the test assembly in the coverage report."
+          },
+          {
+            "name": "CoverletSingleHit",
+            "type": "bool",
+            "format": "--coverlet-single-hit",
+            "isForwarded": true,
+            "help": "Counts at most one hit for each location in the code."
+          },
+          {
+            "name": "CoverletSkipAutoProps",
+            "type": "bool",
+            "format": "--coverlet-skip-auto-props",
+            "isForwarded": true,
+            "help": "Skips auto-implemented properties."
+          },
+          {
+            "name": "CoverletThreshold",
+            "type": "int",
+            "format": "--coverlet-threshold {value}",
+            "isForwarded": true,
+            "help": "Fails the test application when the coverage percentage is lower."
+          },
+          {
+            "name": "CrashDump",
+            "type": "bool",
+            "format": "--crashdump",
+            "isForwarded": true,
+            "help": "Writes a dump file when a test application crashes. Needs the <c>Microsoft.Testing.Extensions.CrashDump</c> package."
+          },
+          {
+            "name": "CrashDumpType",
+            "type": "DotNetTestDumpType",
+            "format": "--crashdump-type {value}",
+            "isForwarded": true,
+            "help": "The type of the crash dump. The default is <c>Full</c>."
+          },
+          {
+            "name": "HangDump",
+            "type": "bool",
+            "format": "--hangdump",
+            "isForwarded": true,
+            "help": "Writes a dump file and stops the test application when it runs longer than <c>HangDumpTimeout</c>. Needs the <c>Microsoft.Testing.Extensions.HangDump</c> package."
+          },
+          {
+            "name": "HangDumpTimeout",
+            "type": "string",
+            "format": "--hangdump-timeout {value}",
+            "isForwarded": true,
+            "help": "The time after which the hang dump is written, such as <c>90s</c> or <c>10m</c>. The default is <c>30m</c>."
+          },
+          {
+            "name": "HangDumpType",
+            "type": "DotNetTestDumpType",
+            "format": "--hangdump-type {value}",
+            "isForwarded": true,
+            "help": "The type of the hang dump. The default is <c>Full</c>. <c>None</c> stops the test application without a dump."
+          },
+          {
+            "name": "RetryFailedTests",
+            "type": "int",
+            "format": "--retry-failed-tests {value}",
+            "isForwarded": true,
+            "help": "Runs failed tests again, at most this number of times. Needs the <c>Microsoft.Testing.Extensions.Retry</c> package."
+          },
+          {
+            "name": "ReportGitHubActions",
+            "type": "bool",
+            "format": "--report-gh",
+            "isForwarded": true,
+            "help": "Writes log groups, annotations and a job summary on GitHub Actions. Needs the <c>Microsoft.Testing.Extensions.GitHubActionsReport</c> package."
+          },
+          {
+            "name": "ReportAzureDevOps",
+            "type": "bool",
+            "format": "--report-azdo",
+            "isForwarded": true,
+            "help": "Writes errors, warnings and annotations in the format of Azure Pipelines. Needs the <c>Microsoft.Testing.Extensions.AzureDevOpsReport</c> package."
+          },
+          {
+            "name": "TestApplicationArguments",
+            "type": "List<string>",
+            "format": "{value}",
+            "position": -1,
+            "isForwarded": true,
+            "help": "Other arguments for the test applications, such as the options of the test framework (for example <c>--report-xunit-trx</c> of xunit.v3) or of other extensions."
           }
         ]
       }
@@ -2181,6 +2637,67 @@
         "normal",
         "detailed",
         "diagnostic"
+      ]
+    },
+    {
+      "name": "DotNetTestResultsDirectoryLayout",
+      "values": [
+        "flat",
+        "per-module"
+      ]
+    },
+    {
+      "name": "DotNetTestOutputVerbosity",
+      "values": [
+        "Minimal",
+        "Normal",
+        "Detailed"
+      ]
+    },
+    {
+      "name": "DotNetTestZeroTestsPolicy",
+      "values": [
+        "allow-skipped",
+        "strict"
+      ]
+    },
+    {
+      "name": "DotNetTestDiagnosticVerbosity",
+      "values": [
+        "Trace",
+        "Debug",
+        "Information",
+        "Warning",
+        "Error",
+        "Critical"
+      ]
+    },
+    {
+      "name": "DotNetTestCoverageOutputFormat",
+      "values": [
+        "coverage",
+        "xml",
+        "cobertura"
+      ]
+    },
+    {
+      "name": "DotNetTestCoverletOutputFormat",
+      "values": [
+        "json",
+        "lcov",
+        "opencover",
+        "cobertura",
+        "teamcity"
+      ]
+    },
+    {
+      "name": "DotNetTestDumpType",
+      "values": [
+        "Mini",
+        "Heap",
+        "Triage",
+        "Full",
+        "None"
       ]
     },
     {

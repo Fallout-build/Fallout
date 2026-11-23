@@ -23,14 +23,15 @@ public interface ITest : ICompile, IHasArtifacts
     int TestDegreeOfParallelism => 1;
 
     /// <summary>
-    ///     Run the test projects on Microsoft.Testing.Platform (<c>dotnet test --project</c>) instead of VSTest.
-    ///     Required for test frameworks that no longer support VSTest on the .NET 10 SDK, such as xunit.v3.
-    ///     Test projects need the <c>Microsoft.Testing.Extensions.TrxReport</c> package, and the
-    ///     <c>coverlet.MTP</c> package for coverage. The repository's
-    ///     <c>global.json</c> must opt in to the platform (<c>"test": { "runner": "Microsoft.Testing.Platform" }</c>).
-    ///     Off by default, so existing builds keep using VSTest.
+    ///     Runs the test projects on Microsoft.Testing.Platform with
+    ///     <see cref="DotNetTasks.DotNetTestMtp(DotNetTestMtpSettings)" /> instead of VSTest.
     /// </summary>
-    bool UseTestingPlatform => false;
+    /// <remarks>
+    ///     The default follows the test runner of <c>dotnet test</c> (<see cref="DotNetTasks.GetTestRunner" />): the
+    ///     <c>DOTNET_TEST_RUNNER</c> environment variable of the .NET 11 SDK, or the <c>test.runner</c> of the nearest
+    ///     <c>global.json</c>, such as <c>"test": { "runner": "Microsoft.Testing.Platform" }</c>.
+    /// </remarks>
+    bool UseTestingPlatform => GetTestRunner(RootDirectory) == DotNetTestRunner.MicrosoftTestingPlatform;
 
     Target Test => _ => _
         .DependsOn(Compile)
@@ -70,30 +71,26 @@ public interface ITest : ICompile, IHasArtifacts
 
     private void RunTestingPlatform()
     {
-        // coverlet.MTP writes timestamped files, so remove the ones from earlier runs.
-        TestResultDirectory.GlobFiles("coverage.cobertura.*.xml").DeleteFiles();
+        // coverlet.MTP adds a timestamp to its file names, so remove the files of earlier runs.
+        TestResultDirectory.GlobFiles("*coverage.cobertura.*.xml").DeleteFiles();
 
-        List<string> failedProjects = new();
+        TestingPlatformRun run = new(
+            CollectCoverage,
+            OnGitHubActions: GitHubActions.Instance is not null,
+            OnTeamCity: TeamCity.Instance is not null,
+            OnAzurePipelines: AzurePipelines.Instance is not null);
 
-        foreach (Project project in TestProjects)
-        {
-            try
-            {
-                DotNet(TestingPlatformArguments.Create(
-                    project.Path,
-                    project.Name,
-                    Configuration,
-                    TestResultDirectory,
-                    SucceededTargets.Contains(Compile),
-                    CollectCoverage));
-            }
-            catch (ProcessException)
-            {
-                failedProjects.Add(project.Name);
-            }
-        }
-
-        Assert.True(failedProjects.Count == 0, $"Tests failed in: {string.Join(", ", failedProjects)}");
+        DotNetTestMtp(_ => _
+                .SetConfiguration(Configuration)
+                .SetNoBuild(SucceededTargets.Contains(Compile))
+                .ResetVerbosity()
+                .SetResultsDirectory(TestResultDirectory)
+                .Apply(TestMtpSettings)
+                .CombineWith(TestProjects, (_, v) => TestingPlatform
+                    .ApplyProject(_.SetProjectFile(v), v.Name, TestingPlatform.GetExtensions(v), run)
+                    .Apply(TestMtpProjectSettings, v)),
+            completeOnFailure: true,
+            degreeOfParallelism: TestDegreeOfParallelism);
     }
 
     private bool CollectCoverage =>
@@ -101,14 +98,24 @@ public interface ITest : ICompile, IHasArtifacts
 
     void ReportTestResults()
     {
+        // TeamCity has no Microsoft.Testing.Platform reporter yet, so it imports the TRX files instead.
+        var importToTeamCity = TeamCity.Instance is not null && UseTestingPlatform;
+
         TestResultDirectory.GlobFiles("*.trx").ForEach(x =>
+        {
             AzurePipelines.Instance?.PublishTestResults(
                 type: AzurePipelinesTestResultsType.VSTest,
                 title: $"{Path.GetFileNameWithoutExtension(x)} ({AzurePipelines.Instance.StageDisplayName})",
                 files: new string[]
                 {
                     x
-                }));
+                });
+
+            if (importToTeamCity)
+            {
+                TeamCity.Instance.ImportData(TeamCityImportType.vstest, x);
+            }
+        });
     }
 
     void ReportTestCount()
@@ -164,6 +171,16 @@ public interface ITest : ICompile, IHasArtifacts
     Configure<DotNetTestSettings> TestSettings => _ => _;
 
     Configure<DotNetTestSettings, Project> TestProjectSettings => (_, v) => _;
+
+    /// <summary>
+    ///     Settings for all test projects when <see cref="UseTestingPlatform" /> is on.
+    /// </summary>
+    Configure<DotNetTestMtpSettings> TestMtpSettings => _ => _;
+
+    /// <summary>
+    ///     Settings for one test project when <see cref="UseTestingPlatform" /> is on.
+    /// </summary>
+    Configure<DotNetTestMtpSettings, Project> TestMtpProjectSettings => (_, v) => _;
 
     IEnumerable<Project> TestProjects { get; }
 }

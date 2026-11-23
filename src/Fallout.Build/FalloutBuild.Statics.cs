@@ -19,7 +19,7 @@ public abstract partial class FalloutBuild
         RootDirectory = GetRootDirectory();
         TemporaryDirectory = GetTemporaryDirectory(RootDirectory).CreateDirectory();
 
-        BuildAssemblyFile = GetBuildAssemblyFile();
+        BuildAssemblyFile = FindBuildAssemblyFile();
         BuildAssemblyDirectory = BuildAssemblyFile?.Parent;
 
         BuildProjectFile = GetBuildProjectFile(BuildAssemblyDirectory);
@@ -105,17 +105,18 @@ public abstract partial class FalloutBuild
             }.JoinNewLine());
     }
 
-    private static AbsolutePath GetBuildAssemblyFile()
+    /// <summary>
+    /// Returns the file of the build assembly, or <c>null</c> when the entry assembly has no build class.
+    /// </summary>
+    /// <remarks>
+    /// An entry assembly without a build class is a test host, such as <c>testhost</c>, <c>ReSharperTestRunner</c>, or a
+    /// Microsoft.Testing.Platform test project, which is its own entry assembly.
+    /// </remarks>
+    private static AbsolutePath FindBuildAssemblyFile()
     {
         var entryAssembly = Assembly.GetEntryAssembly();
         if (entryAssembly == null || entryAssembly.GetTypes().All(x => !x.IsSubclassOf(typeof(FalloutBuild))))
         {
-            var assemblyName = entryAssembly?.GetName().Name;
-            Assert.True(assemblyName == null ||
-                        assemblyName.StartsWith("ReSharperTestRunner") ||
-                        assemblyName == "testhost",
-                $"Assembly name was {assemblyName.SingleQuote()}");
-
             return null;
         }
 

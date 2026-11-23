@@ -68,6 +68,9 @@ public class Property : IDeprecatable
     [Description("Custom implementation of value presentation.")]
     public bool CustomValue { get; set; }
 
+    [Description("Passes the argument on to the program that the tool runs. Forwarded arguments come last, after a single '--'.")]
+    public bool IsForwarded { get; set; }
+
     [Description("Specifies that an overload for the property should be created.")]
     public bool CreateOverload { get; set; }
 

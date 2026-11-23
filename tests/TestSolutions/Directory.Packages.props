@@ -1,0 +1,11 @@
+<Project>
+
+  <!-- The package versions of this repository, so the test solutions keep up with them and with its security pins. -->
+  <Import Project="..\..\Directory.Packages.props" />
+
+  <ItemGroup>
+    <!-- VSTest/ runs on xunit v2, which this repository doesn't use any more. -->
+    <PackageVersion Include="xunit" Version="2.9.3" />
+  </ItemGroup>
+
+</Project>

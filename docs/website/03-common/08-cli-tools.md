@@ -143,7 +143,7 @@ DotNetTasks.DotNetTest(_ => _
     .SetConfiguration(Configuration)
     .EnableNoBuild()
     .When(PublishTestResults, _ => _
-        .SetLogger("trx")
+        .AddLoggers("trx")
         .SetResultsDirectory(TestResultsDirectory)));
 ```
 
