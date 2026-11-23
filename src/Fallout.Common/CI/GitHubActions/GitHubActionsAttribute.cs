@@ -280,6 +280,7 @@ public class GitHubActionsAttribute : ConfigurationAttributeBase
         }
 
         ValidateWorkflowDispatchInputs();
+        ValidateWorkflowRuns();
         ValidateActionReferences();
 
         var configuration = new GitHubActionsConfiguration
@@ -323,7 +324,10 @@ public class GitHubActionsAttribute : ConfigurationAttributeBase
             Image = image,
             TimeoutMinutes = TimeoutMinutes,
             ConcurrencyGroup = JobConcurrencyGroup,
-            ConcurrencyCancelInProgress = JobConcurrencyCancelInProgress
+            ConcurrencyCancelInProgress = JobConcurrencyCancelInProgress,
+            Condition = WorkflowRuns.Any(x => x.RequireSuccess)
+                ? "github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'"
+                : null
         };
     }
 
@@ -549,6 +553,69 @@ public class GitHubActionsAttribute : ConfigurationAttributeBase
                 Cron = OnCronSchedule
             };
         }
+
+        foreach (var run in WorkflowRuns)
+        {
+            yield return new GitHubActionsWorkflowRunTrigger
+            {
+                Workflows = run.Workflows,
+                Types = run.Types,
+                Branches = run.Branches
+            };
+        }
+    }
+
+    // Overridable so tests can inject workflow_run triggers without declaring static class-level attributes.
+    protected virtual IEnumerable<GitHubActionsWorkflowRunAttribute> DeclaredWorkflowRuns
+        => Build.GetType().GetCustomAttributes<GitHubActionsWorkflowRunAttribute>();
+
+    // The workflow_run declarations that start this workflow. An empty ForWorkflows scope means "this workflow"
+    // only when the build class declares a single workflow; ValidateWorkflowRuns rejects the ambiguous case.
+    private GitHubActionsWorkflowRunAttribute[] WorkflowRuns
+        => DeclaredWorkflowRuns
+            .Where(x => x.ForWorkflows.Length == 0
+                ? DeclaredWorkflowNames.Count == 1
+                : x.ForWorkflows.Select(NormalizeWorkflowName).Contains(name))
+            .ToArray();
+
+    private void ValidateWorkflowRuns()
+    {
+        var declaredWorkflows = DeclaredWorkflowNames.Select(NormalizeWorkflowName).ToHashSet();
+
+        foreach (var run in DeclaredWorkflowRuns)
+        {
+            Assert.True(
+                run.Workflows.All(x => !x.IsNullOrWhiteSpace()),
+                $"'{nameof(GitHubActionsWorkflowRunAttribute.Workflows)}' entries must not be null, empty, or whitespace");
+
+            Assert.True(
+                run.Types != null && run.Branches != null && run.ForWorkflows != null,
+                $"'{nameof(GitHubActionsWorkflowRunAttribute.Types)}', " +
+                $"'{nameof(GitHubActionsWorkflowRunAttribute.Branches)}' and " +
+                $"'{nameof(GitHubActionsWorkflowRunAttribute.ForWorkflows)}' must not be null");
+
+            Assert.True(
+                !run.RequireSuccess || run.Types.Contains("completed"),
+                $"'{nameof(GitHubActionsWorkflowRunAttribute.RequireSuccess)}' needs 'completed' in " +
+                $"'{nameof(GitHubActionsWorkflowRunAttribute.Types)}', because the conclusion is only set on completed runs");
+
+            Assert.True(
+                run.ForWorkflows.Length > 0 || declaredWorkflows.Count == 1,
+                $"'{nameof(GitHubActionsWorkflowRunAttribute.ForWorkflows)}' is required when the build declares " +
+                "more than one workflow");
+
+            foreach (var workflow in run.ForWorkflows)
+            {
+                Assert.True(
+                    declaredWorkflows.Contains(NormalizeWorkflowName(workflow)),
+                    $"'{nameof(GitHubActionsWorkflowRunAttribute)}' targets unknown workflow '{workflow}'");
+            }
+        }
+
+        Assert.True(
+            WorkflowRuns.Length <= 1,
+            $"Workflow '{name}' has more than one '{nameof(GitHubActionsWorkflowRunAttribute)}'; " +
+            "list all upstream workflows in a single attribute");
     }
 
     // Workflow names are spaces-to-underscores normalized (see the ctor), so an input's Workflows scope

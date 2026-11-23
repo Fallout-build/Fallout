@@ -569,6 +569,23 @@ public class ConfigurationGenerationSpecs
 
             yield return
             (
+                "workflow-run",
+                new TestGitHubActionsAttribute(GitHubActionsImage.UbuntuLatest)
+                {
+                    InvokedTargets = new[] { nameof(Test) },
+                    WorkflowRunTriggers = new[]
+                    {
+                        new GitHubActionsWorkflowRunAttribute("Build and Deploy")
+                        {
+                            Branches = new[] { "master" },
+                            RequireSuccess = true
+                        }
+                    }
+                }
+            );
+
+            yield return
+            (
                 "default-shell",
                 new TestGitHubActionsAttribute(GitHubActionsImage.UbuntuLatest)
                 {

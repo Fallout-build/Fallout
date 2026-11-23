@@ -8,6 +8,11 @@ public class GitHubActionsJob : ConfigurationEntity
 {
     public string Name { get; set; }
 
+    /// <summary>
+    /// Expression for the job-level <c>if:</c> key. The key is only written when this is set.
+    /// </summary>
+    public string Condition { get; set; }
+
     public GitHubActionsImage Image { get; set; }
 
     public string[] RunsOnLabels { get; set; } = new string[0];
@@ -31,6 +36,11 @@ public class GitHubActionsJob : ConfigurationEntity
         using (writer.Indent())
         {
             writer.WriteLine($"name: {Name}");
+            if (!Condition.IsNullOrWhiteSpace())
+            {
+                writer.WriteLine($"if: {Condition}");
+            }
+
             if (RunsOnLabels.Length > 0)
             {
                 writer.WriteLine($"runs-on: [{RunsOnLabels.JoinCommaSpace()}]");
