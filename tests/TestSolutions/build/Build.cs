@@ -7,8 +7,9 @@ using Fallout.Solutions;
 /// Runs the <see cref="ITest.Test" /> target on one test solution.
 /// </summary>
 /// <remarks>
-/// Run it in the folder of that solution. The <c>.fallout</c> directory there makes it the root directory, and the
-/// <c>global.json</c> there selects the test runner.
+/// <c>TestSolutionSpecs</c> in <c>Fallout.Components.Specs</c> runs this build, so the <c>Test</c> target of the repository
+/// runs it for both solutions. It runs it in the folder of each solution. The <c>.fallout</c> directory there makes that
+/// folder the root directory, and the <c>global.json</c> there selects the test runner.
 /// </remarks>
 class Build : FalloutBuild, ITest
 {
