@@ -150,6 +150,7 @@ public static class DataClassGenerator
 
         writer
             .WriteLine($"/// <summary>{property.Help}</summary>")
+            .WriteObsoleteAttributeWhenObsolete(property)
             .WriteLine(
                 $"{attributes.JoinSpace()} public {type.External} {property.Name} => Get<{type.Internal}>(() => {property.Name});");
 

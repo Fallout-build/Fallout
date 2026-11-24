@@ -93,12 +93,16 @@ public partial class GitVersionSettings : ToolOptions, IToolOptionsWithFramework
     /// <summary>Disables <c>git fetch</c> during version calculation. GitVersion may then calculate a different version than expected.</summary>
     [Argument(Format = "--no-fetch")] public bool? NoFetch => Get<bool?>(() => NoFetch);
     /// <summary>GitVersion 7 removed this switch. Removed in v11.</summary>
+    [Obsolete("GitVersion 7 removed this switch. Removed in v11.", DiagnosticId = "FALLOUTOBS002", UrlFormat = "https://github.com/Fallout-build/Fallout/blob/main/docs/obsolete_apis.md")]
     public string Executable => Get<string>(() => Executable);
     /// <summary>GitVersion 7 removed this switch. Removed in v11.</summary>
+    [Obsolete("GitVersion 7 removed this switch. Removed in v11.", DiagnosticId = "FALLOUTOBS002", UrlFormat = "https://github.com/Fallout-build/Fallout/blob/main/docs/obsolete_apis.md")]
     public string ExecutableArguments => Get<string>(() => ExecutableArguments);
     /// <summary>GitVersion 7 removed this switch. Removed in v11.</summary>
+    [Obsolete("GitVersion 7 removed this switch. Removed in v11.", DiagnosticId = "FALLOUTOBS002", UrlFormat = "https://github.com/Fallout-build/Fallout/blob/main/docs/obsolete_apis.md")]
     public string MSBuildProject => Get<string>(() => MSBuildProject);
     /// <summary>GitVersion 7 removed this switch. Removed in v11.</summary>
+    [Obsolete("GitVersion 7 removed this switch. Removed in v11.", DiagnosticId = "FALLOUTOBS002", UrlFormat = "https://github.com/Fallout-build/Fallout/blob/main/docs/obsolete_apis.md")]
     public string MSBuildProjectArguments => Get<string>(() => MSBuildProjectArguments);
     /// <summary>Disables optional sampled usage telemetry.</summary>
     [Argument(Format = "--telemetry-opt-out")] public bool? TelemetryOptOut => Get<bool?>(() => TelemetryOptOut);
@@ -450,43 +454,59 @@ public static partial class GitVersionSettingsExtensions
     #endregion
     #region Executable
     /// <inheritdoc cref="GitVersionSettings.Executable"/>
+    #pragma warning disable FALLOUTOBS002
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.Executable))]
     [Obsolete("GitVersion 7 removed this switch. Removed in v11.", DiagnosticId = "FALLOUTOBS002", UrlFormat = "https://github.com/Fallout-build/Fallout/blob/main/docs/obsolete_apis.md")]
     public static T SetExecutable<T>(this T o, string v) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.Executable, v));
+    #pragma warning restore FALLOUTOBS002
     /// <inheritdoc cref="GitVersionSettings.Executable"/>
+    #pragma warning disable FALLOUTOBS002
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.Executable))]
     [Obsolete("GitVersion 7 removed this switch. Removed in v11.", DiagnosticId = "FALLOUTOBS002", UrlFormat = "https://github.com/Fallout-build/Fallout/blob/main/docs/obsolete_apis.md")]
     public static T ResetExecutable<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Remove(() => o.Executable));
+    #pragma warning restore FALLOUTOBS002
     #endregion
     #region ExecutableArguments
     /// <inheritdoc cref="GitVersionSettings.ExecutableArguments"/>
+    #pragma warning disable FALLOUTOBS002
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.ExecutableArguments))]
     [Obsolete("GitVersion 7 removed this switch. Removed in v11.", DiagnosticId = "FALLOUTOBS002", UrlFormat = "https://github.com/Fallout-build/Fallout/blob/main/docs/obsolete_apis.md")]
     public static T SetExecutableArguments<T>(this T o, string v) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.ExecutableArguments, v));
+    #pragma warning restore FALLOUTOBS002
     /// <inheritdoc cref="GitVersionSettings.ExecutableArguments"/>
+    #pragma warning disable FALLOUTOBS002
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.ExecutableArguments))]
     [Obsolete("GitVersion 7 removed this switch. Removed in v11.", DiagnosticId = "FALLOUTOBS002", UrlFormat = "https://github.com/Fallout-build/Fallout/blob/main/docs/obsolete_apis.md")]
     public static T ResetExecutableArguments<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Remove(() => o.ExecutableArguments));
+    #pragma warning restore FALLOUTOBS002
     #endregion
     #region MSBuildProject
     /// <inheritdoc cref="GitVersionSettings.MSBuildProject"/>
+    #pragma warning disable FALLOUTOBS002
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.MSBuildProject))]
     [Obsolete("GitVersion 7 removed this switch. Removed in v11.", DiagnosticId = "FALLOUTOBS002", UrlFormat = "https://github.com/Fallout-build/Fallout/blob/main/docs/obsolete_apis.md")]
     public static T SetMSBuildProject<T>(this T o, string v) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.MSBuildProject, v));
+    #pragma warning restore FALLOUTOBS002
     /// <inheritdoc cref="GitVersionSettings.MSBuildProject"/>
+    #pragma warning disable FALLOUTOBS002
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.MSBuildProject))]
     [Obsolete("GitVersion 7 removed this switch. Removed in v11.", DiagnosticId = "FALLOUTOBS002", UrlFormat = "https://github.com/Fallout-build/Fallout/blob/main/docs/obsolete_apis.md")]
     public static T ResetMSBuildProject<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Remove(() => o.MSBuildProject));
+    #pragma warning restore FALLOUTOBS002
     #endregion
     #region MSBuildProjectArguments
     /// <inheritdoc cref="GitVersionSettings.MSBuildProjectArguments"/>
+    #pragma warning disable FALLOUTOBS002
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.MSBuildProjectArguments))]
     [Obsolete("GitVersion 7 removed this switch. Removed in v11.", DiagnosticId = "FALLOUTOBS002", UrlFormat = "https://github.com/Fallout-build/Fallout/blob/main/docs/obsolete_apis.md")]
     public static T SetMSBuildProjectArguments<T>(this T o, string v) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.MSBuildProjectArguments, v));
+    #pragma warning restore FALLOUTOBS002
     /// <inheritdoc cref="GitVersionSettings.MSBuildProjectArguments"/>
+    #pragma warning disable FALLOUTOBS002
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.MSBuildProjectArguments))]
     [Obsolete("GitVersion 7 removed this switch. Removed in v11.", DiagnosticId = "FALLOUTOBS002", UrlFormat = "https://github.com/Fallout-build/Fallout/blob/main/docs/obsolete_apis.md")]
     public static T ResetMSBuildProjectArguments<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Remove(() => o.MSBuildProjectArguments));
+    #pragma warning restore FALLOUTOBS002
     #endregion
     #region TelemetryOptOut
     /// <inheritdoc cref="GitVersionSettings.TelemetryOptOut"/>
