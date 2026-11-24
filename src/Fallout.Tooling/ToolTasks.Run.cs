@@ -17,9 +17,10 @@ partial class ToolTasks
         string Filter(string text) => secrets.Aggregate(text, (str, s) => str.Replace(s, "[REDACTED]"));
 
         options = PreProcess(options);
+        var toolPath = GetToolPathInternal(options);
         using var process = ProcessTasks.StartProcess(
-            GetToolPathInternal(options),
-            options.GetArguments().JoinSpace(),
+            toolPath,
+            options.GetArguments(toolPath).JoinSpace(),
             options.ProcessWorkingDirectory,
             options.ProcessEnvironmentVariables,
             options.ProcessExecutionTimeout,

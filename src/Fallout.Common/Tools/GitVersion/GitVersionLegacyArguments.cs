@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Fallout.Common.Tooling;
 
 namespace Fallout.Common.Tools.GitVersion;
@@ -16,7 +17,9 @@ internal static class GitVersionLegacyArguments
     internal static IEnumerable<string> Adjust(IEnumerable<string> arguments, string toolPath)
     {
         var version = TryGetPackageVersion(toolPath);
-        if (version is not { Major: < 7 })
+        // A path with no version, such as a global tool apphost, stays on the GitVersion 6 switches.
+        // Those switches still work on GitVersion 6. GitVersion 7 is the case that needs the long names.
+        if (version is { Major: >= 7 })
         {
             return arguments;
         }
@@ -74,24 +77,8 @@ internal static class GitVersionLegacyArguments
     private static bool TryParseVersion(string name, out Version version)
     {
         version = null;
-        if (string.IsNullOrEmpty(name) || !char.IsDigit(name[0]))
-        {
-            return false;
-        }
-
-        var end = 0;
-        var dots = 0;
-        while (end < name.Length && (char.IsDigit(name[end]) || name[end] == '.'))
-        {
-            if (name[end] == '.')
-            {
-                dots++;
-            }
-
-            end++;
-        }
-
-        return dots >= 2 && Version.TryParse(name[..end], out version);
+        var match = Regex.Match(name ?? string.Empty, @"^\d+\.\d+\.\d+");
+        return match.Success && Version.TryParse(match.Value, out version);
     }
 
     private static Version TryGetAssemblyVersion(string toolPath)
@@ -114,6 +101,6 @@ internal static class GitVersionLegacyArguments
 
 partial class GitVersionSettings
 {
-    protected override IEnumerable<string> AdjustArguments(IEnumerable<string> arguments)
-        => GitVersionLegacyArguments.Adjust(arguments, GitVersionTasks.ToolPath(this));
+    internal override IEnumerable<string> AdjustArguments(IEnumerable<string> arguments, string toolPath)
+        => GitVersionLegacyArguments.Adjust(arguments, toolPath ?? GitVersionTasks.ToolPath(this));
 }

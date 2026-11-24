@@ -1,4 +1,7 @@
+using System;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using Fallout.Common.Tooling;
 using Fallout.Common.Tools.GitVersion;
 using FluentAssertions;
@@ -170,6 +173,39 @@ public class GitVersionLegacyArgumentSpecs
         // Assert
         version.Should().NotBeNull();
         version.Major.Should().Be(major);
+    }
+
+    [Fact]
+    public void Unknown_tool_version_receives_the_short_switches()
+    {
+        // Arrange
+        var arguments = new[] { "--no-fetch", "--no-cache" };
+
+        // Act
+        var legacy = GitVersionLegacyArguments.Adjust(arguments, "dotnet-gitversion");
+
+        // Assert
+        legacy.Should().Equal("-nofetch", "-nocache");
+    }
+
+    [Fact]
+    public void Every_long_switch_has_a_GitVersion_6_mapping()
+    {
+        // Arrange
+        var switches = typeof(GitVersionSettings)
+            .GetProperties(BindingFlags.Instance | BindingFlags.Public)
+            .Select(property => property.GetCustomAttribute<ArgumentAttribute>()?.Format)
+            .Where(format => format != null && format.StartsWith("--", StringComparison.Ordinal))
+            .Select(format => format.Split(' ')[0])
+            .Distinct()
+            .ToList();
+
+        // Act
+        var legacy = GitVersionLegacyArguments.Adjust(switches, ToolPath("6.8.2")).ToList();
+
+        // Assert
+        legacy.Should().NotContain(argument => argument.StartsWith("--", StringComparison.Ordinal));
+        legacy.Count.Should().BeLessThan(switches.Count);
     }
 
     private static GitVersionSettings Settings(string version, string runtime = "any")

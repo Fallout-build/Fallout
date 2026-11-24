@@ -60,10 +60,14 @@ partial class ToolOptions
 
     /// <summary>
     /// Changes the formatted arguments for one tool. The default keeps them as formatted.
+    /// <paramref name="toolPath"/> is the path <c>Run</c> already resolved. It is null when a caller
+    /// only formats arguments.
     /// </summary>
-    protected virtual IEnumerable<string> AdjustArguments(IEnumerable<string> arguments) => arguments;
+    internal virtual IEnumerable<string> AdjustArguments(IEnumerable<string> arguments, string toolPath) => arguments;
 
-    internal partial IEnumerable<string> GetArguments() => AdjustArguments(CollectArguments());
+    internal partial IEnumerable<string> GetArguments() => GetArguments(toolPath: null);
+
+    internal IEnumerable<string> GetArguments(string toolPath) => AdjustArguments(CollectArguments(), toolPath);
 
     private IEnumerable<string> CollectArguments()
     {
