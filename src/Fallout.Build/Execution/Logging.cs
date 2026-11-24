@@ -14,9 +14,9 @@ using Serilog.Extensions.Logging;
 using Serilog.Formatting.Compact;
 using Serilog.Sinks.SystemConsole.Themes;
 
-// Both Serilog and Microsoft.Extensions.Logging declare an ILogger. This file is the seam between
-// them, so the unqualified name is bound to the abstraction the framework codes against; Serilog's
-// own pipeline is reached through the static Log class below.
+// Serilog and Microsoft.Extensions.Logging both declare ILogger.
+// In this file, ILogger means the Microsoft.Extensions.Logging one.
+// Serilog's pipeline is reached through the static Log class.
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 using ILoggerFactory = Microsoft.Extensions.Logging.ILoggerFactory;
 
@@ -26,7 +26,9 @@ public static class Logging
 {
     public static readonly LoggingLevelSwitch LevelSwitch = new();
 
-    /// <summary>Category for framework log records written without a category of their own.</summary>
+    /// <summary>
+    /// Category for framework log records that have no category of their own.
+    /// </summary>
     internal const string DefaultCategoryName = "Fallout";
 
     private static ILoggerFactory loggerFactory;
@@ -53,27 +55,32 @@ public static class Logging
     }
 
     /// <summary>
-    /// Logger factory for the current build run, backed by the Serilog pipeline that
-    /// <see cref="Configure"/> installs. <c>BuildManager</c> feeds this from its composition root
-    /// (see <c>AddFalloutLogging</c>). Outside a run there is no container — the CLI commands call
-    /// <see cref="Configure"/> directly — so this falls back to a factory over the ambient Serilog
-    /// pipeline, and the seam is usable either way.
+    /// Logger factory for the current build run. It writes to the Serilog pipeline that
+    /// <see cref="Configure"/> installs.
     /// </summary>
+    /// <remarks>
+    /// During a build run, <c>BuildManager</c> sets this from its container.
+    /// The CLI commands have no container, so this then falls back to a new factory over
+    /// Serilog's current pipeline.
+    /// </remarks>
     internal static ILoggerFactory Factory => loggerFactory ??= CreateSerilogLoggerFactory();
 
     /// <summary>
-    /// Logger for framework code that has no category of its own. Deliberately not cached — each
-    /// access creates a logger against the pipeline that is current right now, which is what keeps
-    /// the façade correct across the reassignments described on
-    /// <see cref="CreateSerilogLoggerFactory"/>.
+    /// Logger for framework code that has no category of its own.
     /// </summary>
+    /// <remarks>
+    /// Not cached: each access creates a new logger.
+    /// See <see cref="CreateSerilogLoggerFactory"/> for why.
+    /// </remarks>
     internal static ILogger Logger => Factory.CreateLogger(DefaultCategoryName);
 
     /// <summary>
-    /// Points <see cref="Factory"/> at <paramref name="factory"/> until the returned bracket is
-    /// disposed. Ownership stays with the caller: disposing the bracket restores the previous
-    /// factory, it does not dispose <paramref name="factory"/>.
+    /// Sets <see cref="Factory"/> to <paramref name="factory"/> until the returned object is disposed.
     /// </summary>
+    /// <remarks>
+    /// Disposing the returned object restores the previous factory.
+    /// It does not dispose <paramref name="factory"/>. The caller still owns it.
+    /// </remarks>
     internal static IDisposable UseLoggerFactory(ILoggerFactory factory)
     {
         return DelegateDisposable.SetAndRestore(() => loggerFactory, factory.NotNull());
@@ -83,24 +90,35 @@ public static class Logging
     /// Bridges <see cref="ILogger"/> onto Serilog.
     /// </summary>
     /// <remarks>
-    /// Passing no logger leaves the factory itself unbound, so each logger it hands out reads the
-    /// ambient <see cref="Log.Logger"/> as it is created. That matters because the pipeline is not
-    /// stable for the lifetime of the process: <see cref="Configure"/> installs it late and
-    /// replaces it on re-entry, and <c>Host.WriteErrorsAndWarnings</c> swaps it again to render the
-    /// end-of-build summary. Pinning a logger into the factory would strand every consumer on
-    /// whichever pipeline happened to exist first.
-    ///
-    /// Binding still happens per logger rather than per write, because the category name is
-    /// attached as Serilog's <c>SourceContext</c> at construction. Three consequences the callers
-    /// depend on. <see cref="Configure"/> runs before the container is built, so a resolved logger
-    /// can never bind a pipeline that is already gone. The container registrations for
-    /// <c>ILogger&lt;T&gt;</c> and <see cref="ILogger"/> are transient, so each
-    /// resolution binds the pipeline that is current right now. And <see cref="Logger"/> is not
-    /// cached, for the same reason. A component that resolves a logger once and holds it across a
-    /// reassignment still writes into the old pipeline, so anything living that long must read
-    /// <see cref="Logger"/> at the point of writing.
-    ///
-    /// Serilog owns the pipeline's lifetime (<c>Log.CloseAndFlush</c>), hence <c>dispose: false</c>.
+    /// <para>
+    /// This is the one place that explains how loggers follow pipeline changes.
+    /// </para>
+    /// <para>
+    /// Serilog's <see cref="Log.Logger"/> changes during a run.
+    /// <see cref="Configure"/> sets it late, and sets it again when it is called again.
+    /// <c>Host.WriteErrorsAndWarnings</c> replaces it to write the end-of-build summary.
+    /// </para>
+    /// <para>
+    /// The factory gets no logger of its own.
+    /// So each logger it creates uses the <see cref="Log.Logger"/> of that moment.
+    /// A logger keeps that pipeline for its whole life, because Serilog adds the category
+    /// (<c>SourceContext</c>) when the logger is created.
+    /// </para>
+    /// <para>
+    /// The callers depend on this in three ways:
+    /// </para>
+    /// <list type="bullet">
+    /// <item><description><c>BuildManager</c> calls <see cref="Configure"/> before it builds the container.</description></item>
+    /// <item><description>The container registers <c>ILogger&lt;T&gt;</c> and <see cref="ILogger"/> as transient, so each resolution gets a new logger.</description></item>
+    /// <item><description><see cref="Logger"/> is not cached.</description></item>
+    /// </list>
+    /// <para>
+    /// A logger that is kept across a pipeline change still writes to the old pipeline.
+    /// Code that lives that long must read <see cref="Logger"/> each time it writes.
+    /// </para>
+    /// <para>
+    /// Serilog closes the pipeline (<c>Log.CloseAndFlush</c>), so the factory uses <c>dispose: false</c>.
+    /// </para>
     /// </remarks>
     internal static ILoggerFactory CreateSerilogLoggerFactory()
     {

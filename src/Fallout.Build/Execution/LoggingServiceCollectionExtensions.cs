@@ -7,13 +7,11 @@ using Microsoft.Extensions.Logging;
 namespace Fallout.Common.Execution;
 
 /// <summary>
-/// Composition root for the logging seam. Serilog stays the provider. This only puts
-/// <see cref="ILogger"/> in front of it, so framework code can stop referencing Serilog directly.
+/// Registers <see cref="ILogger"/> over Serilog, so framework code does not need to use Serilog directly.
 /// </summary>
 /// <remarks>
-/// Internal on purpose: the abstraction is the framework's own foundation, not public surface yet.
-/// The root <c>AssemblyInfo.cs</c> grants <c>InternalsVisibleTo</c> to <c>Fallout.Cli</c> and the
-/// spec assemblies, which is everything that needs to wire a container today.
+/// Internal on purpose: this is not public API yet.
+/// <c>InternalsVisibleTo</c> in the root <c>AssemblyInfo.cs</c> covers <c>Fallout.Cli</c> and the spec projects.
 /// </remarks>
 internal static class LoggingServiceCollectionExtensions
 {
@@ -21,39 +19,29 @@ internal static class LoggingServiceCollectionExtensions
     /// Registers the <see cref="ILogger"/> abstraction over the Serilog pipeline.
     /// </summary>
     /// <remarks>
-    /// Registration only. This method never touches the pipeline, so any container can call it, any
-    /// number of times. Installing the pipeline is <see cref="Logging.Configure"/>, which the caller
-    /// runs explicitly just before it builds the provider.
-    ///
-    /// The two are kept apart because <see cref="Logging.Configure"/> is not idempotent. It
-    /// reassigns Serilog's <c>Log.Logger</c> on every call. Called with no build, it installs a
-    /// pipeline with no file sinks, no host sink and no filter. A second container calling this
-    /// method would then wipe out the pipeline the first one had set up.
-    ///
-    /// Deliberately not <c>services.AddLogging(...)</c>. That installs Microsoft.Extensions.Logging's
-    /// own filter pipeline, whose default minimum is
-    /// <see cref="Microsoft.Extensions.Logging.LogLevel.Information"/> — qualified because the
-    /// unqualified name binds to Fallout's own <see cref="LogLevel"/> from the enclosing namespace.
-    /// It would be a second authority on levels, dropping trace and debug records before Serilog
-    /// ever saw them.
-    /// Registering the Serilog factory directly leaves <see cref="Logging.LevelSwitch"/> as the only
-    /// thing that decides what gets logged.
+    /// <para>
+    /// This method only registers services. It does not change the Serilog pipeline.
+    /// So any container can call it, any number of times.
+    /// The caller runs <see cref="Logging.Configure"/> before it builds the container.
+    /// </para>
+    /// <para>
+    /// <see cref="Logging.Configure"/> stays out of this method because it replaces
+    /// <c>Log.Logger</c> on every call. Without a build, it sets a pipeline with no file sinks,
+    /// no host sink and no filter. A second container would then remove the pipeline of the first.
+    /// </para>
+    /// <para>
+    /// This method does not call <c>services.AddLogging(...)</c>. That adds a second level filter,
+    /// with a default minimum of <see cref="Microsoft.Extensions.Logging.LogLevel.Information"/>.
+    /// Trace and debug records would then never reach Serilog.
+    /// Without it, <see cref="Logging.LevelSwitch"/> is the only level filter.
+    /// The name is fully qualified because <c>LogLevel</c> alone means Fallout's own type here.
+    /// </para>
     /// </remarks>
     public static IServiceCollection AddFalloutLogging(this IServiceCollection services)
     {
-        // Safe as a singleton because the factory is left unbound: it reads the ambient pipeline
-        // every time it creates a logger. See Logging.CreateSerilogLoggerFactory.
+        // The factory can be a singleton, but the loggers must be transient.
+        // See Logging.CreateSerilogLoggerFactory for why.
         services.TryAddSingleton(_ => Logging.CreateSerilogLoggerFactory());
-
-        // Transient, not singleton. Logger<T> resolves its inner logger in its constructor, and the
-        // non-generic lambda would run once per container. As singletons, both would pin every
-        // consumer to whichever pipeline was current at the first resolution. Log.Logger does not
-        // stay put during a run: Configure installs it late, and Host.WriteErrorsAndWarnings swaps
-        // it again to render the end-of-build summary.
-        //
-        // Transient means each resolution binds to the pipeline that is current right now. It does
-        // not rescue a component that resolves a logger once and holds it across a swap. Any
-        // component that outlives a swap must read Logging.Logger at the point of writing instead.
         services.TryAddTransient(typeof(ILogger<>), typeof(Logger<>));
         services.TryAddTransient(sp => sp.GetRequiredService<ILoggerFactory>().CreateLogger(Logging.DefaultCategoryName));
 

@@ -47,17 +47,15 @@ internal static class BuildManager
         using var context = BuildContext.Activate();
         var build = new T();
 
-        // The composition root for the run. Declared out here so it survives into `finally` —
-        // Finish() still writes the outcome summary — but built inside the `try`, so a failure while
-        // configuring logging is reported the same way it was before there was a container.
+        // The container for this run. Declared here so that `finally` can dispose it.
+        // Built inside `try`, so a failure while setting up logging is reported as before.
         ServiceProvider services = null;
         IDisposable loggerFactoryScope = null;
 
         try
         {
-            // Configure installs the pipeline; AddFalloutLogging only registers the abstraction over
-            // it. Order matters here rather than inside the registration: a logger binds the ambient
-            // pipeline when it is created, so the pipeline has to exist before anything resolves one.
+            // Configure must run before the container is built.
+            // See Logging.CreateSerilogLoggerFactory for why.
             Logging.Configure(build);
             services = new ServiceCollection().AddFalloutLogging().BuildServiceProvider();
             loggerFactoryScope = Logging.UseLoggerFactory(services.GetRequiredService<ILoggerFactory>());
