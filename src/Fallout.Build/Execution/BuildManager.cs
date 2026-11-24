@@ -7,7 +7,9 @@ using Fallout.Build.Execution;
 using Fallout.Common.Tooling;
 using Fallout.Common.Utilities;
 using Fallout.Common.Utilities.Collections;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyModel;
+using Microsoft.Extensions.Logging;
 using Serilog;
 
 #pragma warning disable CA2255
@@ -45,9 +47,18 @@ internal static class BuildManager
         using var context = BuildContext.Activate();
         var build = new T();
 
+        // The container for this run. Declared here so that `finally` can dispose it.
+        // Built inside `try`, so a failure while setting up logging is reported as before.
+        ServiceProvider services = null;
+        IDisposable loggerFactoryScope = null;
+
         try
         {
+            // Configure must run before the container is built.
+            // See Logging.CreateSerilogLoggerFactory for why.
             Logging.Configure(build);
+            services = new ServiceCollection().AddFalloutLogging().BuildServiceProvider();
+            loggerFactoryScope = Logging.UseLoggerFactory(services.GetRequiredService<ILoggerFactory>());
 
             build.ExecutableTargets = ExecutableTargetFactory.CreateAll(build, defaultTargetExpressions);
             build.ExecuteExtension<IOnBuildCreated>(x => x.OnBuildCreated(build.ExecutableTargets));
@@ -97,6 +108,8 @@ internal static class BuildManager
         {
             Finish();
             Log.CloseAndFlush();
+            loggerFactoryScope?.Dispose();
+            services?.Dispose();
             // Per-run teardown (handler unsubscription + state reset) is owned by the BuildContext,
             // run when `context` is disposed at method exit.
         }

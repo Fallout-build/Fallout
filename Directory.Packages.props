@@ -65,6 +65,12 @@
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="10.0.0" />
+    <!-- Logging seam in Fallout.Build (#428). Internal only: no type from these packages is public API.
+         Serilog.Extensions.Logging also brings Microsoft.Extensions.Logging and
+         Microsoft.Extensions.Options to every consumer. -->
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+    <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />
     <PackageVersion Include="Microsoft.Build.Locator" Version="1.7.8" />
     <!-- Security-advisory pin; reaches us through Microsoft.Build. Per-framework versions below. -->
     <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.13" />
@@ -107,7 +113,6 @@
     <!-- Fallout.Cli / Fallout.Migrate only -->
     <PackageVersion Include="Spectre.Console" Version="0.57.2" />
     <PackageVersion Include="Spectre.Console.Cli" Version="0.57.2" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
     <PackageVersion Include="JetBrains.Annotations" Version="2026.2.0" />
   </ItemGroup>
 

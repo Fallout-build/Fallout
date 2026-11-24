@@ -7,7 +7,7 @@ The list of third-party packages lives in [`Directory.Packages.props`](https://g
 Every `10.x` release must be non-breaking ([ADR-0009](adr/0009-gitflow-and-semver-reversion.md)). For a library, that covers more than our own code:
 
 - **A dependency version in a package is a minimum.** When we raise a version, every consumer gets at least that version. A consumer that pins a lower version gets the `NU1605` downgrade error.
-- **Transitive pinning makes every package a direct dependency.** `CentralPackageTransitivePinningEnabled` is on, so the `.nuspec` of `Fallout.Common` and `Fallout.Components` lists every third-party package they use (21 today), not just the Fallout packages. Raising a version anywhere in the graph changes what consumers of those two packages receive.
+- **Transitive pinning makes every package a direct dependency.** `CentralPackageTransitivePinningEnabled` is on, so the `.nuspec` of `Fallout.Common` and `Fallout.Components` lists every third-party package they use (24 today), not just the Fallout packages. Raising a version anywhere in the graph changes what consumers of those two packages receive.
 - **Some third-party types are part of our public API.** If a consumer's code uses `GitHubTasks.GitHubClient`, a breaking change in Octokit breaks their build, even though our own code did not change.
 - **Some packages run inside the consumer's tools.** `Fallout.Common` bundles the MSBuild tasks and the source generator, with their dependencies (see [What `Fallout.Common` bundles](architecture.md#what-falloutcommon-bundles)). Those DLLs load next to the versions that MSBuild, Visual Studio or the C# compiler already loaded.
 
