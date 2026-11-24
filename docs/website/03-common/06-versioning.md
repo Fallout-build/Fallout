@@ -13,6 +13,8 @@ Fallout supports 4 different tools that help generating version numbers from you
 
 :::note
 Please refer to the [GitVersion documentation](https://gitversion.net/docs/reference/configuration) for any questions.
+GitVersion 7 puts the program in a second package, one for each operating system, such as `GitVersion.Tool.win-x64`, `GitVersion.Tool.linux-x64`, or `GitVersion.Tool.osx-arm64`.
+Add that package too. `fallout :add-package GitVersion.Tool` does not download it, and the build then reports a missing package for each operating system.
 A GitVersion 6 `GitVersion.yml` needs `GITVERSION_CONFIGURATION_VERSION=v6` when the tool is GitVersion 7. You can also run `gitversion config migrate`.
 :::
 
