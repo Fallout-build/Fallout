@@ -125,9 +125,11 @@ public class NuGetToolPathResolverSpecs : IDisposable
     {
         // Arrange
         var runtimeIdentifier = RuntimeInformation.RuntimeIdentifier;
-        var otherRuntime = runtimeIdentifier.Equals("win-x64", StringComparison.OrdinalIgnoreCase)
-            ? "linux-x64"
-            : "win-x64";
+        // android-arm64 sorts before linux-x64, osx-arm64, and win-x64.
+        // A later name would win on macOS and Linux even without the runtime ordering.
+        var otherRuntime = runtimeIdentifier.Equals("android-arm64", StringComparison.OrdinalIgnoreCase)
+            ? "android-x64"
+            : "android-arm64";
         Write(_root / "sample.tool" / "tools" / "net10.0" / otherRuntime / "sample.dll", "");
         Write(_root / "sample.tool" / "tools" / "net10.0" / runtimeIdentifier / "sample.dll", "");
 
