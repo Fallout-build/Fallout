@@ -81,6 +81,101 @@ public class RemoveRelatedNugetPinsStepSpecs : IDisposable
         summary.EditCount.Should().Be(0);
     }
 
+    [Fact]
+    public async Task Central_related_nuget_pin_is_removed_for_v11()
+    {
+        // Arrange
+        var props = tempDirectory / "Directory.Packages.props";
+        props.WriteAllText(
+            """
+            <Project>
+              <ItemGroup>
+                <PackageVersion Include="NuGet.Protocol" Version="7.9.0" />
+                <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
+              </ItemGroup>
+            </Project>
+            """, eofLineBreak: false);
+
+        var project = tempDirectory / "_build.csproj";
+        project.WriteAllText(
+            """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <ItemGroup>
+                <PackageReference Include="NuGet.Protocol" />
+                <PackageReference Include="Newtonsoft.Json" />
+              </ItemGroup>
+            </Project>
+            """, eofLineBreak: false);
+        var context = CreateContext("11.0.0");
+
+        // Act
+        await new RemoveRelatedNugetPinsStep().ExecuteAsync(context, summary);
+
+        // Assert
+        props.ReadAllText().Should().Be(
+            """
+            <Project>
+              <ItemGroup>
+                <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
+              </ItemGroup>
+            </Project>
+            """);
+        project.ReadAllText().Should().Be(
+            """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <ItemGroup>
+                <PackageReference Include="Newtonsoft.Json" />
+              </ItemGroup>
+            </Project>
+            """);
+        summary.FilesChanged.Should().Be(2);
+        summary.EditCount.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task Central_pin_is_kept_for_a_package_another_project_references()
+    {
+        // Arrange
+        var props = tempDirectory / "Directory.Packages.props";
+        props.WriteAllText(
+            """
+            <Project>
+              <ItemGroup>
+                <PackageVersion Include="NuGet.Protocol" Version="7.9.0" />
+                <PackageVersion Include="NuGet.Packaging" Version="7.9.0" />
+              </ItemGroup>
+            </Project>
+            """, eofLineBreak: false);
+
+        var library = tempDirectory / "Library.csproj";
+        const string libraryInput =
+            """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <ItemGroup>
+                <PackageReference Include="NuGet.Packaging" />
+              </ItemGroup>
+            </Project>
+            """;
+        library.WriteAllText(libraryInput, eofLineBreak: false);
+        var context = CreateContext("11.0.0");
+
+        // Act
+        await new RemoveRelatedNugetPinsStep().ExecuteAsync(context, summary);
+
+        // Assert
+        props.ReadAllText().Should().Be(
+            """
+            <Project>
+              <ItemGroup>
+                <PackageVersion Include="NuGet.Packaging" Version="7.9.0" />
+              </ItemGroup>
+            </Project>
+            """);
+        library.ReadAllText().Should().Be(libraryInput);
+        summary.FilesChanged.Should().Be(1);
+        summary.EditCount.Should().Be(1);
+    }
+
     private MigrationContext CreateContext(string falloutVersion) =>
         new(tempDirectory, dryRun: false, TextWriter.Null)
         {

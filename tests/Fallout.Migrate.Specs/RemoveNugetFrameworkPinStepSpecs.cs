@@ -158,6 +158,158 @@ public class RemoveNugetFrameworkPinStepSpecs : IDisposable
         summary.EditCount.Should().Be(0);
     }
 
+    [Fact]
+    public async Task Central_nuget_framework_pin_is_removed()
+    {
+        // Arrange
+        var props = tempDirectory / "Directory.Packages.props";
+        props.WriteAllText(
+            """
+            <Project>
+              <ItemGroup>
+                <PackageVersion Include="NuGet.Frameworks" Version="7.9.0" />
+                <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
+              </ItemGroup>
+            </Project>
+            """, eofLineBreak: false);
+
+        var project = tempDirectory / "_build.csproj";
+        project.WriteAllText(
+            """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <ItemGroup>
+                <PackageReference Include="NuGet.Frameworks" />
+                <PackageReference Include="Newtonsoft.Json" />
+              </ItemGroup>
+            </Project>
+            """, eofLineBreak: false);
+
+        // Act
+        await new RemoveNugetFrameworkPinStep().ExecuteAsync(context, summary);
+
+        // Assert
+        props.ReadAllText().Should().Be(
+            """
+            <Project>
+              <ItemGroup>
+                <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
+              </ItemGroup>
+            </Project>
+            """);
+        project.ReadAllText().Should().Be(
+            """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <ItemGroup>
+                <PackageReference Include="Newtonsoft.Json" />
+              </ItemGroup>
+            </Project>
+            """);
+        summary.FilesChanged.Should().Be(2);
+        summary.EditCount.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task Central_nuget_framework_pin_is_kept_when_another_project_references_it()
+    {
+        // Arrange
+        var props = tempDirectory / "Directory.Packages.props";
+        const string propsInput =
+            """
+            <Project>
+              <ItemGroup>
+                <PackageVersion Include="NuGet.Frameworks" Version="7.9.0" />
+              </ItemGroup>
+            </Project>
+            """;
+        props.WriteAllText(propsInput, eofLineBreak: false);
+
+        var library = tempDirectory / "Library.csproj";
+        const string libraryInput =
+            """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <ItemGroup>
+                <PackageReference Include="NuGet.Frameworks" />
+              </ItemGroup>
+            </Project>
+            """;
+        library.WriteAllText(libraryInput, eofLineBreak: false);
+
+        var project = tempDirectory / "_build.csproj";
+        project.WriteAllText(
+            """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <ItemGroup>
+                <PackageReference Include="NuGet.Frameworks" Version="7.9.0" />
+                <PackageReference Include="NuGet.Frameworks" />
+              </ItemGroup>
+            </Project>
+            """, eofLineBreak: false);
+
+        // Act
+        await new RemoveNugetFrameworkPinStep().ExecuteAsync(context, summary);
+
+        // Assert
+        props.ReadAllText().Should().Be(propsInput);
+        library.ReadAllText().Should().Be(libraryInput);
+        project.ReadAllText().Should().Be(
+            """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <ItemGroup>
+                <PackageReference Include="NuGet.Frameworks" />
+              </ItemGroup>
+            </Project>
+            """);
+        summary.FilesChanged.Should().Be(1);
+        summary.EditCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Pin_in_other_props_file_is_left_unchanged()
+    {
+        // Arrange
+        var props = tempDirectory / "Directory.Build.props";
+        const string input =
+            """
+            <Project>
+              <ItemGroup>
+                <PackageVersion Include="NuGet.Frameworks" Version="7.9.0" />
+              </ItemGroup>
+            </Project>
+            """;
+        props.WriteAllText(input, eofLineBreak: false);
+
+        // Act
+        await new RemoveNugetFrameworkPinStep().ExecuteAsync(context, summary);
+
+        // Assert
+        props.ReadAllText().Should().Be(input);
+        summary.EditCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Explicit_nuget_framework_pin_is_left_alone_when_version_cannot_be_parsed()
+    {
+        // Arrange
+        var project = tempDirectory / "_build.csproj";
+        const string input =
+            """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <ItemGroup>
+                <PackageReference Version="7.9.0" Include="NuGet.Frameworks" />
+              </ItemGroup>
+            </Project>
+            """;
+        project.WriteAllText(input, eofLineBreak: false);
+        context.FalloutVersion = null;
+
+        // Act
+        await new RemoveNugetFrameworkPinStep().ExecuteAsync(context, summary);
+
+        // Assert
+        project.ReadAllText().Should().Be(input);
+        summary.EditCount.Should().Be(0);
+    }
+
     public void Dispose()
     {
         tempDirectory.DeleteDirectory();
