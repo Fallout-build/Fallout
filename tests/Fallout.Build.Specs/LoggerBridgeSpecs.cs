@@ -17,20 +17,20 @@ using MsLogLevel = Microsoft.Extensions.Logging.LogLevel;
 namespace Fallout.Common.Specs;
 
 /// <summary>
-/// Covers the <see cref="ILogger" /> seam over Serilog added for #428. Serilog stays the provider;
-/// the bridge only has to be faithful — same severities, same message templates, same exceptions,
-/// and no second level authority of its own.
+/// Covers the <see cref="ILogger" /> seam over Serilog (#428).
+/// The seam must keep levels, message templates and exceptions, and must not filter levels itself.
 /// </summary>
 /// <remarks>
-/// Exercising the seam means writing through the ambient <see cref="Log.Logger" />, which is
-/// process-wide: spec classes outside this collection run in parallel and log as they go, so every
-/// message here carries <see cref="Marker" /> and the collected events are filtered down to it.
-/// Without that, a stray warning from another class lands in the sink and fails an assertion.
+/// These specs write through <see cref="Log.Logger" />, which the whole process shares.
+/// Spec classes outside this collection run at the same time and also write log records.
+/// So every message here contains <see cref="Marker" />, and only those records are checked.
 /// </remarks>
 [Collection(ProcessGlobalStateCollection.Name)]
 public class LoggerBridgeSpecs
 {
-    /// <summary>Distinguishes this class's log records from those of concurrently running specs.</summary>
+    /// <summary>
+    /// Separates this class's log records from those of specs that run at the same time.
+    /// </summary>
     private const string Marker = "loggerbridgespec";
 
     [Theory]
@@ -42,21 +42,24 @@ public class LoggerBridgeSpecs
     [InlineData(MsLogLevel.Critical, LogEventLevel.Fatal)]
     public void Each_logger_level_maps_to_its_serilog_level(MsLogLevel level, LogEventLevel expected)
     {
+        // Act
         var events = Capture(logger => logger.Log(level, Marker + " a line"));
 
+        // Assert
         events.Should().ContainSingle().Which.Level.Should().Be(expected);
     }
 
     [Fact]
     public void The_bridge_does_not_filter_below_information()
     {
-        // Regression guard for the AddFalloutLogging registration. Wiring the seam through
-        // services.AddLogging(...) would install Microsoft.Extensions.Logging's own filter pipeline,
-        // whose default minimum is Information — trace and debug records would vanish before Serilog
-        // ever saw them, and the level switch would no longer be the only thing that decides.
+        // Guards against registering the seam through services.AddLogging(...).
+        // See LoggingServiceCollectionExtensions.AddFalloutLogging.
+
+        // Arrange
         using var pipeline = PreserveAmbientPipeline();
         using var services = new ServiceCollection().AddFalloutLogging().BuildServiceProvider();
 
+        // Act
         var events = CaptureAmbient(() =>
         {
             var logger = services.GetRequiredService<ILogger<LoggerBridgeSpecs>>();
@@ -64,17 +67,20 @@ public class LoggerBridgeSpecs
             logger.LogDebug(Marker + " debug line");
         });
 
+        // Assert
         events.Select(x => x.Level).Should().Equal(LogEventLevel.Verbose, LogEventLevel.Debug);
     }
 
     [Fact]
     public void The_level_switch_still_gates_the_bridge()
     {
+        // Arrange
         var original = FalloutBuild.Verbosity;
         try
         {
             FalloutBuild.Verbosity = Verbosity.Minimal;
 
+            // Act
             var events = Capture(
                 logger =>
                 {
@@ -83,6 +89,7 @@ public class LoggerBridgeSpecs
                 },
                 configuration => configuration.MinimumLevel.ControlledBy(Logging.LevelSwitch));
 
+            // Assert
             events.Should().ContainSingle().Which.Level.Should().Be(LogEventLevel.Warning);
         }
         finally
@@ -94,13 +101,15 @@ public class LoggerBridgeSpecs
     [Fact]
     public void Message_templates_survive_the_bridge()
     {
+        // Arrange
         const string Template = Marker + " restored {PackageCount} packages";
 
+        // Act
         var events = Capture(logger => logger.LogInformation(Template, 12));
 
+        // Assert
+        // The structured sinks (compact JSON, file sinks) need the template, not a rendered string.
         var logEvent = events.Should().ContainSingle().Subject;
-        // The template must stay a template — a pre-rendered string would defeat the structured
-        // sinks (the compact-JSON interceptor formatter, the file sinks) downstream.
         logEvent.MessageTemplate.Text.Should().Be(Template);
         logEvent.Properties.Should().ContainKey("PackageCount")
             .WhoseValue.Should().BeOfType<ScalarValue>()
@@ -110,23 +119,27 @@ public class LoggerBridgeSpecs
     [Fact]
     public void Exceptions_reach_the_log_event()
     {
+        // Arrange
         var exception = new InvalidOperationException("boom");
 
+        // Act
         var events = Capture(logger => logger.LogError(exception, Marker + " the target failed"));
 
+        // Assert
         events.Should().ContainSingle().Which.Exception.Should().BeSameAs(exception);
     }
 
     [Fact]
     public void The_factory_is_not_pinned_to_one_pipeline()
     {
-        // Log.Logger is reassigned during a run — Configure installs it late, and
-        // Host.WriteErrorsAndWarnings swaps it again for the end-of-build summary. The factory
-        // itself must stay unbound so a logger it creates afterwards lands in the current pipeline.
+        // See Logging.CreateSerilogLoggerFactory for why the pipeline changes during a run.
+
+        // Arrange
         var factory = Logging.CreateSerilogLoggerFactory();
         var first = new CollectingSink();
         var second = new CollectingSink();
 
+        // Act
         using (PreserveAmbientPipeline())
         {
             Log.Logger = CreateLogger(first);
@@ -136,25 +149,26 @@ public class LoggerBridgeSpecs
             factory.CreateLogger(Logging.DefaultCategoryName).LogWarning(Marker + " after the swap");
         }
 
+        // Assert
         first.Marked.Should().ContainSingle();
         second.Marked.Should().ContainSingle();
     }
 
     [Fact]
-    public void The_facade_logger_tracks_the_current_pipeline()
+    public void The_default_logger_tracks_the_current_pipeline()
     {
-        // Binding happens once per logger, not once per write, because the category is attached as
-        // SourceContext at construction. Logging.Logger is therefore deliberately uncached — that is
-        // what keeps the façade pointed at whichever pipeline is installed right now.
+        // Arrange
         var sink = new CollectingSink();
 
         using (PreserveAmbientPipeline())
         {
             var before = Logging.Logger;
 
+            // Act
             Log.Logger = CreateLogger(sink);
             Logging.Logger.LogWarning(Marker + " after the swap");
 
+            // Assert
             Logging.Logger.Should().NotBeSameAs(before);
         }
 
@@ -162,33 +176,42 @@ public class LoggerBridgeSpecs
     }
 
     [Fact]
-    public void The_facade_works_without_a_composition_root()
+    public void The_default_logger_works_without_a_container()
     {
-        // The CLI commands call Logging.Configure() directly, with no container in sight, so the
-        // façade has to fall back to the ambient pipeline rather than throw.
+        // The CLI commands call Logging.Configure() directly and have no container.
+
+        // Act
         var events = CaptureAmbient(() => Logging.Logger.LogInformation(Marker + " no container here"));
 
+        // Assert
         events.Should().ContainSingle().Which.Level.Should().Be(LogEventLevel.Information);
     }
 
     [Fact]
     public void The_container_resolves_the_logging_abstractions()
     {
+        // Arrange
         using var pipeline = PreserveAmbientPipeline();
         using var services = new ServiceCollection().AddFalloutLogging().BuildServiceProvider();
 
-        services.GetRequiredService<ILoggerFactory>().Should().NotBeNull();
-        services.GetRequiredService<ILogger<LoggerBridgeSpecs>>().Should().NotBeNull();
-        services.GetRequiredService<ILogger>().Should().NotBeNull();
+        // Act
+        var act = () =>
+        {
+            services.GetRequiredService<ILoggerFactory>();
+            services.GetRequiredService<ILogger<LoggerBridgeSpecs>>();
+            services.GetRequiredService<ILogger>();
+        };
+
+        // Assert
+        act.Should().NotThrow();
     }
 
     [Fact]
     public void A_container_logger_binds_the_pipeline_current_at_resolution()
     {
-        // The container-side pair of The_facade_logger_tracks_the_current_pipeline. Logger<T> binds
-        // its inner logger in its constructor, so the registration has to be transient. As a
-        // singleton it would strand every consumer on whichever pipeline was current at the first
-        // resolution, which is the failure Logging.Logger stays uncached to avoid.
+        // Fails if ILogger<T> is registered as a singleton.
+
+        // Arrange
         var sink = new CollectingSink();
 
         using var pipeline = PreserveAmbientPipeline();
@@ -196,18 +219,22 @@ public class LoggerBridgeSpecs
 
         services.GetRequiredService<ILogger<LoggerBridgeSpecs>>();
 
+        // Act
         Log.Logger = CreateLogger(sink);
         services.GetRequiredService<ILogger<LoggerBridgeSpecs>>().LogWarning(Marker + " after the swap");
 
+        // Assert
         sink.Marked.Should().ContainSingle();
     }
 
     [Fact]
     public void The_container_hands_out_a_new_logger_per_resolution()
     {
+        // Arrange
         using var pipeline = PreserveAmbientPipeline();
         using var services = new ServiceCollection().AddFalloutLogging().BuildServiceProvider();
 
+        // Act & Assert
         services.GetRequiredService<ILogger<LoggerBridgeSpecs>>()
             .Should().NotBeSameAs(services.GetRequiredService<ILogger<LoggerBridgeSpecs>>());
         services.GetRequiredService<ILogger>()
@@ -217,27 +244,31 @@ public class LoggerBridgeSpecs
     [Fact]
     public void Registering_the_seam_leaves_the_pipeline_alone()
     {
-        // AddFalloutLogging registers, it does not configure. Logging.Configure is not idempotent:
-        // with no build it installs a pipeline with no file sinks, no host sink and no filter. A
-        // second container calling AddFalloutLogging must not wipe out the pipeline the first one
-        // is using.
+        // A second container must not remove the pipeline that the first one uses.
+
+        // Arrange
         using var pipeline = PreserveAmbientPipeline();
         Log.Logger = CreateLogger(new CollectingSink());
         var installed = Log.Logger;
 
+        // Act
         using var services = new ServiceCollection().AddFalloutLogging().BuildServiceProvider();
 
+        // Assert
         Log.Logger.Should().BeSameAs(installed);
     }
 
     [Fact]
     public void Using_a_logger_factory_restores_the_previous_one()
     {
+        // Arrange
         var previous = Logging.Factory;
-        var replacement = new StubLoggerFactory();
+        var replacement = NullLoggerFactory.Instance;
 
+        // Act
         using (Logging.UseLoggerFactory(replacement))
         {
+            // Assert
             Logging.Factory.Should().BeSameAs(replacement);
         }
 
@@ -247,14 +278,16 @@ public class LoggerBridgeSpecs
     [Fact]
     public void Using_a_null_logger_factory_is_rejected()
     {
+        // Act
         var act = () => Logging.UseLoggerFactory(factory: null);
 
+        // Assert
         act.Should().Throw<ArgumentException>();
     }
 
     /// <summary>
-    /// Writes through a bridged logger against a pipeline that collects this class's records, and
-    /// returns them. <paramref name="configure" /> overrides the minimum-level rule.
+    /// Writes through a bridged logger to a pipeline that collects this class's records, and returns them.
+    /// <paramref name="configure" /> replaces the minimum-level rule.
     /// </summary>
     private static LogEvent[] Capture(
         Action<ILogger> write,
@@ -265,7 +298,9 @@ public class LoggerBridgeSpecs
             configure);
     }
 
-    /// <summary>Runs <paramref name="write" /> against a collecting <see cref="Log.Logger" />.</summary>
+    /// <summary>
+    /// Runs <paramref name="write" /> with a <see cref="Log.Logger" /> that collects records.
+    /// </summary>
     private static LogEvent[] CaptureAmbient(
         Action write,
         Func<LoggerConfiguration, LoggerConfiguration> configure = null)
@@ -280,7 +315,9 @@ public class LoggerBridgeSpecs
         return sink.Marked.ToArray();
     }
 
-    /// <summary>Restores the ambient Serilog pipeline when the returned bracket is disposed.</summary>
+    /// <summary>
+    /// Restores <see cref="Log.Logger" /> when the returned object is disposed.
+    /// </summary>
     private static IDisposable PreserveAmbientPipeline()
     {
         var original = Log.Logger;
@@ -300,7 +337,9 @@ public class LoggerBridgeSpecs
     {
         private readonly List<LogEvent> events = new();
 
-        /// <summary>The records this class wrote, with concurrent specs' traffic filtered out.</summary>
+        /// <summary>
+        /// The records this class wrote, without the records of other specs.
+        /// </summary>
         public IReadOnlyList<LogEvent> Marked
         {
             get
@@ -314,20 +353,6 @@ public class LoggerBridgeSpecs
         {
             lock (events)
                 events.Add(logEvent);
-        }
-    }
-
-    private class StubLoggerFactory : ILoggerFactory
-    {
-        // A no-op rather than a throw: this stub owns the process-wide Logging.Factory while it
-        // is installed, and #428 moves framework code onto Logging.Logger. A throwing stub would
-        // turn any unrelated log write during that window into an intermittent failure.
-        public ILogger CreateLogger(string categoryName) => NullLogger.Instance;
-
-        public void AddProvider(ILoggerProvider provider) => throw new NotSupportedException();
-
-        public void Dispose()
-        {
         }
     }
 }
