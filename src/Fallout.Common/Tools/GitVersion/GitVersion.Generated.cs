@@ -92,13 +92,13 @@ public partial class GitVersionSettings : ToolOptions, IToolOptionsWithFramework
     [Argument(Format = "--dynamic-repo-location {value}")] public string DynamicRepositoryLocation => Get<string>(() => DynamicRepositoryLocation);
     /// <summary>Disables <c>git fetch</c> during version calculation. GitVersion may then calculate a different version than expected.</summary>
     [Argument(Format = "--no-fetch")] public bool? NoFetch => Get<bool?>(() => NoFetch);
-    /// <summary>Removed in GitVersion 7.</summary>
+    /// <summary>GitVersion 7 removed this switch. Removed in v11.</summary>
     public string Executable => Get<string>(() => Executable);
-    /// <summary>Removed in GitVersion 7.</summary>
+    /// <summary>GitVersion 7 removed this switch. Removed in v11.</summary>
     public string ExecutableArguments => Get<string>(() => ExecutableArguments);
-    /// <summary>Removed in GitVersion 7.</summary>
+    /// <summary>GitVersion 7 removed this switch. Removed in v11.</summary>
     public string MSBuildProject => Get<string>(() => MSBuildProject);
-    /// <summary>Removed in GitVersion 7.</summary>
+    /// <summary>GitVersion 7 removed this switch. Removed in v11.</summary>
     public string MSBuildProjectArguments => Get<string>(() => MSBuildProjectArguments);
     /// <summary>Disables optional sampled usage telemetry.</summary>
     [Argument(Format = "--telemetry-opt-out")] public bool? TelemetryOptOut => Get<bool?>(() => TelemetryOptOut);
@@ -451,41 +451,41 @@ public static partial class GitVersionSettingsExtensions
     #region Executable
     /// <inheritdoc cref="GitVersionSettings.Executable"/>
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.Executable))]
-    [Obsolete("Removed in GitVersion 7.")]
+    [Obsolete("GitVersion 7 removed this switch. Removed in v11.", DiagnosticId = "FALLOUTOBS002", UrlFormat = "https://github.com/Fallout-build/Fallout/blob/main/docs/obsolete_apis.md")]
     public static T SetExecutable<T>(this T o, string v) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.Executable, v));
     /// <inheritdoc cref="GitVersionSettings.Executable"/>
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.Executable))]
-    [Obsolete("Removed in GitVersion 7.")]
+    [Obsolete("GitVersion 7 removed this switch. Removed in v11.", DiagnosticId = "FALLOUTOBS002", UrlFormat = "https://github.com/Fallout-build/Fallout/blob/main/docs/obsolete_apis.md")]
     public static T ResetExecutable<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Remove(() => o.Executable));
     #endregion
     #region ExecutableArguments
     /// <inheritdoc cref="GitVersionSettings.ExecutableArguments"/>
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.ExecutableArguments))]
-    [Obsolete("Removed in GitVersion 7.")]
+    [Obsolete("GitVersion 7 removed this switch. Removed in v11.", DiagnosticId = "FALLOUTOBS002", UrlFormat = "https://github.com/Fallout-build/Fallout/blob/main/docs/obsolete_apis.md")]
     public static T SetExecutableArguments<T>(this T o, string v) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.ExecutableArguments, v));
     /// <inheritdoc cref="GitVersionSettings.ExecutableArguments"/>
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.ExecutableArguments))]
-    [Obsolete("Removed in GitVersion 7.")]
+    [Obsolete("GitVersion 7 removed this switch. Removed in v11.", DiagnosticId = "FALLOUTOBS002", UrlFormat = "https://github.com/Fallout-build/Fallout/blob/main/docs/obsolete_apis.md")]
     public static T ResetExecutableArguments<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Remove(() => o.ExecutableArguments));
     #endregion
     #region MSBuildProject
     /// <inheritdoc cref="GitVersionSettings.MSBuildProject"/>
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.MSBuildProject))]
-    [Obsolete("Removed in GitVersion 7.")]
+    [Obsolete("GitVersion 7 removed this switch. Removed in v11.", DiagnosticId = "FALLOUTOBS002", UrlFormat = "https://github.com/Fallout-build/Fallout/blob/main/docs/obsolete_apis.md")]
     public static T SetMSBuildProject<T>(this T o, string v) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.MSBuildProject, v));
     /// <inheritdoc cref="GitVersionSettings.MSBuildProject"/>
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.MSBuildProject))]
-    [Obsolete("Removed in GitVersion 7.")]
+    [Obsolete("GitVersion 7 removed this switch. Removed in v11.", DiagnosticId = "FALLOUTOBS002", UrlFormat = "https://github.com/Fallout-build/Fallout/blob/main/docs/obsolete_apis.md")]
     public static T ResetMSBuildProject<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Remove(() => o.MSBuildProject));
     #endregion
     #region MSBuildProjectArguments
     /// <inheritdoc cref="GitVersionSettings.MSBuildProjectArguments"/>
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.MSBuildProjectArguments))]
-    [Obsolete("Removed in GitVersion 7.")]
+    [Obsolete("GitVersion 7 removed this switch. Removed in v11.", DiagnosticId = "FALLOUTOBS002", UrlFormat = "https://github.com/Fallout-build/Fallout/blob/main/docs/obsolete_apis.md")]
     public static T SetMSBuildProjectArguments<T>(this T o, string v) where T : GitVersionSettings => o.Modify(b => b.Set(() => o.MSBuildProjectArguments, v));
     /// <inheritdoc cref="GitVersionSettings.MSBuildProjectArguments"/>
     [Builder(Type = typeof(GitVersionSettings), Property = nameof(GitVersionSettings.MSBuildProjectArguments))]
-    [Obsolete("Removed in GitVersion 7.")]
+    [Obsolete("GitVersion 7 removed this switch. Removed in v11.", DiagnosticId = "FALLOUTOBS002", UrlFormat = "https://github.com/Fallout-build/Fallout/blob/main/docs/obsolete_apis.md")]
     public static T ResetMSBuildProjectArguments<T>(this T o) where T : GitVersionSettings => o.Modify(b => b.Remove(() => o.MSBuildProjectArguments));
     #endregion
     #region TelemetryOptOut

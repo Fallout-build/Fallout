@@ -19,8 +19,15 @@ public static class WriterExtensions
         }
 
         var message = deprecatable.GetDeprecationMessage();
-        var obsoleteText = string.IsNullOrEmpty(message) ? string.Empty : $"(\"{message}\")";
-        return writerWrapper.WriteLine($"[Obsolete{obsoleteText}]");
+        var diagnosticId = (deprecatable as Property)?.DiagnosticId;
+        if (string.IsNullOrEmpty(diagnosticId))
+        {
+            var obsoleteText = string.IsNullOrEmpty(message) ? string.Empty : $"(\"{message}\")";
+            return writerWrapper.WriteLine($"[Obsolete{obsoleteText}]");
+        }
+
+        return writerWrapper.WriteLine(
+            $"[Obsolete(\"{message}\", DiagnosticId = \"{diagnosticId}\", UrlFormat = \"https://github.com/Fallout-build/Fallout/blob/main/docs/obsolete_apis.md\")]");
     }
 
     public static T WriteSummary<T>(this T writerWrapper, Tool tool)
