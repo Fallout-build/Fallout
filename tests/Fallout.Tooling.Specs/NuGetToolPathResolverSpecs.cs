@@ -80,7 +80,7 @@ public class NuGetToolPathResolverSpecs : IDisposable
                    </RuntimeIdentifierPackages>
                  </DotNetCliTool>
                  """);
-            var storePackage = cliHome / "tools" / ".store" / "gitversion.tool" / "7.0.0" /
+            var storePackage = cliHome / ".dotnet" / "tools" / ".store" / "gitversion.tool" / "7.0.0" /
                                ("gitversion.tool." + runtimeIdentifier) / "7.0.0";
             Write(storePackage / "tools" / "net10.0" / runtimeIdentifier / "gitversion.dll", "");
             Write(storePackage / "tools" / "net11.0" / runtimeIdentifier / "gitversion.dll", "");
@@ -118,6 +118,43 @@ public class NuGetToolPathResolverSpecs : IDisposable
         net8.Should().Contain(Path.Combine("net8.0", "any"));
         net10.Should().Contain(Path.Combine("net10.0", "win-x64"));
         net10.Should().NotContain("net11.0");
+    }
+
+    [Fact]
+    public void Current_runtime_is_chosen_when_another_runtime_sits_beside_it()
+    {
+        // Arrange
+        var runtimeIdentifier = RuntimeInformation.RuntimeIdentifier;
+        var otherRuntime = runtimeIdentifier.Equals("win-x64", StringComparison.OrdinalIgnoreCase)
+            ? "linux-x64"
+            : "win-x64";
+        Write(_root / "sample.tool" / "tools" / "net10.0" / otherRuntime / "sample.dll", "");
+        Write(_root / "sample.tool" / "tools" / "net10.0" / runtimeIdentifier / "sample.dll", "");
+
+        // Act
+        var path = NuGetToolPathResolver.GetPackageExecutable("sample.tool", "sample.dll", framework: "net10.0");
+
+        // Assert
+        path.Should().Contain(Path.Combine("net10.0", runtimeIdentifier));
+        path.Should().NotContain(otherRuntime);
+    }
+
+    [Fact]
+    public void Distro_runtime_falls_back_to_the_portable_linux_package()
+    {
+        // Arrange
+        var available = new[]
+        {
+            new NuGetToolPathResolver.RuntimeIdentifierPackage("linux-x64", "GitVersion.Tool.linux-x64"),
+            new NuGetToolPathResolver.RuntimeIdentifierPackage("win-x64", "GitVersion.Tool.win-x64")
+        };
+
+        // Act
+        var match = NuGetToolPathResolver.MatchRuntimeIdentifier(available, "ubuntu.24.04-x64");
+
+        // Assert
+        match.Should().NotBeNull();
+        match.Value.Id.Should().Be("GitVersion.Tool.linux-x64");
     }
 
     public void Dispose()
