@@ -139,6 +139,10 @@
           "description": "Obsolete message. Property is marked as obsolete when specified.",
           "type": "string"
         },
+        "diagnosticId": {
+          "description": "Compiler diagnostic id for the obsolete attribute, such as FALLOUTOBS002.",
+          "type": "string"
+        },
         "onlyDelegates": {
           "type": "boolean"
         },

@@ -5,7 +5,8 @@ namespace Fallout.Components;
 
 public interface IHasGitVersion : IFalloutBuild
 {
-    [GitVersion(NoFetch = true, Framework = "net8.0")]
+    // GitVersion 7 installs under tools/net10.0/<rid> and tools/net11.0/<rid>. net10.0 runs without the .NET 11 runtime.
+    [GitVersion(NoFetch = true, Framework = GitVersionAttribute.Net10ToolFramework)]
     [Required]
     GitVersion Versioning => TryGetValue(() => Versioning);
 }

@@ -366,12 +366,18 @@ public static class DataClassExtensionGenerator
 
         var signature = $"public static T {name}<T>({parameters.JoinCommaSpace()}) where T : {writer.DataClass.Name}";
         var implementation = $"o.Modify(b => b.{modification})";
+        // nameof and the method body both name the property. That still warns inside an obsolete method.
+        var obsoleteWarning = property.IsDeprecated()
+            ? string.IsNullOrEmpty(property.DiagnosticId) ? "CS0618" : property.DiagnosticId
+            : null;
         return writer
             .WriteLineIfTrue(help == null, $"/// <inheritdoc cref=\"{writer.DataClass.Name}.{property.Name}\"/>")
             .WriteLineIfTrue(help != null, $"/// <summary>{help}</summary>")
+            .WriteLineIfTrue(obsoleteWarning != null, $"#pragma warning disable {obsoleteWarning}")
             .WriteLine($"{builder}")
             .WriteObsoleteAttributeWhenObsolete(property)
-            .WriteLine($"{signature} => {implementation};");
+            .WriteLine($"{signature} => {implementation};")
+            .WriteLineIfTrue(obsoleteWarning != null, $"#pragma warning restore {obsoleteWarning}");
     }
 
     private static void CheckPlural(Property property)

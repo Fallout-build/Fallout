@@ -46,9 +46,11 @@ Status values: **Deprecated** (live, warns on use), **Removed** (API deleted —
 | ID | Surface | Deprecated | Status | Notes |
 |----|---------|------------|--------|-------|
 | `FALLOUTOBS001` | `GitHubActionsAttribute.OnWorkflowDispatch{Optional,Required}Inputs`, `GitHubActionsWorkflowDispatchTrigger.{Optional,Required}Inputs` | 10.5.x | Deprecated | Untyped `workflow_dispatch` input arrays. Use `[GitHubActionsInputAttribute]` / `GitHubActionsWorkflowDispatchTrigger.Inputs` instead. Removal target: v11. |
+| `FALLOUTOBS002` | `GitVersionSettings.Executable`, `ExecutableArguments`, `MSBuildProject`, `MSBuildProjectArguments` | 10.6.x | Deprecated | GitVersion 7 removed these switches. Removal target: v11. |
+| `FALLOUTOBS003` | `GitVersionVerbosity.debug`, `info`, `warn`, `error`, `none` | 10.6.x | Deprecated | Old GitVersion verbosity names. Use `Quiet`, `Minimal`, `Normal`, `Verbose`, or `Diagnostic`. Removal target: v11. |
 
 <!--
 Allocation example (do not uncomment unless a real API is deprecated):
 
-| `FALLOUTOBS002` | `Fallout.Namespace.SomeType.OldMember` | 10.5.x | Deprecated | Use `NewMember` instead. Removal target: v11. |
+| `FALLOUTOBS002` | `Fallout.Namespace.SomeType.OldMember` | x.y.z | Deprecated | Use `NewMember` instead. Removal target: v11. |
 -->

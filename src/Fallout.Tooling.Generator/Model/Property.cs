@@ -80,6 +80,9 @@ public class Property : IDeprecatable
     [Description("Obsolete message. Property is marked as obsolete when specified.")]
     public string DeprecationMessage { get; set; }
 
+    [Description("Compiler diagnostic id for the obsolete attribute, such as FALLOUTOBS002.")]
+    public string DiagnosticId { get; set; }
+
     public bool OnlyDelegates { get; set; }
 
     public bool IsTailArgument { get; set; }
