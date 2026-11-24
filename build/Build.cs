@@ -88,7 +88,7 @@ partial class Build
     // GitVersion computes the canonical version from the branch and tags (GitVersion.yml):
     // develop is -alpha.N, release/* is -beta.N, and a tag is exactly that version.
     // The tool comes from the GitVersion.Tool PackageDownload in _build.csproj.
-    [GitVersion(Framework = "net10.0", NoFetch = true, NoCache = true)]
+    [GitVersion(Framework = GitVersionAttribute.Net10ToolFramework, NoFetch = true, NoCache = true)]
     readonly GitVersion GitVersion;
 
     // The release workflow passes the tag it builds (tag push or re-run). A tag is the
@@ -98,9 +98,8 @@ partial class Build
     [Parameter]
     readonly string ReleaseTag;
 
-    // GitVersion 6 no longer outputs NuGetVersionV2, which IHasGitVersion uses for packing.
     GitVersion IHasGitVersion.Versioning => ReleaseTag.IsNullOrWhiteSpace()
-        ? GitVersion with { NuGetVersionV2 = GitVersion.SemVer }
+        ? GitVersion
         : WithVersionFromTag(GitVersion, ReleaseTag);
 
     // Sets only the fields that ICompile, IPack and this build read.

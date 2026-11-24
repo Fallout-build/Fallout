@@ -17,6 +17,12 @@ namespace Fallout.Common.Tools.GitVersion;
 /// </summary>
 public class GitVersionAttribute : ValueInjectionAttributeBase
 {
+    /// <summary>
+    /// The <c>net10.0</c> tool folder published by GitVersion 7.
+    /// It runs on the .NET 10 runtime, including a build that targets a later framework.
+    /// </summary>
+    public const string Net10ToolFramework = "net10.0";
+
     public string Framework { get; set; }
 
     public bool DisableOnUnix { get; set; }
@@ -46,7 +52,7 @@ public class GitVersionAttribute : ValueInjectionAttributeBase
         }
 
         var gitVersion = GitVersionTasks.GitVersion(s => s
-                .SetFramework(Framework ?? "net10.0")
+                .SetFramework(Framework)
                 .SetNoFetch(NoFetch)
                 .SetNoCache(NoCache)
                 .SetVerbosity(GitVersionVerbosity.Quiet)

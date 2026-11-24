@@ -1,15 +1,20 @@
 using System;
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Fallout.Common.Utilities;
 
 namespace Fallout.Common.Tools.GitVersion;
 
 /// <summary>
 /// Reads GitVersion 5, 6, and 7 JSON into <see cref="GitVersion"/>.
 /// GitVersion 7 renamed the pre-release fields and removed <c>CommitsSinceVersionSource</c>.
+/// Use <see cref="Options"/> when parsing tool output. The record itself keeps the default serializer.
 /// </summary>
 internal sealed class GitVersionJsonConverter : JsonConverter<GitVersion>
 {
+    internal static readonly JsonSerializerOptions Options = CreateOptions();
+
     public override GitVersion Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         using var document = JsonDocument.ParseValue(ref reader);
@@ -38,7 +43,6 @@ internal sealed class GitVersionJsonConverter : JsonConverter<GitVersion>
         }
 
         var semVer = ReadString(root, "SemVer");
-        var commitsSinceVersionSource = ReadFirst(root, "CommitsSinceVersionSource", "VersionSourceDistance");
 
         return new GitVersion(
             ReadInt(root, "Major"),
@@ -70,60 +74,30 @@ internal sealed class GitVersionJsonConverter : JsonConverter<GitVersion>
             ReadString(root, "NuGetPreReleaseTagV2"),
             ReadString(root, "NuGetPreReleaseTag"),
             ReadString(root, "VersionSourceSha"),
-            commitsSinceVersionSource,
+            ReadFirst(root, "CommitsSinceVersionSource", "VersionSourceDistance"),
             ReadString(root, "CommitsSinceVersionSourcePadded"),
             ReadNullableInt(root, "UncommittedChanges"),
-            ReadString(root, "CommitDate"),
-            ReadString(root, "VersionSourceSemVer"),
-            ReadString(root, "VersionSourceIncrement"),
-            ReadFirst(root, "VersionSourceDistance", "CommitsSinceVersionSource"),
-            preReleaseLabel,
-            preReleaseLabelWithDash,
-            ReadString(root, "SemVerSourceSha"),
-            ReadString(root, "SemVerSourceSemVer"),
-            ReadString(root, "SemVerSourceIncrement"),
-            ReadString(root, "CommitCountSourceSha"),
-            ReadString(root, "CommitCountSourceDistance"),
-            ReadString(root, "CustomVersion"));
+            ReadString(root, "CommitDate"))
+        {
+            VersionSourceSemVer = ReadString(root, "VersionSourceSemVer"),
+            VersionSourceIncrement = ReadString(root, "VersionSourceIncrement"),
+            SemVerSourceSha = ReadString(root, "SemVerSourceSha"),
+            SemVerSourceSemVer = ReadString(root, "SemVerSourceSemVer"),
+            SemVerSourceIncrement = ReadString(root, "SemVerSourceIncrement"),
+            CommitCountSourceSha = ReadString(root, "CommitCountSourceSha"),
+            CommitCountSourceDistance = ReadString(root, "CommitCountSourceDistance"),
+            CustomVersion = ReadString(root, "CustomVersion")
+        };
     }
 
     public override void Write(Utf8JsonWriter writer, GitVersion value, JsonSerializerOptions options)
+        => throw new NotSupportedException("GitVersion JSON is only read from the tool output.");
+
+    private static JsonSerializerOptions CreateOptions()
     {
-        writer.WriteStartObject();
-        writer.WriteNumber("Major", value.Major);
-        writer.WriteNumber("Minor", value.Minor);
-        writer.WriteNumber("Patch", value.Patch);
-        WriteString(writer, "PreReleaseLabel", value.PreReleaseTag);
-        WriteString(writer, "PreReleaseLabelWithDash", value.PreReleaseTagWithDash);
-        WriteString(writer, "PreReleaseLabelName", value.PreReleaseLabel);
-        WriteString(writer, "PreReleaseLabelNameWithDash", value.PreReleaseLabelWithDash);
-        WriteString(writer, "PreReleaseNumber", value.PreReleaseNumber);
-        WriteString(writer, "WeightedPreReleaseNumber", value.WeightedPreReleaseNumber);
-        WriteString(writer, "BuildMetaData", value.BuildMetaData);
-        WriteString(writer, "FullBuildMetaData", value.FullBuildMetaData);
-        WriteString(writer, "MajorMinorPatch", value.MajorMinorPatch);
-        WriteString(writer, "SemVer", value.SemVer);
-        WriteString(writer, "AssemblySemVer", value.AssemblySemVer);
-        WriteString(writer, "AssemblySemFileVer", value.AssemblySemFileVer);
-        WriteString(writer, "FullSemVer", value.FullSemVer);
-        WriteString(writer, "InformationalVersion", value.InformationalVersion);
-        WriteString(writer, "BranchName", value.BranchName);
-        WriteString(writer, "EscapedBranchName", value.EscapedBranchName);
-        WriteString(writer, "Sha", value.Sha);
-        WriteString(writer, "ShortSha", value.ShortSha);
-        WriteNullableNumber(writer, "UncommittedChanges", value.UncommittedChanges);
-        WriteString(writer, "CommitDate", value.CommitDate);
-        WriteString(writer, "VersionSourceSha", value.VersionSourceSha);
-        WriteString(writer, "VersionSourceSemVer", value.VersionSourceSemVer);
-        WriteString(writer, "VersionSourceIncrement", value.VersionSourceIncrement);
-        WriteString(writer, "VersionSourceDistance", value.VersionSourceDistance);
-        WriteString(writer, "SemVerSourceSha", value.SemVerSourceSha);
-        WriteString(writer, "SemVerSourceSemVer", value.SemVerSourceSemVer);
-        WriteString(writer, "SemVerSourceIncrement", value.SemVerSourceIncrement);
-        WriteString(writer, "CommitCountSourceSha", value.CommitCountSourceSha);
-        WriteString(writer, "CommitCountSourceDistance", value.CommitCountSourceDistance);
-        WriteString(writer, "CustomVersion", value.CustomVersion);
-        writer.WriteEndObject();
+        var options = new JsonSerializerOptions(JsonExtensions.DefaultSerializerOptions);
+        options.Converters.Add(new GitVersionJsonConverter());
+        return options;
     }
 
     private static string ReadFirst(JsonElement root, params string[] names)
@@ -147,17 +121,27 @@ internal sealed class GitVersionJsonConverter : JsonConverter<GitVersion>
             return null;
         }
 
-        return NumberToStringJsonConverter.FromElement(value);
+        return value.ValueKind switch
+        {
+            JsonValueKind.String => value.GetString(),
+            JsonValueKind.Number => value.TryGetInt64(out var integer)
+                ? integer.ToString(CultureInfo.InvariantCulture)
+                : value.GetDouble().ToString(CultureInfo.InvariantCulture),
+            JsonValueKind.Null => null,
+            _ => null
+        };
     }
 
     private static int ReadInt(JsonElement root, string name)
     {
-        if (!root.TryGetProperty(name, out var value) || value.ValueKind != JsonValueKind.Number)
+        if (!root.TryGetProperty(name, out var value) ||
+            value.ValueKind != JsonValueKind.Number ||
+            !value.TryGetInt32(out var number))
         {
-            return 0;
+            throw new JsonException($"GitVersion JSON property '{name}' must be a number.");
         }
 
-        return value.GetInt32();
+        return number;
     }
 
     private static int? ReadNullableInt(JsonElement root, string name)
@@ -168,29 +152,5 @@ internal sealed class GitVersionJsonConverter : JsonConverter<GitVersion>
         }
 
         return value.GetInt32();
-    }
-
-    private static void WriteString(Utf8JsonWriter writer, string name, string value)
-    {
-        if (value == null)
-        {
-            writer.WriteNull(name);
-        }
-        else
-        {
-            writer.WriteString(name, value);
-        }
-    }
-
-    private static void WriteNullableNumber(Utf8JsonWriter writer, string name, int? value)
-    {
-        if (value == null)
-        {
-            writer.WriteNull(name);
-        }
-        else
-        {
-            writer.WriteNumber(name, value.Value);
-        }
     }
 }
