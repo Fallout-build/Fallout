@@ -13,6 +13,7 @@ Fallout supports 4 different tools that help generating version numbers from you
 
 :::note
 Please refer to the [GitVersion documentation](https://gitversion.net/docs/reference/configuration) for any questions.
+A GitVersion 6 `GitVersion.yml` needs `GITVERSION_CONFIGURATION_VERSION=v6` when the tool is GitVersion 7. You can also run `gitversion config migrate`.
 :::
 
 ```powershell title="Tool Installation"
