@@ -10,6 +10,7 @@ namespace Fallout.Common.Tools.GitVersion;
 /// Reads GitVersion 5, 6, and 7 JSON into <see cref="GitVersion"/>.
 /// GitVersion 7 renamed the pre-release fields and removed <c>CommitsSinceVersionSource</c>.
 /// Use <see cref="Options"/> when parsing tool output. The record itself keeps the default serializer.
+/// Numeric fields such as <c>PreReleaseNumber</c> still use <see cref="NumberToStringJsonConverter"/>, so <c>JsonSerializer.Deserialize</c> keeps working.
 /// </summary>
 internal sealed class GitVersionJsonConverter : JsonConverter<GitVersion>
 {

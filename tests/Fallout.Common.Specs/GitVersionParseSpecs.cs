@@ -55,6 +55,23 @@ public class GitVersionParseSpecs
                                            """;
 
     [Fact]
+    public void Default_deserializer_reads_numeric_version_6_fields()
+    {
+        // Arrange
+        // GitVersion6Json is the payload from issue #218 (numeric GitVersion fields).
+
+        // Act
+        var result = GitVersion6Json.GetJson<GitVersion>();
+
+        // Assert
+        result.PreReleaseNumber.Should().Be("1");
+        result.WeightedPreReleaseNumber.Should().Be("1");
+        result.BuildMetaData.Should().Be("7");
+        result.CommitsSinceVersionSource.Should().Be("7");
+        result.PreReleaseTag.Should().Be("switch-to-fallout.1");
+    }
+
+    [Fact]
     public void GitVersion_6_output_keeps_the_pre_release_meaning()
     {
         var result = GitVersion6Json.GetJson<GitVersion>(GitVersionJsonConverter.Options);

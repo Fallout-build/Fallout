@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Fallout.Common.Tooling;
 using Fallout.Common.Utilities;
 using Fallout.Common.Utilities.Collections;
@@ -76,8 +77,11 @@ public record GitVersion(
     string PreReleaseTagWithDash,
     string PreReleaseLabel,
     string PreReleaseLabelWithDash,
+    [property: JsonConverter(typeof(NumberToStringJsonConverter))]
     string PreReleaseNumber,
+    [property: JsonConverter(typeof(NumberToStringJsonConverter))]
     string WeightedPreReleaseNumber,
+    [property: JsonConverter(typeof(NumberToStringJsonConverter))]
     string BuildMetaData,
     string BuildMetaDataPadded,
     string FullBuildMetaData,
@@ -98,6 +102,7 @@ public record GitVersion(
     string NuGetPreReleaseTagV2,
     string NuGetPreReleaseTag,
     string VersionSourceSha,
+    [property: JsonConverter(typeof(NumberToStringJsonConverter))]
     string CommitsSinceVersionSource,
     string CommitsSinceVersionSourcePadded,
     int? UncommittedChanges,
