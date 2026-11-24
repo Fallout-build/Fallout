@@ -65,7 +65,9 @@
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageVersion Include="Microsoft.Extensions.DependencyModel" Version="10.0.0" />
-    <!-- Fallout.Build: internal ILogger seam over the Serilog pipeline (#428). Not in our public API yet. -->
+    <!-- Logging seam in Fallout.Build (#428). Internal only: no type from these packages is public API.
+         Serilog.Extensions.Logging also brings Microsoft.Extensions.Logging and
+         Microsoft.Extensions.Options to every consumer. -->
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
     <PackageVersion Include="Serilog.Extensions.Logging" Version="10.0.0" />
