@@ -176,11 +176,11 @@ stages:
             inputs:
               artifactName: coverage-report.zip
               pathToPublish: 'output/coverage-report.zip'
-  - stage: windows_2019
-    displayName: 'windows-2019'
+  - stage: windows_2022
+    displayName: 'windows-2022'
     dependsOn: [  ]
     pool:
-      vmImage: 'windows-2019'
+      vmImage: 'windows-2022'
     jobs:
       - job: Restore
         displayName: 'Restore'
