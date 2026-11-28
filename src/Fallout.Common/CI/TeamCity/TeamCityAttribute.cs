@@ -69,7 +69,7 @@ public class TeamCityAttribute : ChainedConfigurationAttributeBase
 
     protected override StreamWriter CreateStream()
     {
-        PomFile.WriteAllLines(ResourceUtility.GetResourceAllLines<TeamCityConfiguration>("pom.xml"));
+        PomFile.WriteGeneratedText(ResourceUtility.GetResourceAllText<TeamCityConfiguration>("pom.xml"));
 
         return base.CreateStream();
     }
