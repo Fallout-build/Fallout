@@ -14,10 +14,18 @@ Rules that add to the [C# Coding Guidelines](coding-guidelines.md), and the plac
 
 - Make a type `internal` unless it is meant to be public API. Its members may be `public`: they can't be more visible than the type. Don't flag a `public` member on an `internal` type.
 - Add an abstraction only when at least three places use it.
+- Use a design pattern (AV0105) only for a problem the code has now, and name the type after it: `ToolSettingsBuilder`, not `ToolSettingsHelper`. Don't add a Factory, Strategy, Mediator or Repository layer only to give the code structure.
+- Group related primitive parameters into a value type (AV1140) when a method takes about five or more of them. Two or three primitives are fine.
 - Don't add an interface only for dependency injection or tests. Add one when it separates two parts of the system that must not know each other.
 - Make nullability match the contract. Mark a property that must have a value as `required`, or make it non-nullable, instead of declaring it nullable and rejecting `null` at run time. A property that may be absent must be nullable, not just documented as optional.
 - When you validate arguments, check each one on its own and throw an exception that names it. One message for several fields doesn't tell the caller which one is wrong.
 - Don't add an early-return guard before code that already handles empty input. It adds noise and can skip logging that should still run.
+
+## Errors
+
+- Inside the libraries, throw exceptions instead of returning error codes (AV1200).
+- At the command-line surface, such as the global tool or `fallout-migrate`, return a result with an exit code and error messages. Don't let an exception reach the user as a stack trace.
+- Add a custom exception type only when no framework exception describes the error precisely enough (AV1205).
 
 ## Names
 
@@ -39,7 +47,8 @@ Rules that add to the [C# Coding Guidelines](coding-guidelines.md), and the plac
 
 - Keep a method under 15 statements, at one level of abstraction. Split a longer method into well-named private methods. A flat list of independent guard clauses is fine.
 - Order methods so that a method comes before the methods it calls. The file then reads from top to bottom.
-- Put one type in each file, and name the file after the type.
+- Put one type in each file, and name the file after the type. Give each type one purpose (AV1000).
+- Avoid new `partial` types. Don't spread one type over several files to make it look smaller: split it into types with their own purpose instead. Generated code and the existing `*Tasks` and `FalloutBuild` partials are fine. When a type must be partial, name each file after its role, such as `FalloutBuild.Statics.cs` (AV1508).
 - Keep lines at 130 characters or less.
 
 ## Documentation and comments
