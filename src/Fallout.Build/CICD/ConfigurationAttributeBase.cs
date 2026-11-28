@@ -84,7 +84,9 @@ public abstract class ConfigurationAttributeBase : Attribute, IConfigurationGene
 
     protected virtual StreamWriter CreateStream()
     {
-        return new StreamWriter(File.Open(ConfigurationFile, FileMode.Create));
+        // Read the line break before File.Open truncates the file.
+        var lineBreak = ConfigurationFile.GetGeneratedFileLineBreak();
+        return new StreamWriter(File.Open(ConfigurationFile, FileMode.Create)) { NewLine = lineBreak };
     }
 
     public virtual void SerializeState()

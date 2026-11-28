@@ -34,16 +34,16 @@ internal class HandleShellCompletionAttribute : BuildExtensionAttributeBase, IOn
         {
             var buildSchema = SchemaUtility.GetJsonString(Build);
             var buildSchemaFile = GetBuildSchemaFile(Build.RootDirectory);
-            buildSchemaFile.WriteAllText(buildSchema);
+            buildSchemaFile.WriteGeneratedText(buildSchema);
 
             var parametersFile = GetDefaultParametersFile(Build.RootDirectory);
             if (!parametersFile.Exists())
             {
-                parametersFile.WriteAllText($$"""
-                                              {
-                                                "$schema": "./{{BuildSchemaFileName}}"
-                                              }
-                                              """);
+                parametersFile.WriteGeneratedText($$"""
+                                                    {
+                                                      "$schema": "./{{BuildSchemaFileName}}"
+                                                    }
+                                                    """);
             }
         }
         else if (ParameterService.GetPositionalArgument<string>(0) == ":complete")
